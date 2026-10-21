@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Delete everything the lab created: the istio-lab cluster (eksctl stacks) only. The VPC is shared and stays.
 source "$(dirname "$0")/env.sh"
+# Deletion must validate the account, even when a partial cluster has no kube context.
+guard_account
 log "deleting cluster $CLUSTER (waits for the CloudFormation stacks)"
 eksctl delete cluster --name "$CLUSTER" --region "$AWS_REGION" --wait --disable-nodegroup-eviction
 log "left in the account (should be empty):"

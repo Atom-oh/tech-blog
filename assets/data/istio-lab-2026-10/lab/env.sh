@@ -12,7 +12,13 @@ export RESULTS="$LAB/results"
 export KUBECONFIG="$HOME/.kube/${CLUSTER}.yaml"
 MODES=(base sidecar ambient-l4 ambient-l7)
 log() { printf '\033[1;34m[%s]\033[0m %s\n' "$(date +%H:%M:%S)" "$*" >&2; }
+guard_account() {
+  : "${EXPECTED_ACCOUNT:?set EXPECTED_ACCOUNT}"
+  local account
+  account="$(aws sts get-caller-identity --query Account --output text)" || { echo "could not verify AWS account" >&2; exit 1; }
+  [[ "$account" == "$EXPECTED_ACCOUNT" ]] || { echo "wrong AWS account" >&2; exit 1; }
+}
 guard() {
-  [[ "$(aws sts get-caller-identity --query Account --output text)" == "${EXPECTED_ACCOUNT:?set EXPECTED_ACCOUNT}" ]] || { echo "wrong AWS account"; exit 1; }
+  guard_account
   kubectl config current-context 2>/dev/null | grep -q "$CLUSTER" || { echo "WRONG CONTEXT"; exit 1; }
 }
