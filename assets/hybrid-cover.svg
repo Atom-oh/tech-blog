@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="300" viewBox="0 0 480 300" fill="none">
+  <defs><pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#afc0ad" opacity=".6"/></pattern></defs>
+  <rect width="480" height="300" fill="url(#dots)"/>
+  <path d="M143 110h194M143 190h194M143 110v80m194-80v80" stroke="#8da28b" stroke-width="1.5" stroke-dasharray="5 5"/>
+  <path d="m95 101 48-28 48 28v58l-48 28-48-28Z" fill="#f0f3eb" stroke="#69866b" stroke-width="1.5"/>
+  <path d="m95 101 48 28 48-28M143 129v58" stroke="#69866b" stroke-width="1.5"/>
+  <path d="m95 101 48-28 48 28-48 28Z" fill="#90ab8c"/>
+  <path d="m289 157 48-28 48 28v58l-48 28-48-28Z" fill="#f0f3eb" stroke="#69866b" stroke-width="1.5"/>
+  <path d="m289 157 48 28 48-28M337 185v58" stroke="#69866b" stroke-width="1.5"/>
+  <path d="m289 157 48-28 48 28-48 28Z" fill="#90ab8c"/>
+  <path d="m191 132 98 56" stroke="#69866b" stroke-width="2"/>
+  <circle cx="240" cy="160" r="17" fill="#e4eae3" stroke="#69866b" stroke-width="1.5"/>
+  <path d="M232 160h16m-5-5 5 5-5 5" stroke="#69866b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="337" cy="110" r="6" fill="#69866b"/><circle cx="143" cy="190" r="6" fill="#69866b"/>
+</svg>

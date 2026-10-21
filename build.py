@@ -41,18 +41,26 @@ PAGE = """<!DOCTYPE html>
   <link rel="alternate" type="application/rss+xml" title="{site_title}" href="/feed.xml">
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/assets/style.css">
+  <meta name="theme-color" content="#faf9f6">
   <script async src="https://www.googletagmanager.com/gtag/js?id={ga}"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){{dataLayer.push(arguments)}}gtag('js',new Date());gtag('config','{ga}');</script>
 </head>
-<body>
+<body class="{page_class}">
+<a class="skip-link" href="#main">본문으로 건너뛰기</a>
 <header class="site-header"><div class="inner">
-  <a class="brand" href="/">{site_title}</a>
-  <nav class="site-nav"><a href="/">글 목록</a><a href="/tags/">태그</a><a href="/feed.xml">RSS</a></nav>
+  <a class="brand" href="/" aria-label="{site_title} 홈">
+    <svg class="brand-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true"><circle cx="20" cy="20" r="3" fill="currentColor"/><ellipse cx="20" cy="20" rx="17" ry="7" stroke="currentColor" stroke-width="1.8" transform="rotate(-45 20 20)"/><ellipse cx="20" cy="20" rx="17" ry="7" stroke="currentColor" stroke-width="1.8" transform="rotate(45 20 20)"/></svg>
+    <span>atom<span class="brand-dot">.</span></span><span class="brand-caption">기술 블로그</span>
+  </a>
+  <nav class="site-nav" aria-label="주 메뉴"><a href="/"{home_current}>글 목록</a><a href="/tags/"{tags_current}>태그</a><a class="rss-link" href="/feed.xml"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="5" cy="15" r="1.5" fill="currentColor"/><path d="M4 9a7 7 0 0 1 7 7M4 4a12 12 0 0 1 12 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>RSS</a></nav>
 </div></header>
-<main class="wrap">
+<main id="main" class="wrap">
 {main}
 </main>
-<footer class="site-footer"><div class="inner">blog.atomai.click. 발표 자료는 <a href="https://presentation.atomai.click/">presentation.atomai.click</a>에 있습니다.</div></footer>
+<footer class="site-footer"><div class="inner">
+  <div><a class="footer-brand" href="/">atom.</a><p>직접 구성하고, 측정하고, 기록합니다.</p></div>
+  <div class="footer-links"><a href="https://presentation.atomai.click/">발표 자료 <span aria-hidden="true">↗</span></a><a href="/feed.xml">RSS 구독 <span aria-hidden="true">↗</span></a><span>© {year} Atom</span></div>
+</div></footer>
 {scripts}
 </body>
 </html>
@@ -107,15 +115,30 @@ def tag_links(tags: list) -> str:
     return f'<ul class="tags">{items}</ul>'
 
 
-def page(*, src, title, description, url, main, og_type="website", scripts=""):
+def page(*, src, title, description, url, main, og_type="website", scripts="", page_class=""):
     return PAGE.format(marker=MARKER, src=src, title=esc(title), description=esc(description), url=url,
-                       og_type=og_type, site_title=esc(SITE_TITLE), ga=GA_ID, main=main, scripts=scripts)
+                       og_type=og_type, site_title=esc(SITE_TITLE), ga=GA_ID, main=main, scripts=scripts,
+                       page_class=page_class, year=datetime.now(timezone.utc).year,
+                       home_current=' aria-current="page"' if page_class == "home-page" else "",
+                       tags_current=' aria-current="page"' if page_class == "tags-page" else "")
+
+
+def artwork(p: dict) -> str:
+    theme = "hybrid" if "hybrid-nodes" in p["tags"] else "mesh"
+    label = p["tags"][0] if p["tags"] else "engineering"
+    return (f'<div class="post-art art-{theme}" aria-hidden="true">'
+            f'<div class="art-label"><span>FIELD NOTES</span><span>{esc(label.upper())}</span></div>'
+            f'<img src="/assets/{theme}-cover.svg" alt="" width="480" height="300">'
+            f'<div class="art-caption"><span>BUILD. MEASURE. LEARN.</span><span>↗</span></div></div>')
 
 
 def item(p: dict, heading="h2") -> str:
-    return (f'<li class="post-item"><span class="meta">{p["date"]:%Y-%m-%d}</span>'
-            f'<{heading}><a href="/{p["slug"]}/">{esc(p["title"])}</a></{heading}>'
-            f'<p>{esc(p["description"])}</p>{tag_links(p["tags"])}</li>')
+    return (f'<li class="post-item">{artwork(p)}<div class="post-item-content">'
+            f'<div class="meta"><time datetime="{p["date"]:%Y-%m-%d}">{p["date"]:%Y.%m.%d}</time>'
+            f'<span class="meta-separator" aria-hidden="true">/</span><span>실험과 기록</span></div>'
+            f'<{heading}><a href="/{p["slug"]}/">{esc(p["title"])}'
+            f'<span class="item-arrow" aria-hidden="true">↗</span></a></{heading}>'
+            f'<p>{esc(p["description"])}</p>{tag_links(p["tags"])}</div></li>')
 
 
 def write(rel: str, content: str) -> None:
@@ -144,30 +167,67 @@ def main() -> None:
     for i, p in enumerate(posts):
         newer = posts[i - 1] if i > 0 else None
         older = posts[i + 1] if i + 1 < len(posts) else None
-        nav = '<nav class="post-nav">'
-        nav += f'<a href="/{older["slug"]}/">이전 글: {esc(older["title"])}</a>' if older else "<span></span>"
-        nav += f'<a href="/{newer["slug"]}/">다음 글: {esc(newer["title"])}</a>' if newer else "<span></span>"
+        nav = '<nav class="post-nav" aria-label="이전 글과 다음 글">'
+        nav += f'<a href="/{older["slug"]}/"><span>← 이전 글</span>{esc(older["title"])}</a>' if older else "<span></span>"
+        nav += f'<a href="/{newer["slug"]}/"><span>다음 글 →</span>{esc(newer["title"])}</a>' if newer else "<span></span>"
         nav += "</nav>"
-        main_html = (f'<article>\n<header class="post-head"><h1>{esc(p["title"])}</h1>'
-                     f'<div class="meta"><time datetime="{p["date"]:%Y-%m-%d}">{p["date"]:%Y-%m-%d}</time>'
-                     f'{tag_links(p["tags"])}</div></header>\n{p["body"]}\n{nav}\n</article>')
+        main_html = (f'<article>\n<header class="post-head"><a class="back-link" href="/">← 모든 글</a>'
+                     f'<p class="eyebrow">ENGINEERING NOTES</p><h1>{esc(p["title"])}</h1>'
+                     f'<div class="post-author"><span class="author-avatar" aria-hidden="true">a.</span>'
+                     f'<span><strong>Atom</strong><time datetime="{p["date"]:%Y-%m-%d}">{p["date"]:%Y.%m.%d}</time></span></div>'
+                     f'{tag_links(p["tags"])}</header>\n<div class="prose">{p["body"]}</div>\n{nav}\n</article>')
         write(f'{p["slug"]}/index.html', page(src=p["src"], title=p["title"], description=p["description"],
                                               url=p["url"], main=main_html, og_type="article",
-                                              scripts=VIDEO_JS if p["videos"] else ""))
-
-    home = (f'<p class="intro">{esc(SITE_DESC)}</p>\n<ul class="post-list">'
-            + "".join(item(p) for p in posts) + "</ul>")
-    write("index.html", page(src="posts/", title=SITE_TITLE, description=SITE_DESC, url=f"{SITE_URL}/", main=home))
+                                              scripts=VIDEO_JS if p["videos"] else "", page_class="article-page"))
 
     by_tag = {}
     for p in posts:
         for t in p["tags"]:
             by_tag.setdefault(t, []).append(p)
-    groups = "".join(f'<section class="tag-group" id="{esc(t)}"><h2>#{esc(t)} ({len(ps)})</h2>'
+    topic_links = "".join(f'<a href="/tags/#{esc(t)}">{esc(t)}<span>{len(ps)}</span></a>'
+                          for t, ps in sorted(by_tag.items(), key=lambda pair: (-len(pair[1]), pair[0])))
+    latest = posts[0]
+    home = (
+        '<section class="hero" aria-labelledby="hero-title"><div class="hero-copy">'
+        '<p class="eyebrow"><span class="status-dot"></span> NOTES FROM THE FIELD</p>'
+        '<h1 id="hero-title">직접 만들고,<br>확인한 <span>기술 기록.</span></h1>'
+        '<p class="hero-description">AWS와 Kubernetes, 문서 너머의 이야기.<br>'
+        '직접 구성하고 측정한 결과를 바탕으로<br class="mobile-break"> 더 나은 운영을 고민합니다.</p>'
+        '<a class="primary-link" href="#all-posts">기록 살펴보기 <span aria-hidden="true">↗</span></a></div>'
+        '<aside class="hero-note" aria-label="블로그 소개"><span class="note-index">THE ENGINEERING NOTEBOOK</span>'
+        '<div class="note-symbol" aria-hidden="true">a<span>＊</span></div>'
+        '<p>이론에서 한 걸음 더,<br><strong>실제로 해보며 배웁니다.</strong></p>'
+        '<div class="note-bottom"><span>AWS · KUBERNETES · INFRA</span><span aria-hidden="true">↙</span></div></aside></section>'
+        '<section class="featured-section" aria-labelledby="featured-title">'
+        '<div class="section-heading"><h2 id="featured-title"><span class="status-dot"></span> 최근에 쓴 글</h2>'
+        '<span class="section-note">LATEST FIELD NOTE</span></div>'
+        f'<div class="featured-card">{artwork(latest)}<div class="featured-copy">'
+        f'<div class="meta"><span class="new-label">NEW</span><time datetime="{latest["date"]:%Y-%m-%d}">{latest["date"]:%Y.%m.%d}</time></div>'
+        f'<h3><a href="/{latest["slug"]}/">{esc(latest["title"])}</a></h3>'
+        f'<p>{esc(latest["description"])}</p>{tag_links(latest["tags"])}'
+        f'<a class="read-link" href="/{latest["slug"]}/">글 읽기 <span aria-hidden="true">↗</span></a></div></div></section>'
+        '<section class="archive-section" id="all-posts" aria-labelledby="archive-title">'
+        f'<div class="section-heading"><h2 id="archive-title">모든 기록 <span class="count">{len(posts):02d}</span></h2>'
+        '<a class="text-link" href="/tags/">태그로 찾아보기 <span aria-hidden="true">↗</span></a></div>'
+        '<div class="archive-layout"><ul class="post-list">'
+        + "".join(item(p, "h3") for p in posts)
+        + '</ul><aside class="archive-sidebar"><div class="topic-box"><p class="eyebrow">EXPLORE TOPICS</p>'
+        f'<h3>어떤 기술이 궁금한가요?</h3><nav class="topic-links" aria-label="주제별 글">{topic_links}</nav></div>'
+        '<a class="presentation-card" href="https://presentation.atomai.click/"><span class="eyebrow">BEYOND THE BLOG</span>'
+        '<strong>발표 자료도<br>함께 살펴보세요.</strong><span>실험을 이야기로 나누는 공간 <span aria-hidden="true">↗</span></span></a>'
+        '</aside></div></section>')
+    write("index.html", page(src="posts/", title=SITE_TITLE, description=SITE_DESC, url=f"{SITE_URL}/",
+                            main=home, page_class="home-page"))
+
+    groups = "".join(f'<section class="tag-group" id="{esc(t)}"><div class="section-heading"><h2>#{esc(t)} <span class="count">{len(ps):02d}</span></h2>'
+                     f'<a class="text-link" href="#topics">모든 태그 ↑</a></div>'
                      f'<ul class="post-list">{"".join(item(x, "h3") for x in ps)}</ul></section>'
                      for t, ps in sorted(by_tag.items()))
+    tags_intro = (f'<header class="page-intro" id="topics"><p class="eyebrow">EXPLORE THE NOTEBOOK</p>'
+                  f'<h1>관심 있는 기술부터.</h1><p>태그를 따라 필요한 기록을 찾아보세요.</p>'
+                  f'<nav class="topic-links" aria-label="태그 목록">{topic_links}</nav></header>')
     write("tags/index.html", page(src="posts/", title=f"태그 | {SITE_TITLE}", description="태그별 글 목록",
-                                  url=f"{SITE_URL}/tags/", main=f"<h1>태그</h1>\n{groups}"))
+                                  url=f"{SITE_URL}/tags/", main=tags_intro + groups, page_class="tags-page"))
 
     rss_items = "".join(
         f"<item><title>{esc(p['title'])}</title><link>{p['url']}</link><guid>{p['url']}</guid>"
