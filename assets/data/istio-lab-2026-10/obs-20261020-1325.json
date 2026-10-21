@@ -1,0 +1,115 @@
+{
+  "generated": "2026-10-20T13:25:25+00:00",
+  "env": {
+    "kubernetes": "v1.36.4-eks-b9510e3",
+    "istiod_image": "docker.io/istio/pilot:1.31.2-distroless",
+    "nodes": [
+      {
+        "name": "ip-10-0-2-150.ap-northeast-2.compute.internal",
+        "role": "server",
+        "type": "m7g.xlarge",
+        "zone": "ap-northeast-2a",
+        "kernel": "6.18.54-121.166.amzn2023.aarch64"
+      },
+      {
+        "name": "ip-10-0-2-160.ap-northeast-2.compute.internal",
+        "role": "server",
+        "type": "m7g.xlarge",
+        "zone": "ap-northeast-2a",
+        "kernel": "6.18.54-121.166.amzn2023.aarch64"
+      },
+      {
+        "name": "ip-10-0-2-65.ap-northeast-2.compute.internal",
+        "role": "client",
+        "type": "m7g.xlarge",
+        "zone": "ap-northeast-2a",
+        "kernel": "6.18.54-121.166.amzn2023.aarch64"
+      }
+    ]
+  },
+  "test": "observability",
+  "traffic": [
+    {
+      "path": "/echo",
+      "requests": 100
+    },
+    {
+      "path": "/echo?status=500",
+      "requests": 50
+    },
+    {
+      "path": "/admin/report",
+      "requests": 30
+    }
+  ],
+  "matrix": {
+    "base": {
+      "l7_proxy": "none",
+      "istio_requests_total_series": 0,
+      "response_codes_in_metrics": [],
+      "request_duration_histogram": false,
+      "ztunnel_tcp_series": [],
+      "ztunnel_has_http_status": false,
+      "access_log_lines": 0,
+      "access_log_has_path_and_status": false,
+      "ztunnel_log_lines": 0,
+      "ztunnel_log_sample": null,
+      "access_log_sample": null
+    },
+    "sidecar": {
+      "l7_proxy": "server sidecar",
+      "istio_requests_total_series": 6,
+      "response_codes_in_metrics": [
+        "200",
+        "500"
+      ],
+      "request_duration_histogram": true,
+      "ztunnel_tcp_series": [],
+      "ztunnel_has_http_status": false,
+      "access_log_lines": 180,
+      "access_log_has_path_and_status": true,
+      "ztunnel_log_lines": 0,
+      "ztunnel_log_sample": null,
+      "access_log_sample": "[2026-10-20T13:24:54.323Z] \"GET /echo?status=500 HTTP/1.1\" 500 - via_upstream - \"-\" 0 0 0 0 \"-\" \"fortio.org/fortio-1.76.0\" \"518d27d2-11dc-4024-b9e4-588a79d52a91\" \"echo:8080\" \"10.0.2.197:8080\" inbound|8080|| 127.0.0.6:37489 10.0.2.197:8080 10.0.2.130:38110 outbound_.8080_._.echo.sidecar.svc.cluster.local default"
+    },
+    "ambient-l4": {
+      "l7_proxy": "none",
+      "istio_requests_total_series": 0,
+      "response_codes_in_metrics": [],
+      "request_duration_histogram": false,
+      "ztunnel_tcp_series": [
+        "istio_tcp_connections_closed_total",
+        "istio_tcp_connections_opened_total",
+        "istio_tcp_received_bytes_total",
+        "istio_tcp_sent_bytes_total"
+      ],
+      "ztunnel_has_http_status": false,
+      "access_log_lines": 0,
+      "access_log_has_path_and_status": false,
+      "ztunnel_log_lines": 108,
+      "ztunnel_log_sample": "2026-10-20T13:25:01.846739Z\tinfo\taccess\tconnection complete\tsrc.addr=10.0.2.175:52468 src.workload=\"client-57f6f5b9b8-dls9q\" src.namespace=\"ambient-l4\" src.identity=\"spiffe://cluster.local/ns/ambient-l4/sa/default\" src.cluster=\"Kubernetes\" dst.addr=10.0.2.28:15008 dst.hbone_addr=10.0.2.28:8080 dst.service=\"echo.ambient-l4.svc.cluster.local\" dst.workload=\"echo-6494bd574f-w2wng\" dst.namespace=\"ambie",
+      "access_log_sample": null
+    },
+    "ambient-l7": {
+      "l7_proxy": "waypoint",
+      "istio_requests_total_series": 2,
+      "response_codes_in_metrics": [
+        "200",
+        "500"
+      ],
+      "request_duration_histogram": true,
+      "ztunnel_tcp_series": [
+        "istio_tcp_connections_closed_total",
+        "istio_tcp_connections_opened_total",
+        "istio_tcp_received_bytes_total",
+        "istio_tcp_sent_bytes_total"
+      ],
+      "ztunnel_has_http_status": false,
+      "access_log_lines": 180,
+      "access_log_has_path_and_status": true,
+      "ztunnel_log_lines": 54,
+      "ztunnel_log_sample": "2026-10-20T13:25:07.198811Z\tinfo\taccess\tconnection complete\tsrc.addr=10.0.2.182:43600 src.workload=\"client-57f6f5b9b8-2qdvs\" src.namespace=\"ambient-l7\" src.identity=\"spiffe://cluster.local/ns/ambient-l7/sa/default\" src.cluster=\"Kubernetes\" dst.addr=10.0.2.242:15008 dst.hbone_addr=172.20.151.169:8080 dst.service=\"echo.ambient-l7.svc.cluster.local\" dst.workload=\"waypoint-56dc45767b-lf2ps\" dst.namesp",
+      "access_log_sample": "[2026-10-20T13:25:05.006Z] \"GET /echo?status=500 HTTP/1.1\" 500 - via_upstream - \"-\" 0 0 0 0 \"-\" \"fortio.org/fortio-1.76.0\" \"671013dc-1dd3-46ca-93ac-91838361f61e\" \"echo:8080\" \"envoy://connect_originate/10.0.2.72:8080\" inbound-vip|8080|http|echo.ambient-l7.svc.cluster.local envoy://internal_client_address/ 172.20.151.169:8080 10.0.2.182:43408 - default"
+    }
+  }
+}

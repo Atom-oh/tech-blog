@@ -1,0 +1,199 @@
+{
+  "generated": "2026-10-20T13:51:07+00:00",
+  "env": {
+    "kubernetes": "v1.36.4-eks-b9510e3",
+    "istiod_image": "docker.io/istio/pilot:1.31.2-distroless",
+    "nodes": [
+      {
+        "name": "ip-10-0-2-150.ap-northeast-2.compute.internal",
+        "role": "server",
+        "type": "m7g.xlarge",
+        "zone": "ap-northeast-2a",
+        "kernel": "6.18.54-121.166.amzn2023.aarch64"
+      },
+      {
+        "name": "ip-10-0-2-160.ap-northeast-2.compute.internal",
+        "role": "server",
+        "type": "m7g.xlarge",
+        "zone": "ap-northeast-2a",
+        "kernel": "6.18.54-121.166.amzn2023.aarch64"
+      },
+      {
+        "name": "ip-10-0-2-65.ap-northeast-2.compute.internal",
+        "role": "client",
+        "type": "m7g.xlarge",
+        "zone": "ap-northeast-2a",
+        "kernel": "6.18.54-121.166.amzn2023.aarch64"
+      }
+    ]
+  },
+  "test": "outlier-detection",
+  "params": {
+    "qps": 100,
+    "seconds": 60,
+    "connections": 8,
+    "endpoints": "3 good + 1 always-500"
+  },
+  "destination_rule": "apiVersion: networking.istio.io/v1\nkind: DestinationRule\nmetadata: {name: echo-outlier, namespace: <ns>}\nspec:\n  host: echo.<ns>.svc.cluster.local\n  trafficPolicy:\n    outlierDetection: {consecutive5xxErrors: 5, interval: 5s, baseEjectionTime: 60s, maxEjectionPercent: 50}\n",
+  "runs": [
+    {
+      "mode": "base",
+      "policy": "istio-default",
+      "requested_qps": "100",
+      "actual_qps": 100.0,
+      "connections": 8,
+      "count": 6000,
+      "codes": {
+        "200": 5999,
+        "500": 1
+      },
+      "avg_ms": 0.265,
+      "min_ms": 0.15,
+      "max_ms": 1.043,
+      "p50": 0.575,
+      "p75": 0.788,
+      "p90": 0.915,
+      "p99": 0.992,
+      "p99.9": 0.999,
+      "errors": 1,
+      "sockets": 11,
+      "error_pct": 0.02
+    },
+    {
+      "mode": "sidecar",
+      "policy": "istio-default",
+      "requested_qps": "100",
+      "actual_qps": 100.0,
+      "connections": 8,
+      "count": 6000,
+      "codes": {
+        "200": 4496,
+        "500": 1504
+      },
+      "avg_ms": 1.645,
+      "min_ms": 0.926,
+      "max_ms": 14.202,
+      "p50": 1.536,
+      "p75": 1.805,
+      "p90": 1.965,
+      "p99": 2.908,
+      "p99.9": 5.0,
+      "errors": 1504,
+      "sockets": 1514,
+      "error_pct": 25.07
+    },
+    {
+      "mode": "sidecar",
+      "policy": "outlierDetection",
+      "requested_qps": "100",
+      "actual_qps": 100.0,
+      "connections": 8,
+      "count": 6000,
+      "codes": {
+        "200": 5996,
+        "500": 4
+      },
+      "avg_ms": 1.602,
+      "min_ms": 0.891,
+      "max_ms": 8.232,
+      "p50": 1.504,
+      "p75": 1.756,
+      "p90": 1.908,
+      "p99": 1.999,
+      "p99.9": 5.714,
+      "errors": 4,
+      "sockets": 13,
+      "error_pct": 0.07
+    },
+    {
+      "mode": "ambient-l4",
+      "policy": "istio-default",
+      "requested_qps": "100",
+      "actual_qps": 100.0,
+      "connections": 8,
+      "count": 6000,
+      "codes": {
+        "200": 6000
+      },
+      "avg_ms": 0.646,
+      "min_ms": 0.406,
+      "max_ms": 1.852,
+      "p50": 0.704,
+      "p75": 0.853,
+      "p90": 0.943,
+      "p99": 0.996,
+      "p99.9": 1.639,
+      "errors": 0,
+      "sockets": 9,
+      "error_pct": 0.0
+    },
+    {
+      "mode": "ambient-l4",
+      "policy": "outlierDetection",
+      "requested_qps": "100",
+      "actual_qps": 100.0,
+      "connections": 8,
+      "count": 6000,
+      "codes": {
+        "200": 6000
+      },
+      "avg_ms": 0.639,
+      "min_ms": 0.301,
+      "max_ms": 1.457,
+      "p50": 0.652,
+      "p75": 0.827,
+      "p90": 0.932,
+      "p99": 0.995,
+      "p99.9": 1.305,
+      "errors": 0,
+      "sockets": 9,
+      "error_pct": 0.0
+    },
+    {
+      "mode": "ambient-l7",
+      "policy": "istio-default",
+      "requested_qps": "100",
+      "actual_qps": 100.0,
+      "connections": 8,
+      "count": 6000,
+      "codes": {
+        "200": 4520,
+        "500": 1480
+      },
+      "avg_ms": 2.211,
+      "min_ms": 1.531,
+      "max_ms": 5.01,
+      "p50": 2.307,
+      "p75": 2.657,
+      "p90": 2.867,
+      "p99": 2.993,
+      "p99.9": 3.893,
+      "errors": 1480,
+      "sockets": 1489,
+      "error_pct": 24.67
+    },
+    {
+      "mode": "ambient-l7",
+      "policy": "outlierDetection",
+      "requested_qps": "100",
+      "actual_qps": 100.0,
+      "connections": 8,
+      "count": 6000,
+      "codes": {
+        "200": 5998,
+        "500": 2
+      },
+      "avg_ms": 1.984,
+      "min_ms": 1.564,
+      "max_ms": 3.997,
+      "p50": 1.931,
+      "p75": 2.386,
+      "p90": 2.757,
+      "p99": 2.98,
+      "p99.9": 3.498,
+      "errors": 2,
+      "sockets": 14,
+      "error_pct": 0.03
+    }
+  ]
+}

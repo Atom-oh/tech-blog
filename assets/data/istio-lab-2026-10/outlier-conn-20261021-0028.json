@@ -1,0 +1,180 @@
+{
+  "generated": "2026-10-21T00:28:59+00:00",
+  "env": {
+    "kubernetes": "v1.36.4-eks-b9510e3",
+    "istiod_image": "docker.io/istio/pilot:1.31.2-distroless",
+    "nodes": [
+      {
+        "name": "ip-10-0-2-150.ap-northeast-2.compute.internal",
+        "role": "server",
+        "type": "m7g.xlarge",
+        "zone": "ap-northeast-2a",
+        "kernel": "6.18.54-121.166.amzn2023.aarch64"
+      },
+      {
+        "name": "ip-10-0-2-160.ap-northeast-2.compute.internal",
+        "role": "server",
+        "type": "m7g.xlarge",
+        "zone": "ap-northeast-2a",
+        "kernel": "6.18.54-121.166.amzn2023.aarch64"
+      },
+      {
+        "name": "ip-10-0-2-65.ap-northeast-2.compute.internal",
+        "role": "client",
+        "type": "m7g.xlarge",
+        "zone": "ap-northeast-2a",
+        "kernel": "6.18.54-121.166.amzn2023.aarch64"
+      }
+    ]
+  },
+  "test": "outlier-detection-per-connection",
+  "params": {
+    "qps": 100,
+    "seconds": 60,
+    "connections": 8,
+    "endpoints": "3 good + 1 always-500"
+  },
+  "runs": [
+    {
+      "mode": "base",
+      "policy": "istio-default",
+      "keepalive": true,
+      "requested_qps": "100",
+      "actual_qps": 100.0,
+      "connections": 8,
+      "count": 6000,
+      "codes": {
+        "200": 6000
+      },
+      "avg_ms": 0.272,
+      "min_ms": 0.116,
+      "max_ms": 1.105,
+      "p50": 0.558,
+      "p75": 0.779,
+      "p90": 0.912,
+      "p99": 0.991,
+      "p99.9": 0.999,
+      "errors": 0,
+      "sockets": 8,
+      "error_pct": 0.0
+    },
+    {
+      "mode": "base",
+      "policy": "istio-default",
+      "keepalive": false,
+      "requested_qps": "100",
+      "actual_qps": 100.0,
+      "connections": 8,
+      "count": 6000,
+      "codes": {
+        "200": 4497,
+        "500": 1503
+      },
+      "avg_ms": 1.153,
+      "min_ms": 0.844,
+      "max_ms": 1.864,
+      "p50": 1.427,
+      "p75": 1.646,
+      "p90": 1.777,
+      "p99": 1.855,
+      "p99.9": 1.863,
+      "errors": 1503,
+      "sockets": 6008,
+      "error_pct": 25.05
+    },
+    {
+      "mode": "ambient-l4",
+      "policy": "istio-default",
+      "keepalive": true,
+      "requested_qps": "100",
+      "actual_qps": 100.0,
+      "connections": 8,
+      "count": 6000,
+      "codes": {
+        "200": 6000
+      },
+      "avg_ms": 0.637,
+      "min_ms": 0.279,
+      "max_ms": 1.138,
+      "p50": 0.64,
+      "p75": 0.821,
+      "p90": 0.929,
+      "p99": 0.994,
+      "p99.9": 1.074,
+      "errors": 0,
+      "sockets": 9,
+      "error_pct": 0.0
+    },
+    {
+      "mode": "ambient-l4",
+      "policy": "istio-default",
+      "keepalive": false,
+      "requested_qps": "100",
+      "actual_qps": 100.0,
+      "connections": 8,
+      "count": 6000,
+      "codes": {
+        "200": 4477,
+        "500": 1523
+      },
+      "avg_ms": 2.117,
+      "min_ms": 1.544,
+      "max_ms": 4.592,
+      "p50": 2.275,
+      "p75": 2.639,
+      "p90": 2.858,
+      "p99": 2.989,
+      "p99.9": 3.667,
+      "errors": 1523,
+      "sockets": 6008,
+      "error_pct": 25.38
+    },
+    {
+      "mode": "ambient-l4",
+      "policy": "outlierDetection",
+      "keepalive": true,
+      "requested_qps": "100",
+      "actual_qps": 100.0,
+      "connections": 8,
+      "count": 6000,
+      "codes": {
+        "200": 6000
+      },
+      "avg_ms": 0.676,
+      "min_ms": 0.244,
+      "max_ms": 2.227,
+      "p50": 0.623,
+      "p75": 0.813,
+      "p90": 0.927,
+      "p99": 0.995,
+      "p99.9": 1.933,
+      "errors": 0,
+      "sockets": 8,
+      "error_pct": 0.0
+    },
+    {
+      "mode": "ambient-l4",
+      "policy": "outlierDetection",
+      "keepalive": false,
+      "requested_qps": "100",
+      "actual_qps": 100.0,
+      "connections": 8,
+      "count": 6000,
+      "codes": {
+        "200": 4460,
+        "500": 1540
+      },
+      "avg_ms": 2.137,
+      "min_ms": 1.375,
+      "max_ms": 6.548,
+      "p50": 2.291,
+      "p75": 2.653,
+      "p90": 2.87,
+      "p99": 3.0,
+      "p99.9": 5.882,
+      "errors": 1540,
+      "sockets": 6008,
+      "error_pct": 25.67
+    }
+  ]
+}

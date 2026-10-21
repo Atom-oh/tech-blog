@@ -1,0 +1,153 @@
+{
+  "generated": "2026-10-20T13:27:46+00:00",
+  "env": {
+    "kubernetes": "v1.36.4-eks-b9510e3",
+    "istiod_image": "docker.io/istio/pilot:1.31.2-distroless",
+    "nodes": [
+      {
+        "name": "ip-10-0-2-150.ap-northeast-2.compute.internal",
+        "role": "server",
+        "type": "m7g.xlarge",
+        "zone": "ap-northeast-2a",
+        "kernel": "6.18.54-121.166.amzn2023.aarch64"
+      },
+      {
+        "name": "ip-10-0-2-160.ap-northeast-2.compute.internal",
+        "role": "server",
+        "type": "m7g.xlarge",
+        "zone": "ap-northeast-2a",
+        "kernel": "6.18.54-121.166.amzn2023.aarch64"
+      },
+      {
+        "name": "ip-10-0-2-65.ap-northeast-2.compute.internal",
+        "role": "client",
+        "type": "m7g.xlarge",
+        "zone": "ap-northeast-2a",
+        "kernel": "6.18.54-121.166.amzn2023.aarch64"
+      }
+    ]
+  },
+  "test": "authorization-policy-l7",
+  "cases": [
+    {
+      "mode": "sidecar",
+      "action": "DENY",
+      "attach": "selector",
+      "rule": "paths /admin*",
+      "before": {
+        "echo": "200",
+        "admin": "200",
+        "admin_via_pod_ip": "503"
+      },
+      "with_policy": {
+        "echo": "200",
+        "admin": "200",
+        "admin_via_pod_ip": "503"
+      },
+      "after_delete": {
+        "echo": "200",
+        "admin": "200",
+        "admin_via_pod_ip": "503"
+      },
+      "istioctl_analyze": [
+        "Warning [IST0133] (AuthorizationPolicy sidecar/lab-admin) Schema validation warning: configured AuthorizationPolicy will deny all traffic to TCP ports under its scope due to the use of only HTTP attributes in a DENY rule; it is recommended to explicitly specify the port"
+      ]
+    },
+    {
+      "mode": "ambient-l4",
+      "action": "DENY",
+      "attach": "selector",
+      "rule": "paths /admin*",
+      "before": {
+        "echo": "200",
+        "admin": "200",
+        "admin_via_pod_ip": "200"
+      },
+      "with_policy": {
+        "echo": "200",
+        "admin": "200",
+        "admin_via_pod_ip": "200"
+      },
+      "after_delete": {
+        "echo": "200",
+        "admin": "200",
+        "admin_via_pod_ip": "200"
+      },
+      "istioctl_analyze": [
+        "Warning [IST0133] (AuthorizationPolicy ambient-l4/lab-admin) Schema validation warning: configured AuthorizationPolicy will deny all traffic to TCP ports under its scope due to the use of only HTTP attributes in a DENY rule; it is recommended to explicitly specify the port"
+      ]
+    },
+    {
+      "mode": "ambient-l4",
+      "action": "ALLOW",
+      "attach": "selector",
+      "rule": "paths /admin*",
+      "before": {
+        "echo": "200",
+        "admin": "200",
+        "admin_via_pod_ip": "200"
+      },
+      "with_policy": {
+        "echo": "reset",
+        "admin": "reset",
+        "admin_via_pod_ip": "reset"
+      },
+      "after_delete": {
+        "echo": "200",
+        "admin": "200",
+        "admin_via_pod_ip": "200"
+      },
+      "istioctl_analyze": [
+        "✔ No validation issues found when analyzing namespace: ambient-l4."
+      ]
+    },
+    {
+      "mode": "ambient-l7",
+      "action": "DENY",
+      "attach": "targetRefs Service",
+      "rule": "paths /admin*",
+      "before": {
+        "echo": "200",
+        "admin": "200",
+        "admin_via_pod_ip": "200"
+      },
+      "with_policy": {
+        "echo": "200",
+        "admin": "403",
+        "admin_via_pod_ip": "200"
+      },
+      "after_delete": {
+        "echo": "200",
+        "admin": "200",
+        "admin_via_pod_ip": "200"
+      },
+      "istioctl_analyze": [
+        "Warning [IST0133] (AuthorizationPolicy ambient-l7/lab-admin) Schema validation warning: configured AuthorizationPolicy will deny all traffic to TCP ports under its scope due to the use of only HTTP attributes in a DENY rule; it is recommended to explicitly specify the port"
+      ]
+    },
+    {
+      "mode": "ambient-l7",
+      "action": "DENY",
+      "attach": "selector",
+      "rule": "paths /admin*",
+      "before": {
+        "echo": "200",
+        "admin": "200",
+        "admin_via_pod_ip": "200"
+      },
+      "with_policy": {
+        "echo": "200",
+        "admin": "200",
+        "admin_via_pod_ip": "200"
+      },
+      "after_delete": {
+        "echo": "200",
+        "admin": "200",
+        "admin_via_pod_ip": "200"
+      },
+      "istioctl_analyze": [
+        "Warning [IST0133] (AuthorizationPolicy ambient-l7/lab-admin) Schema validation warning: configured AuthorizationPolicy will deny all traffic to TCP ports under its scope due to the use of only HTTP attributes in a DENY rule; it is recommended to explicitly specify the port"
+      ]
+    }
+  ]
+}

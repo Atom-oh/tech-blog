@@ -1,0 +1,704 @@
+{
+  "generated": "2026-10-20T13:40:56+00:00",
+  "env": {
+    "kubernetes": "v1.36.4-eks-b9510e3",
+    "istiod_image": "docker.io/istio/pilot:1.31.2-distroless",
+    "nodes": [
+      {
+        "name": "ip-10-0-2-150.ap-northeast-2.compute.internal",
+        "role": "server",
+        "type": "m7g.xlarge",
+        "zone": "ap-northeast-2a",
+        "kernel": "6.18.54-121.166.amzn2023.aarch64"
+      },
+      {
+        "name": "ip-10-0-2-160.ap-northeast-2.compute.internal",
+        "role": "server",
+        "type": "m7g.xlarge",
+        "zone": "ap-northeast-2a",
+        "kernel": "6.18.54-121.166.amzn2023.aarch64"
+      },
+      {
+        "name": "ip-10-0-2-65.ap-northeast-2.compute.internal",
+        "role": "client",
+        "type": "m7g.xlarge",
+        "zone": "ap-northeast-2a",
+        "kernel": "6.18.54-121.166.amzn2023.aarch64"
+      }
+    ]
+  },
+  "test": "authorization-policy-l7",
+  "probe_interval_s": 2,
+  "cases": [
+    {
+      "mode": "sidecar",
+      "action": "DENY",
+      "attach": "selector",
+      "rule": "paths /admin*",
+      "apply_warning": "Warning: configured AuthorizationPolicy will deny all traffic to TCP ports under its scope due to the use of only HTTP attributes in a DENY rule; it is recommended to explicitly specify the port",
+      "before": {
+        "echo": "200",
+        "admin": "200",
+        "admin_via_pod_ip": "503"
+      },
+      "steady_after_60s": {
+        "echo": "200",
+        "admin": "403",
+        "admin_via_pod_ip": "503"
+      },
+      "after_delete": {
+        "echo": "200",
+        "admin": "403",
+        "admin_via_pod_ip": "503"
+      },
+      "admin_denied_stable_after_s": 0.0,
+      "echo_denied_stable_after_s": null,
+      "admin_codes_seen": [
+        "403"
+      ],
+      "echo_codes_seen": [
+        "200"
+      ],
+      "ztunnel_view": null,
+      "timeline": [
+        {
+          "t": 0.0,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 3.2,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 6.6,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 9.9,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 13.2,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 16.5,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 19.7,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 22.8,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 26.0,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 29.3,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 32.6,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 35.9,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 39.0,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 42.2,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 45.4,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 48.6,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 51.8,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 55.0,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 58.2,
+          "echo": "200",
+          "admin": "403"
+        }
+      ]
+    },
+    {
+      "mode": "ambient-l4",
+      "action": "DENY",
+      "attach": "selector",
+      "rule": "paths /admin*",
+      "apply_warning": "Warning: configured AuthorizationPolicy will deny all traffic to TCP ports under its scope due to the use of only HTTP attributes in a DENY rule; it is recommended to explicitly specify the port",
+      "before": {
+        "echo": "200",
+        "admin": "200",
+        "admin_via_pod_ip": "200"
+      },
+      "steady_after_60s": {
+        "echo": "200",
+        "admin": "200",
+        "admin_via_pod_ip": "200"
+      },
+      "after_delete": {
+        "echo": "200",
+        "admin": "200",
+        "admin_via_pod_ip": "200"
+      },
+      "admin_denied_stable_after_s": null,
+      "echo_denied_stable_after_s": null,
+      "admin_codes_seen": [
+        "200"
+      ],
+      "echo_codes_seen": [
+        "200"
+      ],
+      "ztunnel_view": {
+        "name": "lab-admin",
+        "namespace": "ambient-l4",
+        "scope": "WorkloadSelector",
+        "action": "Deny",
+        "rules": [
+          [
+            [
+              {}
+            ]
+          ]
+        ]
+      },
+      "timeline": [
+        {
+          "t": 0.0,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 3.2,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 6.4,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 9.6,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 12.7,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 15.9,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 19.0,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 22.2,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 25.4,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 28.5,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 31.6,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 34.8,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 38.0,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 41.1,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 44.2,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 47.4,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 50.5,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 53.7,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 56.8,
+          "echo": "200",
+          "admin": "200"
+        }
+      ]
+    },
+    {
+      "mode": "ambient-l4",
+      "action": "ALLOW",
+      "attach": "selector",
+      "rule": "paths /admin*",
+      "apply_warning": null,
+      "before": {
+        "echo": "200",
+        "admin": "200",
+        "admin_via_pod_ip": "200"
+      },
+      "steady_after_60s": {
+        "echo": "reset",
+        "admin": "reset",
+        "admin_via_pod_ip": "reset"
+      },
+      "after_delete": {
+        "echo": "200",
+        "admin": "200",
+        "admin_via_pod_ip": "200"
+      },
+      "admin_denied_stable_after_s": 0.0,
+      "echo_denied_stable_after_s": 0.0,
+      "admin_codes_seen": [
+        "reset"
+      ],
+      "echo_codes_seen": [
+        "reset"
+      ],
+      "ztunnel_view": {
+        "name": "lab-admin",
+        "namespace": "ambient-l4",
+        "scope": "WorkloadSelector",
+        "action": "Allow",
+        "rules": []
+      },
+      "timeline": [
+        {
+          "t": 0.0,
+          "echo": "reset",
+          "admin": "reset"
+        },
+        {
+          "t": 3.1,
+          "echo": "reset",
+          "admin": "reset"
+        },
+        {
+          "t": 6.3,
+          "echo": "reset",
+          "admin": "reset"
+        },
+        {
+          "t": 9.4,
+          "echo": "reset",
+          "admin": "reset"
+        },
+        {
+          "t": 12.6,
+          "echo": "reset",
+          "admin": "reset"
+        },
+        {
+          "t": 15.8,
+          "echo": "reset",
+          "admin": "reset"
+        },
+        {
+          "t": 19.0,
+          "echo": "reset",
+          "admin": "reset"
+        },
+        {
+          "t": 22.1,
+          "echo": "reset",
+          "admin": "reset"
+        },
+        {
+          "t": 25.3,
+          "echo": "reset",
+          "admin": "reset"
+        },
+        {
+          "t": 28.4,
+          "echo": "reset",
+          "admin": "reset"
+        },
+        {
+          "t": 31.6,
+          "echo": "reset",
+          "admin": "reset"
+        },
+        {
+          "t": 35.0,
+          "echo": "reset",
+          "admin": "reset"
+        },
+        {
+          "t": 38.2,
+          "echo": "reset",
+          "admin": "reset"
+        },
+        {
+          "t": 41.3,
+          "echo": "reset",
+          "admin": "reset"
+        },
+        {
+          "t": 44.5,
+          "echo": "reset",
+          "admin": "reset"
+        },
+        {
+          "t": 47.6,
+          "echo": "reset",
+          "admin": "reset"
+        },
+        {
+          "t": 50.8,
+          "echo": "reset",
+          "admin": "reset"
+        },
+        {
+          "t": 54.0,
+          "echo": "reset",
+          "admin": "reset"
+        },
+        {
+          "t": 57.1,
+          "echo": "reset",
+          "admin": "reset"
+        }
+      ]
+    },
+    {
+      "mode": "ambient-l7",
+      "action": "DENY",
+      "attach": "targetRefs Service",
+      "rule": "paths /admin*",
+      "apply_warning": "Warning: configured AuthorizationPolicy will deny all traffic to TCP ports under its scope due to the use of only HTTP attributes in a DENY rule; it is recommended to explicitly specify the port",
+      "before": {
+        "echo": "200",
+        "admin": "200",
+        "admin_via_pod_ip": "200"
+      },
+      "steady_after_60s": {
+        "echo": "200",
+        "admin": "403",
+        "admin_via_pod_ip": "200"
+      },
+      "after_delete": {
+        "echo": "200",
+        "admin": "200",
+        "admin_via_pod_ip": "200"
+      },
+      "admin_denied_stable_after_s": 0.0,
+      "echo_denied_stable_after_s": null,
+      "admin_codes_seen": [
+        "403"
+      ],
+      "echo_codes_seen": [
+        "200"
+      ],
+      "ztunnel_view": null,
+      "timeline": [
+        {
+          "t": 0.0,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 3.2,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 6.4,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 9.6,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 12.8,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 16.1,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 19.2,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 22.4,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 25.6,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 28.7,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 31.9,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 35.1,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 38.2,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 41.4,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 44.5,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 47.6,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 50.8,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 53.9,
+          "echo": "200",
+          "admin": "403"
+        },
+        {
+          "t": 57.0,
+          "echo": "200",
+          "admin": "403"
+        }
+      ]
+    },
+    {
+      "mode": "ambient-l7",
+      "action": "DENY",
+      "attach": "selector",
+      "rule": "paths /admin*",
+      "apply_warning": "Warning: configured AuthorizationPolicy will deny all traffic to TCP ports under its scope due to the use of only HTTP attributes in a DENY rule; it is recommended to explicitly specify the port",
+      "before": {
+        "echo": "200",
+        "admin": "200",
+        "admin_via_pod_ip": "200"
+      },
+      "steady_after_60s": {
+        "echo": "200",
+        "admin": "200",
+        "admin_via_pod_ip": "200"
+      },
+      "after_delete": {
+        "echo": "200",
+        "admin": "200",
+        "admin_via_pod_ip": "200"
+      },
+      "admin_denied_stable_after_s": null,
+      "echo_denied_stable_after_s": null,
+      "admin_codes_seen": [
+        "200"
+      ],
+      "echo_codes_seen": [
+        "200"
+      ],
+      "ztunnel_view": {
+        "name": "lab-admin",
+        "namespace": "ambient-l7",
+        "scope": "WorkloadSelector",
+        "action": "Deny",
+        "rules": [
+          [
+            [
+              {}
+            ]
+          ]
+        ]
+      },
+      "timeline": [
+        {
+          "t": 0.0,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 3.3,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 6.5,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 9.7,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 12.9,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 16.1,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 19.4,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 22.5,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 25.7,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 28.9,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 32.0,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 35.3,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 38.4,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 41.7,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 44.9,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 48.0,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 51.2,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 54.3,
+          "echo": "200",
+          "admin": "200"
+        },
+        {
+          "t": 57.5,
+          "echo": "200",
+          "admin": "200"
+        }
+      ]
+    }
+  ]
+}
