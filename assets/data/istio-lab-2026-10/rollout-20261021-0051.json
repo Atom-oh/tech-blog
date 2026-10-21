@@ -1,0 +1,341 @@
+{
+  "generated": "2026-10-21T00:51:03+00:00",
+  "env": {
+    "kubernetes": "v1.36.4-eks-b9510e3",
+    "istiod_image": "docker.io/istio/pilot:1.31.2-distroless",
+    "nodes": [
+      {
+        "name": "ip-10-0-2-150.ap-northeast-2.compute.internal",
+        "role": "server",
+        "type": "m7g.xlarge",
+        "zone": "ap-northeast-2a",
+        "kernel": "6.18.54-121.166.amzn2023.aarch64"
+      },
+      {
+        "name": "ip-10-0-2-160.ap-northeast-2.compute.internal",
+        "role": "server",
+        "type": "m7g.xlarge",
+        "zone": "ap-northeast-2a",
+        "kernel": "6.18.54-121.166.amzn2023.aarch64"
+      },
+      {
+        "name": "ip-10-0-2-65.ap-northeast-2.compute.internal",
+        "role": "client",
+        "type": "m7g.xlarge",
+        "zone": "ap-northeast-2a",
+        "kernel": "6.18.54-121.166.amzn2023.aarch64"
+      }
+    ]
+  },
+  "test": "rollout",
+  "params": {
+    "qps": 200,
+    "connections": 16,
+    "restarts": 3,
+    "strategy": "RollingUpdate 25%/25% (default)",
+    "replicas": 3
+  },
+  "runs": [
+    {
+      "variant": "default",
+      "mode": "base",
+      "restarts": 3,
+      "load_seconds": 150,
+      "restart_done_at_s": [
+        19.1,
+        28.2,
+        37.2
+      ],
+      "restarts_inside_load_window": true,
+      "requested_qps": "200",
+      "actual_qps": 200.0,
+      "connections": 16,
+      "count": 30000,
+      "codes": {
+        "-1": 33,
+        "200": 29967
+      },
+      "avg_ms": 1.207,
+      "min_ms": 0.067,
+      "max_ms": 3002.083,
+      "p50": 0.535,
+      "p75": 0.769,
+      "p90": 0.91,
+      "p99": 0.994,
+      "p99.9": 1.779,
+      "errors": 33,
+      "sockets": 115,
+      "client_side_proxy_counters": null,
+      "fortio_error_lines": [
+        "Error cases : count N avg N.N +/- N.N min N.N max N.N sum N.N"
+      ]
+    },
+    {
+      "variant": "default",
+      "mode": "sidecar",
+      "restarts": 3,
+      "load_seconds": 150,
+      "restart_done_at_s": [
+        24.6,
+        39.7,
+        54.7
+      ],
+      "restarts_inside_load_window": true,
+      "requested_qps": "200",
+      "actual_qps": 200.0,
+      "connections": 16,
+      "count": 30000,
+      "codes": {
+        "200": 29963,
+        "503": 37
+      },
+      "avg_ms": 2.425,
+      "min_ms": 0.901,
+      "max_ms": 59.334,
+      "p50": 2.395,
+      "p75": 2.708,
+      "p90": 2.896,
+      "p99": 3.956,
+      "p99.9": 31.389,
+      "errors": 37,
+      "sockets": 53,
+      "client_side_proxy_counters": {
+        "upstream_cx_connect_fail": 59,
+        "upstream_rq_503": 37,
+        "upstream_rq_5xx": 37,
+        "upstream_rq_retry": 60,
+        "upstream_rq_retry_limit_exceeded": 0,
+        "upstream_rq_retry_success": 60
+      },
+      "fortio_error_lines": [
+        "Error cases : count N avg N.N +/- N.N min N.N max N.N sum N.N"
+      ]
+    },
+    {
+      "variant": "default",
+      "mode": "ambient-l4",
+      "restarts": 3,
+      "load_seconds": 150,
+      "restart_done_at_s": [
+        18.8,
+        27.8,
+        51.0
+      ],
+      "restarts_inside_load_window": true,
+      "requested_qps": "200",
+      "actual_qps": 200.0,
+      "connections": 16,
+      "count": 30000,
+      "codes": {
+        "-1": 24,
+        "200": 29976
+      },
+      "avg_ms": 0.915,
+      "min_ms": 0.144,
+      "max_ms": 3000.803,
+      "p50": 0.604,
+      "p75": 0.833,
+      "p90": 0.971,
+      "p99": 1.903,
+      "p99.9": 3.353,
+      "errors": 24,
+      "sockets": 104,
+      "client_side_proxy_counters": null,
+      "fortio_error_lines": [
+        "Error cases : count N avg N.N +/- N.N min N.N max N.N sum N.N",
+        "{\"ts\":N.N,\"level\":\"err\",\"r\":N,\"file\":\"http_client.go\",\"line\":N,\"msg\":\"Read error\",\"err\":\"read tcp N.N.N.N:N->N.N.N.N:N: read: connection reset by peer\",\"size\":N",
+        "{\"ts\":N.N,\"level\":\"err\",\"r\":N,\"file\":\"http_client.go\",\"line\":N,\"msg\":\"Timeout error (incomplete/invalid response)\",\"err\":\"read tcp N.N.N.N:N->N.N.N.N:N: i/o tim"
+      ]
+    },
+    {
+      "variant": "default",
+      "mode": "ambient-l7",
+      "restarts": 3,
+      "load_seconds": 150,
+      "restart_done_at_s": [
+        19.0,
+        28.1,
+        37.1
+      ],
+      "restarts_inside_load_window": true,
+      "requested_qps": "200",
+      "actual_qps": 200.0,
+      "connections": 16,
+      "count": 30000,
+      "codes": {
+        "-1": 3,
+        "200": 29921,
+        "503": 76
+      },
+      "avg_ms": 4.096,
+      "min_ms": 0.709,
+      "max_ms": 3006.894,
+      "p50": 2.615,
+      "p75": 2.932,
+      "p90": 3.517,
+      "p99": 3.999,
+      "p99.9": 15.6,
+      "errors": 79,
+      "sockets": 104,
+      "client_side_proxy_counters": {
+        "upstream_cx_connect_fail": 0,
+        "upstream_rq_503": 76,
+        "upstream_rq_5xx": 76,
+        "upstream_rq_retry": 0,
+        "upstream_rq_retry_limit_exceeded": 0,
+        "upstream_rq_retry_success": 0
+      },
+      "fortio_error_lines": [
+        "Error cases : count N avg N.N +/- N.N min N.N max N.N sum N.N",
+        "{\"ts\":N.N,\"level\":\"err\",\"r\":N,\"file\":\"http_client.go\",\"line\":N,\"msg\":\"Timeout error (incomplete/invalid response)\",\"err\":\"read tcp N.N.N.N:N->N.N.N.N:N: i/o tim"
+      ]
+    },
+    {
+      "variant": "prestop-sleep-10s",
+      "mode": "base",
+      "restarts": 3,
+      "load_seconds": 150,
+      "restart_done_at_s": [
+        18.6,
+        27.6,
+        36.4
+      ],
+      "restarts_inside_load_window": true,
+      "requested_qps": "200",
+      "actual_qps": 200.0,
+      "connections": 16,
+      "count": 30000,
+      "codes": {
+        "200": 30000
+      },
+      "avg_ms": 0.304,
+      "min_ms": 0.089,
+      "max_ms": 2.457,
+      "p50": 0.545,
+      "p75": 0.773,
+      "p90": 0.91,
+      "p99": 0.992,
+      "p99.9": 1.219,
+      "errors": 0,
+      "sockets": 48,
+      "client_side_proxy_counters": null,
+      "fortio_error_lines": [
+        "Error cases : count N avg N +/- N min N max N sum N"
+      ]
+    },
+    {
+      "variant": "prestop-sleep-10s",
+      "mode": "sidecar",
+      "restarts": 3,
+      "load_seconds": 150,
+      "restart_done_at_s": [
+        24.8,
+        38.9,
+        54.9
+      ],
+      "restarts_inside_load_window": true,
+      "requested_qps": "200",
+      "actual_qps": 200.0,
+      "connections": 16,
+      "count": 30000,
+      "codes": {
+        "200": 30000
+      },
+      "avg_ms": 2.379,
+      "min_ms": 1.004,
+      "max_ms": 60.281,
+      "p50": 2.398,
+      "p75": 2.707,
+      "p90": 2.892,
+      "p99": 3.385,
+      "p99.9": 16.0,
+      "errors": 0,
+      "sockets": 16,
+      "client_side_proxy_counters": {
+        "upstream_cx_connect_fail": 0,
+        "upstream_rq_503": 0,
+        "upstream_rq_5xx": 0,
+        "upstream_rq_retry": 0,
+        "upstream_rq_retry_limit_exceeded": 0,
+        "upstream_rq_retry_success": 0
+      },
+      "fortio_error_lines": [
+        "Error cases : count N avg N +/- N min N max N sum N"
+      ]
+    },
+    {
+      "variant": "prestop-sleep-10s",
+      "mode": "ambient-l4",
+      "restarts": 3,
+      "load_seconds": 150,
+      "restart_done_at_s": [
+        19.0,
+        28.1,
+        37.1
+      ],
+      "restarts_inside_load_window": true,
+      "requested_qps": "200",
+      "actual_qps": 200.0,
+      "connections": 16,
+      "count": 30000,
+      "codes": {
+        "200": 30000
+      },
+      "avg_ms": 0.774,
+      "min_ms": 0.254,
+      "max_ms": 3.866,
+      "p50": 0.639,
+      "p75": 0.831,
+      "p90": 0.947,
+      "p99": 1.734,
+      "p99.9": 2.755,
+      "errors": 0,
+      "sockets": 48,
+      "client_side_proxy_counters": null,
+      "fortio_error_lines": [
+        "Error cases : count N avg N +/- N min N max N sum N"
+      ]
+    },
+    {
+      "variant": "prestop-sleep-10s",
+      "mode": "ambient-l7",
+      "restarts": 3,
+      "load_seconds": 150,
+      "restart_done_at_s": [
+        18.2,
+        27.3,
+        36.3
+      ],
+      "restarts_inside_load_window": true,
+      "requested_qps": "200",
+      "actual_qps": 200.0,
+      "connections": 16,
+      "count": 30000,
+      "codes": {
+        "200": 29973,
+        "503": 27
+      },
+      "avg_ms": 2.781,
+      "min_ms": 1.507,
+      "max_ms": 28.272,
+      "p50": 2.539,
+      "p75": 2.809,
+      "p90": 2.971,
+      "p99": 3.992,
+      "p99.9": 15.647,
+      "errors": 27,
+      "sockets": 43,
+      "client_side_proxy_counters": {
+        "upstream_cx_connect_fail": 19,
+        "upstream_rq_503": 27,
+        "upstream_rq_5xx": 27,
+        "upstream_rq_retry": 19,
+        "upstream_rq_retry_limit_exceeded": 0,
+        "upstream_rq_retry_success": 19
+      },
+      "fortio_error_lines": [
+        "Error cases : count N avg N.N +/- N.N min N.N max N.N sum N.N"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,760 @@
+{
+  "generated": "2026-10-21T01:21:19+00:00",
+  "env": {
+    "kubernetes": "v1.36.4-eks-b9510e3",
+    "istiod_image": "docker.io/istio/pilot:1.31.2-distroless",
+    "nodes": [
+      {
+        "name": "ip-10-0-2-150.ap-northeast-2.compute.internal",
+        "role": "server",
+        "type": "m7g.xlarge",
+        "zone": "ap-northeast-2a",
+        "kernel": "6.18.54-121.166.amzn2023.aarch64"
+      },
+      {
+        "name": "ip-10-0-2-160.ap-northeast-2.compute.internal",
+        "role": "server",
+        "type": "m7g.xlarge",
+        "zone": "ap-northeast-2a",
+        "kernel": "6.18.54-121.166.amzn2023.aarch64"
+      },
+      {
+        "name": "ip-10-0-2-65.ap-northeast-2.compute.internal",
+        "role": "client",
+        "type": "m7g.xlarge",
+        "zone": "ap-northeast-2a",
+        "kernel": "6.18.54-121.166.amzn2023.aarch64"
+      }
+    ]
+  },
+  "test": "latency",
+  "params": {
+    "connections": 16,
+    "seconds": 60,
+    "url": "http://echo:8080/echo",
+    "percentiles": "50,75,90,99,99.9",
+    "histogram_resolution_s": "0.0001"
+  },
+  "runs": [
+    {
+      "round": 1,
+      "mode": "base",
+      "qps": 200,
+      "requested_qps": "200",
+      "actual_qps": 200.0,
+      "connections": 16,
+      "count": 12000,
+      "codes": {
+        "200": 12000
+      },
+      "avg_ms": 0.294,
+      "min_ms": 0.124,
+      "max_ms": 1.247,
+      "p50": 0.283,
+      "p75": 0.341,
+      "p90": 0.382,
+      "p99": 0.494,
+      "p99.9": 0.889,
+      "errors": 0,
+      "sockets": 21,
+      "cpu": {
+        "sidecars_cores": 0.0,
+        "ztunnel_cores": 0.001,
+        "waypoint_cores": 0.0,
+        "app_cores": 0.026
+      },
+      "cpu_window_s": 62.8,
+      "warmup_errors": 0
+    },
+    {
+      "round": 1,
+      "mode": "sidecar",
+      "qps": 200,
+      "requested_qps": "200",
+      "actual_qps": 200.0,
+      "connections": 16,
+      "count": 12000,
+      "codes": {
+        "200": 12000
+      },
+      "avg_ms": 2.422,
+      "min_ms": 0.907,
+      "max_ms": 4.951,
+      "p50": 2.595,
+      "p75": 2.81,
+      "p90": 2.939,
+      "p99": 3.343,
+      "p99.9": 3.583,
+      "errors": 0,
+      "sockets": 16,
+      "cpu": {
+        "sidecars_cores": 0.096,
+        "ztunnel_cores": 0.001,
+        "waypoint_cores": 0.0,
+        "app_cores": 0.03
+      },
+      "cpu_window_s": 63.0,
+      "warmup_errors": 0
+    },
+    {
+      "round": 1,
+      "mode": "ambient-l4",
+      "qps": 200,
+      "requested_qps": "200",
+      "actual_qps": 200.0,
+      "connections": 16,
+      "count": 12000,
+      "codes": {
+        "200": 12000
+      },
+      "avg_ms": 0.721,
+      "min_ms": 0.292,
+      "max_ms": 2.52,
+      "p50": 0.72,
+      "p75": 0.781,
+      "p90": 0.85,
+      "p99": 0.988,
+      "p99.9": 2.261,
+      "errors": 0,
+      "sockets": 16,
+      "cpu": {
+        "sidecars_cores": 0.0,
+        "ztunnel_cores": 0.024,
+        "waypoint_cores": 0.0,
+        "app_cores": 0.026
+      },
+      "cpu_window_s": 63.0,
+      "warmup_errors": 0
+    },
+    {
+      "round": 1,
+      "mode": "ambient-l7",
+      "qps": 200,
+      "requested_qps": "200",
+      "actual_qps": 200.0,
+      "connections": 16,
+      "count": 12000,
+      "codes": {
+        "200": 12000
+      },
+      "avg_ms": 2.668,
+      "min_ms": 1.415,
+      "max_ms": 4.432,
+      "p50": 2.712,
+      "p75": 2.863,
+      "p90": 2.953,
+      "p99": 3.338,
+      "p99.9": 4.108,
+      "errors": 0,
+      "sockets": 16,
+      "cpu": {
+        "sidecars_cores": 0.0,
+        "ztunnel_cores": 0.019,
+        "waypoint_cores": 0.028,
+        "app_cores": 0.027
+      },
+      "cpu_window_s": 62.8,
+      "warmup_errors": 0
+    },
+    {
+      "round": 1,
+      "mode": "base",
+      "qps": 1000,
+      "requested_qps": "1000",
+      "actual_qps": 1000.0,
+      "connections": 16,
+      "count": 60000,
+      "codes": {
+        "200": 60000
+      },
+      "avg_ms": 0.236,
+      "min_ms": 0.083,
+      "max_ms": 1.91,
+      "p50": 0.237,
+      "p75": 0.277,
+      "p90": 0.311,
+      "p99": 0.4,
+      "p99.9": 0.595,
+      "errors": 0,
+      "sockets": 16,
+      "cpu": {
+        "sidecars_cores": 0.0,
+        "ztunnel_cores": 0.001,
+        "waypoint_cores": 0.0,
+        "app_cores": 0.103
+      },
+      "cpu_window_s": 63.2,
+      "warmup_errors": 0
+    },
+    {
+      "round": 1,
+      "mode": "sidecar",
+      "qps": 1000,
+      "requested_qps": "1000",
+      "actual_qps": 999.9,
+      "connections": 16,
+      "count": 60000,
+      "codes": {
+        "200": 60000
+      },
+      "avg_ms": 2.2,
+      "min_ms": 0.621,
+      "max_ms": 9.136,
+      "p50": 2.203,
+      "p75": 2.494,
+      "p90": 2.806,
+      "p99": 2.996,
+      "p99.9": 7.143,
+      "errors": 0,
+      "sockets": 16,
+      "cpu": {
+        "sidecars_cores": 0.425,
+        "ztunnel_cores": 0.001,
+        "waypoint_cores": 0.0,
+        "app_cores": 0.133
+      },
+      "cpu_window_s": 62.8,
+      "warmup_errors": 0
+    },
+    {
+      "round": 1,
+      "mode": "ambient-l4",
+      "qps": 1000,
+      "requested_qps": "1000",
+      "actual_qps": 1000.0,
+      "connections": 16,
+      "count": 60000,
+      "codes": {
+        "200": 60000
+      },
+      "avg_ms": 0.568,
+      "min_ms": 0.207,
+      "max_ms": 3.701,
+      "p50": 0.561,
+      "p75": 0.643,
+      "p90": 0.699,
+      "p99": 0.866,
+      "p99.9": 1.35,
+      "errors": 0,
+      "sockets": 16,
+      "cpu": {
+        "sidecars_cores": 0.0,
+        "ztunnel_cores": 0.091,
+        "waypoint_cores": 0.0,
+        "app_cores": 0.11
+      },
+      "cpu_window_s": 62.8,
+      "warmup_errors": 0
+    },
+    {
+      "round": 1,
+      "mode": "ambient-l7",
+      "qps": 1000,
+      "requested_qps": "1000",
+      "actual_qps": 999.9,
+      "connections": 16,
+      "count": 60000,
+      "codes": {
+        "200": 60000
+      },
+      "avg_ms": 2.445,
+      "min_ms": 1.117,
+      "max_ms": 6.802,
+      "p50": 2.423,
+      "p75": 2.702,
+      "p90": 2.885,
+      "p99": 2.994,
+      "p99.9": 4.143,
+      "errors": 0,
+      "sockets": 16,
+      "cpu": {
+        "sidecars_cores": 0.0,
+        "ztunnel_cores": 0.088,
+        "waypoint_cores": 0.144,
+        "app_cores": 0.12
+      },
+      "cpu_window_s": 62.9,
+      "warmup_errors": 0
+    },
+    {
+      "round": 2,
+      "mode": "sidecar",
+      "qps": 200,
+      "requested_qps": "200",
+      "actual_qps": 200.0,
+      "connections": 16,
+      "count": 12000,
+      "codes": {
+        "200": 12000
+      },
+      "avg_ms": 2.269,
+      "min_ms": 0.847,
+      "max_ms": 3.864,
+      "p50": 2.237,
+      "p75": 2.402,
+      "p90": 2.506,
+      "p99": 2.961,
+      "p99.9": 3.395,
+      "errors": 0,
+      "sockets": 16,
+      "cpu": {
+        "sidecars_cores": 0.106,
+        "ztunnel_cores": 0.003,
+        "waypoint_cores": 0.0,
+        "app_cores": 0.029
+      },
+      "cpu_window_s": 62.7,
+      "warmup_errors": 0
+    },
+    {
+      "round": 2,
+      "mode": "ambient-l4",
+      "qps": 200,
+      "requested_qps": "200",
+      "actual_qps": 200.0,
+      "connections": 16,
+      "count": 12000,
+      "codes": {
+        "200": 12000
+      },
+      "avg_ms": 0.757,
+      "min_ms": 0.332,
+      "max_ms": 2.518,
+      "p50": 0.751,
+      "p75": 0.816,
+      "p90": 0.878,
+      "p99": 1.156,
+      "p99.9": 1.725,
+      "errors": 0,
+      "sockets": 16,
+      "cpu": {
+        "sidecars_cores": 0.0,
+        "ztunnel_cores": 0.024,
+        "waypoint_cores": 0.0,
+        "app_cores": 0.028
+      },
+      "cpu_window_s": 62.7,
+      "warmup_errors": 0
+    },
+    {
+      "round": 2,
+      "mode": "ambient-l7",
+      "qps": 200,
+      "requested_qps": "200",
+      "actual_qps": 200.0,
+      "connections": 16,
+      "count": 12000,
+      "codes": {
+        "200": 12000
+      },
+      "avg_ms": 2.803,
+      "min_ms": 1.332,
+      "max_ms": 3.61,
+      "p50": 2.749,
+      "p75": 2.912,
+      "p90": 3.063,
+      "p99": 3.459,
+      "p99.9": 3.499,
+      "errors": 0,
+      "sockets": 16,
+      "cpu": {
+        "sidecars_cores": 0.0,
+        "ztunnel_cores": 0.02,
+        "waypoint_cores": 0.027,
+        "app_cores": 0.029
+      },
+      "cpu_window_s": 62.8,
+      "warmup_errors": 0
+    },
+    {
+      "round": 2,
+      "mode": "base",
+      "qps": 200,
+      "requested_qps": "200",
+      "actual_qps": 200.0,
+      "connections": 16,
+      "count": 12000,
+      "codes": {
+        "200": 12000
+      },
+      "avg_ms": 0.298,
+      "min_ms": 0.129,
+      "max_ms": 1.705,
+      "p50": 0.29,
+      "p75": 0.347,
+      "p90": 0.383,
+      "p99": 0.472,
+      "p99.9": 0.767,
+      "errors": 0,
+      "sockets": 16,
+      "cpu": {
+        "sidecars_cores": 0.0,
+        "ztunnel_cores": 0.001,
+        "waypoint_cores": 0.0,
+        "app_cores": 0.028
+      },
+      "cpu_window_s": 62.8,
+      "warmup_errors": 0
+    },
+    {
+      "round": 2,
+      "mode": "sidecar",
+      "qps": 1000,
+      "requested_qps": "1000",
+      "actual_qps": 999.9,
+      "connections": 16,
+      "count": 60000,
+      "codes": {
+        "200": 60000
+      },
+      "avg_ms": 2.076,
+      "min_ms": 0.722,
+      "max_ms": 4.645,
+      "p50": 2.096,
+      "p75": 2.331,
+      "p90": 2.472,
+      "p99": 2.945,
+      "p99.9": 3.406,
+      "errors": 0,
+      "sockets": 16,
+      "cpu": {
+        "sidecars_cores": 0.366,
+        "ztunnel_cores": 0.002,
+        "waypoint_cores": 0.0,
+        "app_cores": 0.119
+      },
+      "cpu_window_s": 62.8,
+      "warmup_errors": 0
+    },
+    {
+      "round": 2,
+      "mode": "ambient-l4",
+      "qps": 1000,
+      "requested_qps": "1000",
+      "actual_qps": 1000.0,
+      "connections": 16,
+      "count": 60000,
+      "codes": {
+        "200": 60000
+      },
+      "avg_ms": 0.571,
+      "min_ms": 0.229,
+      "max_ms": 3.139,
+      "p50": 0.562,
+      "p75": 0.648,
+      "p90": 0.717,
+      "p99": 0.937,
+      "p99.9": 1.68,
+      "errors": 0,
+      "sockets": 16,
+      "cpu": {
+        "sidecars_cores": 0.0,
+        "ztunnel_cores": 0.089,
+        "waypoint_cores": 0.0,
+        "app_cores": 0.11
+      },
+      "cpu_window_s": 62.8,
+      "warmup_errors": 0
+    },
+    {
+      "round": 2,
+      "mode": "ambient-l7",
+      "qps": 1000,
+      "requested_qps": "1000",
+      "actual_qps": 999.9,
+      "connections": 16,
+      "count": 60000,
+      "codes": {
+        "200": 60000
+      },
+      "avg_ms": 2.323,
+      "min_ms": 1.105,
+      "max_ms": 17.916,
+      "p50": 2.259,
+      "p75": 2.412,
+      "p90": 2.529,
+      "p99": 3.284,
+      "p99.9": 12.269,
+      "errors": 0,
+      "sockets": 16,
+      "cpu": {
+        "sidecars_cores": 0.0,
+        "ztunnel_cores": 0.087,
+        "waypoint_cores": 0.1,
+        "app_cores": 0.106
+      },
+      "cpu_window_s": 62.8,
+      "warmup_errors": 0
+    },
+    {
+      "round": 2,
+      "mode": "base",
+      "qps": 1000,
+      "requested_qps": "1000",
+      "actual_qps": 1000.0,
+      "connections": 16,
+      "count": 60000,
+      "codes": {
+        "200": 60000
+      },
+      "avg_ms": 0.212,
+      "min_ms": 0.079,
+      "max_ms": 3.307,
+      "p50": 0.21,
+      "p75": 0.259,
+      "p90": 0.288,
+      "p99": 0.387,
+      "p99.9": 0.587,
+      "errors": 0,
+      "sockets": 16,
+      "cpu": {
+        "sidecars_cores": 0.0,
+        "ztunnel_cores": 0.002,
+        "waypoint_cores": 0.0,
+        "app_cores": 0.092
+      },
+      "cpu_window_s": 63.0,
+      "warmup_errors": 0
+    },
+    {
+      "round": 3,
+      "mode": "ambient-l4",
+      "qps": 200,
+      "requested_qps": "200",
+      "actual_qps": 200.0,
+      "connections": 16,
+      "count": 12000,
+      "codes": {
+        "200": 12000
+      },
+      "avg_ms": 0.782,
+      "min_ms": 0.237,
+      "max_ms": 2.171,
+      "p50": 0.778,
+      "p75": 0.865,
+      "p90": 0.944,
+      "p99": 1.123,
+      "p99.9": 1.714,
+      "errors": 0,
+      "sockets": 16,
+      "cpu": {
+        "sidecars_cores": 0.0,
+        "ztunnel_cores": 0.022,
+        "waypoint_cores": 0.0,
+        "app_cores": 0.026
+      },
+      "cpu_window_s": 62.7,
+      "warmup_errors": 0
+    },
+    {
+      "round": 3,
+      "mode": "ambient-l7",
+      "qps": 200,
+      "requested_qps": "200",
+      "actual_qps": 200.0,
+      "connections": 16,
+      "count": 12000,
+      "codes": {
+        "200": 12000
+      },
+      "avg_ms": 2.873,
+      "min_ms": 1.651,
+      "max_ms": 4.116,
+      "p50": 2.804,
+      "p75": 2.981,
+      "p90": 3.282,
+      "p99": 3.487,
+      "p99.9": 3.888,
+      "errors": 0,
+      "sockets": 16,
+      "cpu": {
+        "sidecars_cores": 0.0,
+        "ztunnel_cores": 0.021,
+        "waypoint_cores": 0.029,
+        "app_cores": 0.028
+      },
+      "cpu_window_s": 62.7,
+      "warmup_errors": 0
+    },
+    {
+      "round": 3,
+      "mode": "base",
+      "qps": 200,
+      "requested_qps": "200",
+      "actual_qps": 200.0,
+      "connections": 16,
+      "count": 12000,
+      "codes": {
+        "200": 12000
+      },
+      "avg_ms": 0.302,
+      "min_ms": 0.108,
+      "max_ms": 2.302,
+      "p50": 0.292,
+      "p75": 0.35,
+      "p90": 0.385,
+      "p99": 0.492,
+      "p99.9": 0.88,
+      "errors": 0,
+      "sockets": 16,
+      "cpu": {
+        "sidecars_cores": 0.0,
+        "ztunnel_cores": 0.002,
+        "waypoint_cores": 0.0,
+        "app_cores": 0.027
+      },
+      "cpu_window_s": 62.8,
+      "warmup_errors": 0
+    },
+    {
+      "round": 3,
+      "mode": "sidecar",
+      "qps": 200,
+      "requested_qps": "200",
+      "actual_qps": 200.0,
+      "connections": 16,
+      "count": 12000,
+      "codes": {
+        "200": 12000
+      },
+      "avg_ms": 2.311,
+      "min_ms": 0.921,
+      "max_ms": 4.621,
+      "p50": 2.271,
+      "p75": 2.457,
+      "p90": 2.744,
+      "p99": 2.983,
+      "p99.9": 3.75,
+      "errors": 0,
+      "sockets": 16,
+      "cpu": {
+        "sidecars_cores": 0.1,
+        "ztunnel_cores": 0.001,
+        "waypoint_cores": 0.0,
+        "app_cores": 0.03
+      },
+      "cpu_window_s": 62.8,
+      "warmup_errors": 0
+    },
+    {
+      "round": 3,
+      "mode": "ambient-l4",
+      "qps": 1000,
+      "requested_qps": "1000",
+      "actual_qps": 1000.0,
+      "connections": 16,
+      "count": 60000,
+      "codes": {
+        "200": 60000
+      },
+      "avg_ms": 0.58,
+      "min_ms": 0.213,
+      "max_ms": 4.208,
+      "p50": 0.572,
+      "p75": 0.656,
+      "p90": 0.729,
+      "p99": 0.925,
+      "p99.9": 2.0,
+      "errors": 0,
+      "sockets": 16,
+      "cpu": {
+        "sidecars_cores": 0.0,
+        "ztunnel_cores": 0.098,
+        "waypoint_cores": 0.0,
+        "app_cores": 0.105
+      },
+      "cpu_window_s": 62.8,
+      "warmup_errors": 0
+    },
+    {
+      "round": 3,
+      "mode": "ambient-l7",
+      "qps": 1000,
+      "requested_qps": "1000",
+      "actual_qps": 1000.0,
+      "connections": 16,
+      "count": 60000,
+      "codes": {
+        "200": 60000
+      },
+      "avg_ms": 2.351,
+      "min_ms": 1.098,
+      "max_ms": 4.437,
+      "p50": 2.298,
+      "p75": 2.463,
+      "p90": 2.746,
+      "p99": 2.983,
+      "p99.9": 3.758,
+      "errors": 0,
+      "sockets": 16,
+      "cpu": {
+        "sidecars_cores": 0.0,
+        "ztunnel_cores": 0.072,
+        "waypoint_cores": 0.109,
+        "app_cores": 0.112
+      },
+      "cpu_window_s": 62.8,
+      "warmup_errors": 0
+    },
+    {
+      "round": 3,
+      "mode": "base",
+      "qps": 1000,
+      "requested_qps": "1000",
+      "actual_qps": 1000.0,
+      "connections": 16,
+      "count": 60000,
+      "codes": {
+        "200": 60000
+      },
+      "avg_ms": 0.207,
+      "min_ms": 0.079,
+      "max_ms": 2.493,
+      "p50": 0.206,
+      "p75": 0.255,
+      "p90": 0.285,
+      "p99": 0.364,
+      "p99.9": 0.617,
+      "errors": 0,
+      "sockets": 16,
+      "cpu": {
+        "sidecars_cores": 0.0,
+        "ztunnel_cores": 0.001,
+        "waypoint_cores": 0.0,
+        "app_cores": 0.106
+      },
+      "cpu_window_s": 62.8,
+      "warmup_errors": 0
+    },
+    {
+      "round": 3,
+      "mode": "sidecar",
+      "qps": 1000,
+      "requested_qps": "1000",
+      "actual_qps": 1000.0,
+      "connections": 16,
+      "count": 60000,
+      "codes": {
+        "200": 60000
+      },
+      "avg_ms": 2.045,
+      "min_ms": 0.68,
+      "max_ms": 8.434,
+      "p50": 2.08,
+      "p75": 2.304,
+      "p90": 2.438,
+      "p99": 2.853,
+      "p99.9": 3.271,
+      "errors": 0,
+      "sockets": 16,
+      "cpu": {
+        "sidecars_cores": 0.354,
+        "ztunnel_cores": 0.001,
+        "waypoint_cores": 0.0,
+        "app_cores": 0.119
+      },
+      "cpu_window_s": 62.9,
+      "warmup_errors": 0
+    }
+  ]
+}

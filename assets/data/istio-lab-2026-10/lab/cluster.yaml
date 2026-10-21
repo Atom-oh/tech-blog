@@ -1,0 +1,42 @@
+# istio-lab: dedicated measurement cluster inside the existing demo VPC (an existing VPC). No new VPC.
+# All nodes in one subnet/AZ (2a) so latency is not mixed with cross-AZ hops. Nodes get no public IP.
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: istio-lab
+  region: ap-northeast-2
+  version: "1.36"
+  tags: {project: istio-lab, owner: atomoh}
+vpc:
+  id: <VPC_ID>
+  subnets:
+    private:
+      ap-northeast-2a: {id: <PRIVATE_SUBNET_A>}
+      ap-northeast-2b: {id: <PRIVATE_SUBNET_B>}
+  clusterEndpoints: {publicAccess: true, privateAccess: true}
+  # The workstation VPC has no route to fsi-demo-vpc, so the API endpoint is public but limited to its NAT egress IP.
+  publicAccessCIDRs: ["<YOUR_EGRESS_IP>/32"]
+addons:
+  - name: vpc-cni
+    configurationValues: '{"env":{"WARM_IP_TARGET":"4","MINIMUM_IP_TARGET":"8"}}'
+  - name: coredns
+  - name: kube-proxy
+managedNodeGroups:
+  - name: client
+    instanceType: m7g.xlarge
+    amiFamily: AmazonLinux2023
+    desiredCapacity: 1
+    minSize: 1
+    maxSize: 1
+    privateNetworking: true
+    subnets: [<PRIVATE_SUBNET_A>]
+    labels: {lab-role: client}
+  - name: server
+    instanceType: m7g.xlarge
+    amiFamily: AmazonLinux2023
+    desiredCapacity: 2
+    minSize: 2
+    maxSize: 2
+    privateNetworking: true
+    subnets: [<PRIVATE_SUBNET_A>]
+    labels: {lab-role: server}

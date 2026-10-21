@@ -1,0 +1,257 @@
+{
+  "generated": "2026-10-20T14:13:11+00:00",
+  "env": {
+    "kubernetes": "v1.36.4-eks-b9510e3",
+    "istiod_image": "docker.io/istio/pilot:1.31.2-distroless",
+    "nodes": [
+      {
+        "name": "ip-10-0-2-150.ap-northeast-2.compute.internal",
+        "role": "server",
+        "type": "m7g.xlarge",
+        "zone": "ap-northeast-2a",
+        "kernel": "6.18.54-121.166.amzn2023.aarch64"
+      },
+      {
+        "name": "ip-10-0-2-160.ap-northeast-2.compute.internal",
+        "role": "server",
+        "type": "m7g.xlarge",
+        "zone": "ap-northeast-2a",
+        "kernel": "6.18.54-121.166.amzn2023.aarch64"
+      },
+      {
+        "name": "ip-10-0-2-65.ap-northeast-2.compute.internal",
+        "role": "client",
+        "type": "m7g.xlarge",
+        "zone": "ap-northeast-2a",
+        "kernel": "6.18.54-121.166.amzn2023.aarch64"
+      }
+    ]
+  },
+  "test": "rollout",
+  "params": {
+    "qps": 200,
+    "connections": 16,
+    "restarts": 3,
+    "strategy": "RollingUpdate 25%/25% (default)",
+    "replicas": 3
+  },
+  "runs": [
+    {
+      "variant": "default",
+      "mode": "base",
+      "restarts": 3,
+      "requested_qps": "200",
+      "actual_qps": 200.0,
+      "connections": 16,
+      "count": 30000,
+      "codes": {
+        "-1": 24,
+        "200": 29976
+      },
+      "avg_ms": 0.695,
+      "min_ms": 0.068,
+      "max_ms": 3001.424,
+      "p50": 0.535,
+      "p75": 0.769,
+      "p90": 0.91,
+      "p99": 0.994,
+      "p99.9": 1.763,
+      "errors": 24,
+      "sockets": 121,
+      "client_side_proxy_counters": null,
+      "fortio_error_lines": [
+        "Error cases : count N avg N.N +/- N.N min N.N max N.N sum N.N"
+      ]
+    },
+    {
+      "variant": "default",
+      "mode": "sidecar",
+      "restarts": 3,
+      "requested_qps": "200",
+      "actual_qps": 200.0,
+      "connections": 16,
+      "count": 30000,
+      "codes": {
+        "200": 29970,
+        "503": 30
+      },
+      "avg_ms": 2.366,
+      "min_ms": 0.895,
+      "max_ms": 37.752,
+      "p50": 2.408,
+      "p75": 2.713,
+      "p90": 2.897,
+      "p99": 3.828,
+      "p99.9": 23.438,
+      "errors": 30,
+      "sockets": 46,
+      "client_side_proxy_counters": {},
+      "fortio_error_lines": [
+        "Error cases : count N avg N.N +/- N.N min N.N max N.N sum N.N"
+      ]
+    },
+    {
+      "variant": "default",
+      "mode": "ambient-l4",
+      "restarts": 3,
+      "requested_qps": "200",
+      "actual_qps": 200.0,
+      "connections": 16,
+      "count": 30000,
+      "codes": {
+        "-1": 23,
+        "200": 29977
+      },
+      "avg_ms": 1.51,
+      "min_ms": 0.129,
+      "max_ms": 3001.909,
+      "p50": 0.571,
+      "p75": 0.792,
+      "p90": 0.925,
+      "p99": 1.378,
+      "p99.9": 2.939,
+      "errors": 23,
+      "sockets": 100,
+      "client_side_proxy_counters": null,
+      "fortio_error_lines": [
+        "Error cases : count N avg N.N +/- N.N min N.N max N.N sum N.N",
+        "{\"ts\":N.N,\"level\":\"err\",\"r\":N,\"file\":\"http_client.go\",\"line\":N,\"msg\":\"Read error\",\"err\":\"read tcp N.N.N.N:N->N.N.N.N:N: read: connection reset by peer\",\"size\":N",
+        "{\"ts\":N.N,\"level\":\"err\",\"r\":N,\"file\":\"http_client.go\",\"line\":N,\"msg\":\"Timeout error (incomplete/invalid response)\",\"err\":\"read tcp N.N.N.N:N->N.N.N.N:N: i/o tim"
+      ]
+    },
+    {
+      "variant": "default",
+      "mode": "ambient-l7",
+      "restarts": 3,
+      "requested_qps": "200",
+      "actual_qps": 200.0,
+      "connections": 16,
+      "count": 30000,
+      "codes": {
+        "-1": 5,
+        "200": 29911,
+        "503": 84
+      },
+      "avg_ms": 4.993,
+      "min_ms": 0.567,
+      "max_ms": 3005.876,
+      "p50": 2.529,
+      "p75": 2.813,
+      "p90": 2.983,
+      "p99": 3.978,
+      "p99.9": 43.75,
+      "errors": 89,
+      "sockets": 122,
+      "client_side_proxy_counters": {},
+      "fortio_error_lines": [
+        "Error cases : count N avg N.N +/- N.N min N.N max N.N sum N.N",
+        "{\"ts\":N.N,\"level\":\"err\",\"r\":N,\"file\":\"http_client.go\",\"line\":N,\"msg\":\"Timeout error (incomplete/invalid response)\",\"err\":\"read tcp N.N.N.N:N->N.N.N.N:N: i/o tim"
+      ]
+    },
+    {
+      "variant": "prestop-sleep-10s",
+      "mode": "base",
+      "restarts": 3,
+      "requested_qps": "200",
+      "actual_qps": 200.0,
+      "connections": 16,
+      "count": 30000,
+      "codes": {
+        "200": 30000
+      },
+      "avg_ms": 0.286,
+      "min_ms": 0.104,
+      "max_ms": 4.891,
+      "p50": 0.552,
+      "p75": 0.777,
+      "p90": 0.912,
+      "p99": 0.992,
+      "p99.9": 1.515,
+      "errors": 0,
+      "sockets": 48,
+      "client_side_proxy_counters": null,
+      "fortio_error_lines": [
+        "Error cases : count N avg N +/- N min N max N sum N"
+      ]
+    },
+    {
+      "variant": "prestop-sleep-10s",
+      "mode": "sidecar",
+      "restarts": 3,
+      "requested_qps": "200",
+      "actual_qps": 200.0,
+      "connections": 16,
+      "count": 30000,
+      "codes": {
+        "200": 30000
+      },
+      "avg_ms": 2.363,
+      "min_ms": 0.812,
+      "max_ms": 50.321,
+      "p50": 2.392,
+      "p75": 2.705,
+      "p90": 2.893,
+      "p99": 3.57,
+      "p99.9": 17.333,
+      "errors": 0,
+      "sockets": 16,
+      "client_side_proxy_counters": {},
+      "fortio_error_lines": [
+        "Error cases : count N avg N +/- N min N max N sum N"
+      ]
+    },
+    {
+      "variant": "prestop-sleep-10s",
+      "mode": "ambient-l4",
+      "restarts": 3,
+      "requested_qps": "200",
+      "actual_qps": 200.0,
+      "connections": 16,
+      "count": 30000,
+      "codes": {
+        "200": 30000
+      },
+      "avg_ms": 0.732,
+      "min_ms": 0.313,
+      "max_ms": 3.55,
+      "p50": 0.663,
+      "p75": 0.839,
+      "p90": 0.944,
+      "p99": 1.532,
+      "p99.9": 2.462,
+      "errors": 0,
+      "sockets": 48,
+      "client_side_proxy_counters": null,
+      "fortio_error_lines": [
+        "Error cases : count N avg N +/- N min N max N sum N"
+      ]
+    },
+    {
+      "variant": "prestop-sleep-10s",
+      "mode": "ambient-l7",
+      "restarts": 3,
+      "requested_qps": "200",
+      "actual_qps": 200.0,
+      "connections": 16,
+      "count": 30000,
+      "codes": {
+        "200": 29974,
+        "503": 26
+      },
+      "avg_ms": 2.991,
+      "min_ms": 1.893,
+      "max_ms": 20.711,
+      "p50": 2.753,
+      "p75": 3.261,
+      "p90": 3.718,
+      "p99": 3.991,
+      "p99.9": 18.25,
+      "errors": 26,
+      "sockets": 42,
+      "client_side_proxy_counters": {},
+      "fortio_error_lines": [
+        "Error cases : count N avg N.N +/- N.N min N.N max N.N sum N.N"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "generated": "2026-10-20T13:42:30+00:00",
+  "env": {
+    "kubernetes": "v1.36.4-eks-b9510e3",
+    "istiod_image": "docker.io/istio/pilot:1.31.2-distroless",
+    "nodes": [
+      {
+        "name": "ip-10-0-2-150.ap-northeast-2.compute.internal",
+        "role": "server",
+        "type": "m7g.xlarge",
+        "zone": "ap-northeast-2a",
+        "kernel": "6.18.54-121.166.amzn2023.aarch64"
+      },
+      {
+        "name": "ip-10-0-2-160.ap-northeast-2.compute.internal",
+        "role": "server",
+        "type": "m7g.xlarge",
+        "zone": "ap-northeast-2a",
+        "kernel": "6.18.54-121.166.amzn2023.aarch64"
+      },
+      {
+        "name": "ip-10-0-2-65.ap-northeast-2.compute.internal",
+        "role": "client",
+        "type": "m7g.xlarge",
+        "zone": "ap-northeast-2a",
+        "kernel": "6.18.54-121.166.amzn2023.aarch64"
+      }
+    ]
+  },
+  "test": "mtls",
+  "cases": [
+    {
+      "peer_authentication": "PERMISSIVE",
+      "target": "sidecar",
+      "from_non_mesh_pod": "200",
+      "from_mesh_client": "200"
+    },
+    {
+      "peer_authentication": "PERMISSIVE",
+      "target": "ambient-l4",
+      "from_non_mesh_pod": "200",
+      "from_mesh_client": "200"
+    },
+    {
+      "peer_authentication": "PERMISSIVE",
+      "target": "ambient-l7",
+      "from_non_mesh_pod": "200",
+      "from_mesh_client": "200"
+    },
+    {
+      "peer_authentication": "STRICT",
+      "target": "sidecar",
+      "from_non_mesh_pod": "reset",
+      "from_mesh_client": "200"
+    },
+    {
+      "peer_authentication": "STRICT",
+      "target": "ambient-l4",
+      "from_non_mesh_pod": "reset",
+      "from_mesh_client": "200"
+    },
+    {
+      "peer_authentication": "STRICT",
+      "target": "ambient-l7",
+      "from_non_mesh_pod": "reset",
+      "from_mesh_client": "200"
+    }
+  ],
+  "connection_security_policy": {
+    "sidecar": [
+      "mutual_tls",
+      "none"
+    ],
+    "ambient-l4": [
+      "mutual_tls",
+      "unknown"
+    ],
+    "ambient-l7": [
+      "mutual_tls",
+      "unknown"
+    ]
+  }
+}
