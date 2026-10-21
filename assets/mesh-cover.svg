@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="300" viewBox="0 0 480 300" fill="none">
+  <defs>
+    <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#cbbca6" opacity=".55"/></pattern>
+  </defs>
+  <rect width="480" height="300" fill="url(#dots)"/>
+  <g stroke="#b5a58f" stroke-width="1.4">
+    <path d="m240 45 116 67v84l-116 67-116-67v-84Z" stroke-dasharray="4 5"/>
+    <path d="m240 83 83 48v48l-83 48-83-48v-48Z"/>
+    <path d="m157 131 83 48 83-48M240 179v48M240 83v48m-83 48 83-48 83 48"/>
+  </g>
+  <g stroke="#ad532f" stroke-width="1.5" fill="#f8f1e6">
+    <path d="m240 100 40 23v46l-40 23-40-23v-46Z"/>
+    <path d="m200 123 40 23 40-23M240 146v46"/>
+  </g>
+  <path d="m240 100 40 23-40 23-40-23Z" fill="#d5784e"/>
+  <path d="m200 123 40 23v46l-40-23Z" fill="#edb48e"/>
+  <path d="m240 146 40-23v46l-40 23Z" fill="#d9966e"/>
+  <g fill="#faf5ec" stroke="#a18e73" stroke-width="1.5">
+    <circle cx="240" cy="45" r="8"/><circle cx="356" cy="112" r="8"/><circle cx="356" cy="196" r="8"/>
+    <circle cx="240" cy="263" r="8"/><circle cx="124" cy="196" r="8"/><circle cx="124" cy="112" r="8"/>
+  </g>
+  <g fill="#b65c37"><circle cx="240" cy="45" r="3"/><circle cx="356" cy="196" r="3"/><circle cx="124" cy="196" r="3"/></g>
+  <g fill="#ad9c82"><circle cx="240" cy="83" r="3"/><circle cx="323" cy="131" r="3"/><circle cx="323" cy="179" r="3"/><circle cx="240" cy="227" r="3"/><circle cx="157" cy="179" r="3"/><circle cx="157" cy="131" r="3"/></g>
+</svg>

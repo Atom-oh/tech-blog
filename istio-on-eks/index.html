@@ -15,18 +15,23 @@
   <link rel="alternate" type="application/rss+xml" title="Atom 기술 블로그" href="/feed.xml">
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/assets/style.css">
+  <meta name="theme-color" content="#faf9f6">
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-GWVLEW5JLL"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-GWVLEW5JLL');</script>
 </head>
-<body>
+<body class="article-page">
+<a class="skip-link" href="#main">본문으로 건너뛰기</a>
 <header class="site-header"><div class="inner">
-  <a class="brand" href="/">Atom 기술 블로그</a>
-  <nav class="site-nav"><a href="/">글 목록</a><a href="/tags/">태그</a><a href="/feed.xml">RSS</a></nav>
+  <a class="brand" href="/" aria-label="Atom 기술 블로그 홈">
+    <svg class="brand-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true"><circle cx="20" cy="20" r="3" fill="currentColor"/><ellipse cx="20" cy="20" rx="17" ry="7" stroke="currentColor" stroke-width="1.8" transform="rotate(-45 20 20)"/><ellipse cx="20" cy="20" rx="17" ry="7" stroke="currentColor" stroke-width="1.8" transform="rotate(45 20 20)"/></svg>
+    <span>atom<span class="brand-dot">.</span></span><span class="brand-caption">기술 블로그</span>
+  </a>
+  <nav class="site-nav" aria-label="주 메뉴"><a href="/">글 목록</a><a href="/tags/">태그</a><a class="rss-link" href="/feed.xml"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="5" cy="15" r="1.5" fill="currentColor"/><path d="M4 9a7 7 0 0 1 7 7M4 4a12 12 0 0 1 12 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>RSS</a></nav>
 </div></header>
-<main class="wrap">
+<main id="main" class="wrap">
 <article>
-<header class="post-head"><h1>Amazon EKS에서 Istio 제대로 쓰기: 도입 판단부터 sidecar와 ambient, 트래픽, 보안, 운영 함정까지</h1><div class="meta"><time datetime="2026-10-20">2026-10-20</time><ul class="tags"><li><a href="/tags/#istio">#istio</a></li><li><a href="/tags/#service-mesh">#service-mesh</a></li><li><a href="/tags/#eks">#eks</a></li></ul></div></header>
-<p class="lead">Istio 문서는 양이 많습니다. 설치, 트래픽 관리, 보안, 복원력, 관찰성, 고급 기능까지 장마다 수백 줄의 YAML이 이어지고, 처음 보는 사람은 어디부터 읽어야 할지 막막합니다. 이 글은 EKS 환경을 기준으로 정리해 둔 Istio 문서 세트를 한 편의 글로 다시 엮은 것입니다. 모든 장을 요약하지는 않고, 실제로 도입을 검토하고 운영할 때 판단이 갈리는 지점만 골랐습니다. 이 글은 개념과 설정을 설명하는 가이드이며 별도로 성능이나 비용을 측정한 결과는 담고 있지 않습니다. 성능과 비용은 각자의 워크로드에서 직접 확인해야 합니다.</p>
+<header class="post-head"><a class="back-link" href="/">← 모든 글</a><p class="eyebrow">ENGINEERING NOTES</p><h1>Amazon EKS에서 Istio 제대로 쓰기: 도입 판단부터 sidecar와 ambient, 트래픽, 보안, 운영 함정까지</h1><div class="post-author"><span class="author-avatar" aria-hidden="true">a.</span><span><strong>Atom</strong><time datetime="2026-10-20">2026.10.20</time></span></div><ul class="tags"><li><a href="/tags/#istio">#istio</a></li><li><a href="/tags/#service-mesh">#service-mesh</a></li><li><a href="/tags/#eks">#eks</a></li></ul></header>
+<div class="prose"><p class="lead">Istio 문서는 양이 많습니다. 설치, 트래픽 관리, 보안, 복원력, 관찰성, 고급 기능까지 장마다 수백 줄의 YAML이 이어지고, 처음 보는 사람은 어디부터 읽어야 할지 막막합니다. 이 글은 EKS 환경을 기준으로 정리해 둔 Istio 문서 세트를 한 편의 글로 다시 엮은 것입니다. 모든 장을 요약하지는 않고, 실제로 도입을 검토하고 운영할 때 판단이 갈리는 지점만 골랐습니다. 이 글은 개념과 설정을 설명하는 가이드이며 별도로 성능이나 비용을 측정한 결과는 담고 있지 않습니다. 성능과 비용은 각자의 워크로드에서 직접 확인해야 합니다.</p>
 
 <div class="callout"><strong>기준 버전</strong>2026년 10월 검토 기준입니다. Istio 1.31의 최신 patch는 1.31.2이고, Istio 1.31이 공식 지원하는 Kubernetes 범위는 1.32~1.37입니다. 설치 직전에는 Istio 지원 매트릭스와 EKS 버전 수명 주기를 다시 확인하세요.</div>
 
@@ -625,11 +630,14 @@ istioctl bug-report --include &lt;ns&gt;           # 지원 요청용 수집
 <li><a href="https://kubernetes-sigs.github.io/aws-load-balancer-controller/">AWS Load Balancer Controller</a></li>
 <li><a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights-Prometheus-Setup.html">CloudWatch Container Insights Prometheus 설정</a></li>
 <li><a href="https://docs.aws.amazon.com/vpc-lattice/latest/ug/what-is-vpc-lattice.html">Amazon VPC Lattice란</a></li>
-</ul>
-<nav class="post-nav"><a href="/eks-hybrid-nodes-demos/">이전 글: EKS Hybrid Nodes를 직접 돌려 봤습니다: gateway를 아껴 써야 하는 이유부터 SNAT 없는 연결, PrivateLink, 링크 단절까지</a><a href="/eks-automode-karpenter/">다음 글: EKS Auto Mode와 Karpenter 1.15를 나란히 돌려 봤습니다: 스케일 아웃, Balanced consolidation, Drift, Spot 중단</a></nav>
+</ul></div>
+<nav class="post-nav" aria-label="이전 글과 다음 글"><a href="/eks-hybrid-nodes-demos/"><span>← 이전 글</span>EKS Hybrid Nodes를 직접 돌려 봤습니다: gateway를 아껴 써야 하는 이유부터 SNAT 없는 연결, PrivateLink, 링크 단절까지</a><a href="/eks-automode-karpenter/"><span>다음 글 →</span>EKS Auto Mode와 Karpenter 1.15를 나란히 돌려 봤습니다: 스케일 아웃, Balanced consolidation, Drift, Spot 중단</a></nav>
 </article>
 </main>
-<footer class="site-footer"><div class="inner">blog.atomai.click. 발표 자료는 <a href="https://presentation.atomai.click/">presentation.atomai.click</a>에 있습니다.</div></footer>
+<footer class="site-footer"><div class="inner">
+  <div><a class="footer-brand" href="/">atom.</a><p>직접 구성하고, 측정하고, 기록합니다.</p></div>
+  <div class="footer-links"><a href="https://presentation.atomai.click/">발표 자료 <span aria-hidden="true">↗</span></a><a href="/feed.xml">RSS 구독 <span aria-hidden="true">↗</span></a><span>© 2026 Atom</span></div>
+</div></footer>
 
 </body>
 </html>
