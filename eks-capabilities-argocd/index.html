@@ -557,7 +557,7 @@ aws logs create-delivery --delivery-source-name eks-cap-demo-argocd-application 
 <p>그래서 Argo CD는 자주 교체하는 워크로드 클러스터가 아니라 따로 둔 hub 클러스터에 두는 편이 낫습니다. 그러면 워크로드 클러스터를 blue/green으로 바꿀 때 할 일은 새 클러스터에 access entry와 권한(아래 실측에서는 정책 3개)을 주고, cluster Secret의 ARN을 바꾸는 것으로 줄어듭니다. kro나 ACK의 CR을 배포한다면 그 API 그룹에 대한 RBAC도 함께 줘야 합니다.</p>
 <h3>실측 7: private 원격 클러스터 등록</h3>
 
-<p>spoke 클러스터의 API 엔드포인트는 private 전용이었고, 다른 VPC에 있는 워크스테이션에서는 접속할 수 없었습니다(<code>curl</code> 응답 없음). 관리형 Argo CD 컨트롤러는 고객 VPC가 아니라 AWS 소유 인프라에서 돌기 때문에, 그런데도 동기화가 됐으므로 AWS가 제공하는 연결을 거친 것으로 보입니다. 엔드포인트, 보안 그룹 규칙, 라우팅은 아무것도 추가하지 않았습니다. spoke에 hub의 Argo CD capability role로 access entry를 만들고, hub에서 했던 대로 <code>AmazonEKSEditPolicy</code>와 <code>AmazonEKSAdminViewPolicy</code>를 붙였습니다. 그런 다음 hub에 spoke의 ARN으로 cluster Secret과 Application을 만들었습니다.</p>
+<p>spoke 클러스터의 API 엔드포인트는 private 전용이었고, 다른 VPC에 있는 워크스테이션에서는 접속할 수 없었습니다(<code>curl</code> 응답 없음). 워크스테이션에서는 닿지 않았지만 동기화는 됐습니다. 관리형 Argo CD 컨트롤러는 고객 VPC가 아니라 AWS 소유 인프라에서 돌므로, AWS가 제공하는 연결을 거친 것으로 보입니다. 엔드포인트, 보안 그룹 규칙, 라우팅은 아무것도 추가하지 않았습니다. spoke에 hub의 Argo CD capability role로 access entry를 만들고, hub에서 했던 대로 <code>AmazonEKSEditPolicy</code>와 <code>AmazonEKSAdminViewPolicy</code>를 붙였습니다. 그런 다음 hub에 spoke의 ARN으로 cluster Secret과 Application을 만들었습니다.</p>
 <table>
 <thead>
 <tr>

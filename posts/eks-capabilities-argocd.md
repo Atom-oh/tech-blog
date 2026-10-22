@@ -298,7 +298,7 @@ spoke에 `endpointPrefix`를 `eks-cap-bg`로 지정해 Argo CD capability를 만
 
 <h3>실측 7: private 원격 클러스터 등록</h3>
 
-spoke 클러스터의 API 엔드포인트는 private 전용이었고, 다른 VPC에 있는 워크스테이션에서는 접속할 수 없었습니다(`curl` 응답 없음). 관리형 Argo CD 컨트롤러는 고객 VPC가 아니라 AWS 소유 인프라에서 돌기 때문에, 그런데도 동기화가 됐으므로 AWS가 제공하는 연결을 거친 것으로 보입니다. 엔드포인트, 보안 그룹 규칙, 라우팅은 아무것도 추가하지 않았습니다. spoke에 hub의 Argo CD capability role로 access entry를 만들고, hub에서 했던 대로 `AmazonEKSEditPolicy`와 `AmazonEKSAdminViewPolicy`를 붙였습니다. 그런 다음 hub에 spoke의 ARN으로 cluster Secret과 Application을 만들었습니다.
+spoke 클러스터의 API 엔드포인트는 private 전용이었고, 다른 VPC에 있는 워크스테이션에서는 접속할 수 없었습니다(`curl` 응답 없음). 워크스테이션에서는 닿지 않았지만 동기화는 됐습니다. 관리형 Argo CD 컨트롤러는 고객 VPC가 아니라 AWS 소유 인프라에서 돌므로, AWS가 제공하는 연결을 거친 것으로 보입니다. 엔드포인트, 보안 그룹 규칙, 라우팅은 아무것도 추가하지 않았습니다. spoke에 hub의 Argo CD capability role로 access entry를 만들고, hub에서 했던 대로 `AmazonEKSEditPolicy`와 `AmazonEKSAdminViewPolicy`를 붙였습니다. 그런 다음 hub에 spoke의 ARN으로 cluster Secret과 Application을 만들었습니다.
 
 | 순서 | 결과 |
 |---|---|
