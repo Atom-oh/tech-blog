@@ -1,0 +1,12 @@
+{
+  "capabilityName": "argocd",
+  "type": "ARGOCD",
+  "status": "ACTIVE",
+  "version": "3.4.7-eks-1",
+  "health": {
+    "issues": []
+  },
+  "deletePropagationPolicy": "RETAIN",
+  "createdAt": "2026-10-22T02:36:51.235000+00:00",
+  "modifiedAt": "2026-10-22T02:36:51.235000+00:00"
+}

@@ -42,7 +42,8 @@
 2) 로컬 클러스터도 EKS ARN으로 직접 등록해야 하고, 자동으로 만들어지는 access entry만으로는 동기화가 아예 되지 않습니다(<code>podtemplates is forbidden</code>). <code>AmazonEKSEditPolicy</code>만 추가해도 실패했고, <code>AmazonEKSAdminViewPolicy</code>를 함께 붙이자 cluster-admin 없이 동작했습니다. kro나 ACK가 만든 새 CRD는 그 위에 RBAC를 따로 줘야 했습니다.<br>
 3) Git 폴링은 문서에 6분이라고 되어 있지만, commit부터 Synced까지 342~697초가 걸렸습니다(같은 버전의 self-managed 기본값은 116~171초). GitHub webhook을 연결하자 7.0~7.3초로 줄었습니다. 관리형은 AWS가 호스팅하는 공개 주소가 있으므로, webhook을 받을 엔드포인트를 직접 만들 필요가 없습니다(VPC 엔드포인트로 공개 접근을 막으면 GitHub webhook도 닿지 않을 것으로 보입니다).<br>
 4) <code>argocd login</code>은 비밀번호, SSO 모두 실패하고 UI에서 만든 토큰으로만 CLI를 쓸 수 있습니다. <code>argocd-cm</code>의 배너와 Lua health check는 약 12초 만에 반영됐지만, Lua에서 <code>string</code>, <code>os</code> 라이브러리는 쓸 수 없었습니다.<br>
-5) 문서에는 sync timeout이 120초로 고정되어 있다고 나오지만, 150초 걸리는 PreSync hook을 넣은 동기화는 161초 만에 정상 완료됐습니다.</div>
+5) 문서에는 sync timeout이 120초로 고정되어 있다고 나오지만, 150초 걸리는 PreSync hook을 넣은 동기화는 161초 만에 정상 완료됐습니다.<br>
+6) 추가 측정(10월 22일)에서 클러스터를 1.36에서 1.37로 업그레이드하는 동안 capability는 계속 <code>ACTIVE</code>였고 버전도 바뀌지 않았습니다. 업그레이드 중 self-heal이 최대 254초로 늦어졌지만, 업그레이드 없이도 똑같이 재현되는 upstream의 self-heal 백오프 때문이었습니다. private 전용 원격 클러스터는 네트워크 설정 없이 등록됐지만, <code>CreateNamespace=true</code>로 namespace를 만들려면 원격 쪽 access entry에 <code>AmazonEKSArgoCDClusterPolicy</code>를 직접 붙여야 했습니다. 로그인은 Identity Center만 되고, Okta나 Entra ID는 Identity Center의 외부 IdP로 연결합니다(문서 기준).</div>
 
 <nav class="toc">
 <p><strong>목차</strong></p>
@@ -56,6 +57,7 @@
 <li><a href="#logs">실측 5: 컨트롤러 로그</a></li>
 <li><a href="#video">데모 영상</a></li>
 <li><a href="#oss">self-managed Argo CD와 비교</a></li>
+<li><a href="#ops">도입 전에 고민할 것: 로그인, 클러스터 업그레이드, 멀티 클러스터</a></li>
 <li><a href="#value">얻을 수 있는 것과 비용</a></li>
 <li><a href="#limits">이번 측정의 한계</a></li>
 <li><a href="#more">원시 결과, 재현 방법</a></li>
@@ -428,7 +430,7 @@ aws logs create-delivery --delivery-source-name eks-cap-demo-argocd-application 
 </tr>
 <tr>
 <td>로그인</td>
-<td>IAM Identity Center만. capability 설정으로 그룹 매핑</td>
+<td>IAM Identity Center만. Okta, Entra ID는 Identity Center의 외부 IdP로 연결. capability 설정으로 그룹 매핑</td>
 <td>로컬 admin, Dex, OIDC 등. Identity Center는 SAML 앱과 Dex 설정을 직접 구성</td>
 </tr>
 <tr>
@@ -453,7 +455,7 @@ aws logs create-delivery --delivery-source-name eks-cap-demo-argocd-application 
 </tr>
 <tr>
 <td>원격 클러스터</td>
-<td>EKS ARN과 access entry만으로 등록, private 클러스터도 네트워크 설정 없이 가능</td>
+<td>EKS ARN과 access entry만으로 등록, private 클러스터도 네트워크 설정 없이 가능(실측). EKS가 아닌 클러스터는 불가</td>
 <td>클러스터마다 API 주소, 인증 설정, 네트워크 경로</td>
 </tr>
 <tr>
@@ -479,8 +481,123 @@ aws logs create-delivery --delivery-source-name eks-cap-demo-argocd-application 
 </tbody>
 </table>
 <p>Identity Center 연동은 Argo CD의 Identity Center 연동 문서와 이를 정리한 필자의 학습 문서(<a href="https://github.com/Atom-oh/kubernetes-docs">kubernetes-docs</a>의 GitOps 멀티 클러스터 장)를 기준으로 비교했고, 직접 구성하지는 않았습니다. self-managed는 Identity Center에 고객 관리형 SAML 2.0 애플리케이션을 만들고, ACS URL과 audience를 Argo CD 도메인에 맞추고, 서명 인증서를 받아 Dex 커넥터 설정에 넣고, <code>argocd-rbac-cm</code>에 이메일 기준 매핑을 써야 합니다. 그룹 속성 매핑은 AWS가 공식 지원하지 않는 우회 방법입니다. 관리형은 <code>awsIdc</code>와 <code>rbacRoleMappings</code> 두 필드로 끝났습니다. 이번에는 사용자 한 명만 매핑했지만, 토큰의 사용자 정보에 Identity Center 그룹 ID가 함께 들어와 있었고, 문서상 그룹(<code>SSO_GROUP</code>)도 매핑할 수 있습니다.</p>
-<p>정리하면, 관리형은 설치, 업그레이드, HA, 인증서와 공개 주소, SSO 구성을 모두 없애 주고, webhook을 바로 받을 수 있으며, 원격 클러스터와 private 클러스터 연결을 네트워크 설정 없이 access entry와 그 권한으로 처리합니다(원격 등록은 문서 기준). 대신 기본 권한이 없어서 처음에 반드시 막히고, 플랫폼 CRD가 늘 때마다 RBAC를 더해야 합니다. 버전을 고를 수 없어 upstream보다 한 단계 늦고, Notifications, CMP, <code>argocd admin</code>, Lua 표준 라이브러리를 쓸 수 없으며, 기본 폴링 간격이 길고 흔들립니다. self-managed는 같은 버전이면 동작이 같았고(기본 폴링 간격만 더 짧음) 모든 기능과 설정을 쓸 수 있지만, Pod 7개를 직접 운영하고, UI와 webhook을 위한 노출, SSO, 원격 클러스터 인증을 직접 만들어야 하며, 기본 권한이 클러스터 관리자 수준입니다.</p>
-<h2 id="value">10. 얻을 수 있는 것과 비용</h2>
+<p>정리하면, 관리형은 설치, 업그레이드, HA, 인증서와 공개 주소, SSO 구성을 모두 없애 주고, webhook을 바로 받을 수 있으며, 원격 클러스터와 private 클러스터 연결을 네트워크 설정 없이 access entry와 그 권한으로 처리합니다. 대신 기본 권한이 없어서 처음에 반드시 막히고, 플랫폼 CRD가 늘 때마다 RBAC를 더해야 합니다. 버전을 고를 수 없어 upstream보다 한 단계 늦고, Notifications, CMP, <code>argocd admin</code>, Lua 표준 라이브러리를 쓸 수 없으며, 기본 폴링 간격이 길고 흔들립니다. self-managed는 같은 버전이면 동작이 같았고(기본 폴링 간격만 더 짧음) 모든 기능과 설정을 쓸 수 있지만, Pod 7개를 직접 운영하고, UI와 webhook을 위한 노출, SSO, 원격 클러스터 인증을 직접 만들어야 하며, 기본 권한이 클러스터 관리자 수준입니다.</p>
+<h2 id="ops">10. 도입 전에 고민할 것: 로그인, 클러스터 업그레이드, 멀티 클러스터</h2>
+
+<p>비교표만으로는 판단하기 어려운 질문이 세 가지 남았습니다. 사내 IdP가 Okta나 Microsoft Entra ID라면 로그인을 어떻게 붙이는지, 클러스터를 업그레이드하거나 교체하면 Argo CD는 어떻게 되는지, 클러스터가 여러 개면 Argo CD를 어디에 두는지입니다. 업그레이드와 멀티 클러스터는 2026년 10월 22일에 클러스터 두 개를 새로 만들어 측정했습니다. hub 클러스터(EKS 1.36, 노드 1대)에는 Argo CD, kro, ACK capability를 모두 만들었고, spoke 클러스터(EKS 1.37, 노드 1대)는 API 엔드포인트를 private 전용으로 바꿨습니다. 두 클러스터는 같은 VPC의 private 서브넷에 있었습니다. 로그인은 직접 연동하지 않았고 문서를 기준으로 정리했습니다. 이 절의 시각은 모두 UTC입니다.</p>
+<h3>로그인: Okta는 Identity Center를 거쳐서 붙습니다</h3>
+
+<p>관리형 Argo CD가 받는 인증은 IAM Identity Center 하나뿐입니다. Cognito나 Okta OIDC를 Argo CD에 직접 연결하는 설정은 없습니다. AWS 문서도 별도 SSO 공급자(custom SSO providers)를 지원하지 않는 기능으로 적어 두었고, "Identity Center를 거친 서드 파티 페더레이션은 포함한다"는 단서를 달았습니다. Okta나 Entra ID를 쓰는 조직이라면 Identity Center의 ID 소스를 외부 IdP로 두고, 로그인은 SAML로, 사용자와 그룹 동기화는 SCIM으로 처리합니다. Argo CD 쪽에서는 Identity Center에 들어온 그룹의 ID를 <code>rbacRoleMappings</code>에 넣어 권한을 줍니다.</p>
+<p>이 구조에서 고민할 점은 이렇습니다.</p>
+<ul>
+<li>Identity Center 인스턴스에는 ID 소스를 하나만 둘 수 있습니다. 조직 인스턴스를 이미 Entra ID에 연결했다면 그 인스턴스로는 Okta 로그인을 받을 수 없습니다. Identity Center 문서상 EKS Capabilities는 계정 인스턴스도 지원하므로, 조직 관리자가 허용하면 계정 하나에 별도 IdP를 쓰는 계정 인스턴스를 둘 수는 있습니다. 다만 계정 인스턴스는 그 계정과 리전 안에서만 쓰이고 권한 세트를 쓸 수 없습니다(시험하지 않음). self-managed는 Dex나 OIDC로 원하는 IdP를 직접 연결하므로 이런 제약이 없습니다.</li>
+<li>capability를 만든 뒤에는 연결한 Identity Center 인스턴스를 바꿀 수 없습니다(EKS 콘솔 도움말 기준). 권한 매핑은 Identity Center의 사용자 ID와 그룹 ID로 저장됩니다. ID 소스를 외부 IdP와 Identity Center 디렉터리 사이에서, 또는 외부 IdP끼리(예: Okta에서 Entra ID로) 바꾸면 ID가 유지됩니다. Active Directory로 바꾸면 사용자와 그룹이 지워져 매핑을 다시 써야 합니다.</li>
+<li>그룹은 SCIM으로 Identity Center에 들어와 있어야 매핑할 수 있습니다. Okta에서 그룹 push를 설정해야 하고, AWS의 Okta 연동 문서에 따르면 같은 Okta 그룹을 앱 할당과 그룹 push에 함께 쓸 수 없습니다. capability 하나에 매핑할 수 있는 ID(사용자 또는 그룹)는 1,000개이므로 사용자보다 그룹 단위로 매핑하는 편이 낫습니다.</li>
+<li>전역 역할은 ADMIN, EDITOR, VIEWER 세 가지뿐입니다. <code>argocd-rbac-cm</code>에 IdP 그룹 클레임으로 세밀한 정책을 써 두었다면, 관리형에서는 그 정책을 AppProject 역할로 옮겨야 합니다.</li>
+</ul>
+<p>판단 기준은 조직의 AWS 로그인이 이미 Identity Center로 모여 있는지입니다. 모여 있다면 관리형이 Argo CD SSO를 붙이는 가장 손이 덜 가는 방법입니다. Argo CD만 조직 Identity Center와 다른 IdP를 써야 하는데 계정 인스턴스를 쓸 수 없거나, 기존 RBAC 정책을 그대로 옮겨야 한다면 self-managed가 맞습니다.</p>
+<h3>실측 6: 클러스터를 업그레이드해도 capability는 그대로였습니다</h3>
+
+<p>hub 클러스터를 1.36에서 1.37로 in-place 업그레이드하면서 전후와 진행 중에 같은 측정을 반복했습니다. 측정 1회는 세 가지를 차례로 잽니다. 먼저 Argo CD가 관리하는 Deployment의 replicas를 2에서 4로 바꾼 뒤 self-heal로 2가 될 때까지, 다음으로 kro 인스턴스의 replicas를 바꾼 뒤 하위 Deployment에 반영될 때까지, 마지막으로 새 SQS Queue CR을 만든 뒤 <code>ACK.ResourceSynced=True</code>가 될 때까지입니다. 이와 별도로 약 19초마다 클러스터와 capability 상태를 기록했습니다.</p>
+<p>컨트롤 플레인 업그레이드는 약 7분 걸렸습니다(02:48:48 요청, 02:55:52 기록에서 처음 <code>ACTIVE</code>). 02:52:41부터 02:55:52까지는 API 서버의 <code>/version</code> 응답이 1.36.4와 1.37.0 사이를 오갔습니다. API 서버가 차례로 교체되는 구간으로 보입니다. 업그레이드 내내 capability 3개는 <code>ACTIVE</code>였고, 버전(<code>3.4.7-eks-1</code>, <code>0.9.4-eks-1</code>, <code>46.186.1-eks-1</code>), health, <code>modifiedAt</code>이 업그레이드 전과 같았습니다.</p>
+<table>
+<thead>
+<tr>
+<th>구간</th>
+<th>횟수</th>
+<th>Argo CD self-heal</th>
+<th>kro 반영</th>
+<th>ACK Queue 동기화</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>업그레이드 전</td>
+<td>3</td>
+<td>2.1~14.6초</td>
+<td>1.02~1.04초</td>
+<td>1.49~3.53초</td>
+</tr>
+<tr>
+<td>업그레이드 중</td>
+<td>4</td>
+<td>2.1초, 6.1초, 112.9초, 254.5초</td>
+<td>1.02~1.07초</td>
+<td>1.52~1.58초</td>
+</tr>
+<tr>
+<td>대조: 업그레이드 후 같은 방식으로</td>
+<td>5</td>
+<td>2.3초, 이후 251~252초</td>
+<td>1.01~1.15초</td>
+<td>1.47~1.57초</td>
+</tr>
+<tr>
+<td>대조: 마지막 self-heal 6분 뒤 1회</td>
+<td>1</td>
+<td>2.0초</td>
+<td>-</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<p>표를 읽을 때 주의할 점이 있습니다. kro와 ACK는 Argo CD self-heal이 끝난 뒤에 재기 때문에, 업그레이드 중 4회 가운데 3회는 API 서버 버전이 오가기 전(02:52:40까지)에, 1회는 업그레이드가 끝난 뒤(02:57:43)에 쟀습니다. API 서버 버전이 오가던 3분 동안 kro와 ACK의 반영 시간은 재지 못했습니다. 이 구간에서 확인한 것은 capability가 <code>ACTIVE</code>였다는 점과, 02:53:38에 Argo CD가 drift를 <code>OutOfSync</code>로 잡아냈다는 점뿐입니다. kubectl 호출과 0.5초 대기를 반복해 확인했으므로 해상도는 약 1초입니다.</p>
+<p>업그레이드 중에 Argo CD self-heal이 113초, 254초로 늘어나서 처음에는 업그레이드 영향으로 보였습니다. 그런데 업그레이드가 끝난 클러스터에서 같은 방식으로 다시 재자 똑같이 251~252초가 나왔습니다. 원인은 업그레이드가 아니라 upstream Argo CD의 self-heal 백오프였습니다. 같은 앱에서 self-heal이 반복되면 애플리케이션 컨트롤러가 직전 시도부터 다음 시도까지 기다리는 시간을 2초부터 3배씩 늘리고, 300초를 넘기지 않습니다(<code>--self-heal-backoff-timeout-seconds</code> 2, <code>--self-heal-backoff-factor</code> 3, <code>--self-heal-backoff-cap-seconds</code> 300이 기본값). 업그레이드 중 마지막 측정의 self-heal 직후(02:57:41) Application에는 <code>autoHealAttemptsCount: 7</code>이 남아 있었습니다. 앞 측정의 self-heal이 끝난 뒤 다음 drift를 만들기까지 약 50초를 두었으므로, 300초에서 그만큼을 뺀 약 250초를 기다린 셈입니다. 마지막 self-heal에서 6분, 13분이 지난 뒤에는 2.0초, 2.3초였습니다. 시도 횟수가 초기화된 것이 아니라 300초 대기가 이미 지나 있었기 때문입니다. 실제로 13분 쉰 뒤 2.3초가 나온 바로 다음 측정은 다시 251초였습니다. upstream 코드상 횟수는 새 revision으로 동기화하거나 수동으로 sync하면 초기화되는 것으로 보이지만 시험하지는 않았습니다. kro와 ACK는 측정한 모든 구간에서 1~2초였습니다.</p>
+<p>여기서 고민할 점은 이렇습니다.</p>
+<ul>
+<li>in-place 업그레이드에서는 capability를 따로 챙길 일이 없었습니다. self-managed라면 새 Kubernetes 버전을 Argo CD, kro, ACK 컨트롤러가 지원하는지 확인하고, 필요하면 컨트롤러부터 올려야 합니다. 다만 EKS upgrade insights의 점검 항목 7개 중 capability를 다루는 항목은 없었습니다. 호환성 확인은 AWS에 맡기는 구조입니다.</li>
+<li>반대로 capability 버전은 사용자가 정하지 못합니다. 10월 21일에 다른 클러스터에 만든 Argo CD는 <code>3.4.6-eks-2</code>였고, 하루 뒤 새로 만든 Argo CD는 <code>3.4.7-eks-1</code>이었습니다. 클러스터 업그레이드와 상관없이 컨트롤러 버전이 바뀔 수 있으므로, 같은 capability를 켠 검증 클러스터를 두면 변경을 미리 볼 수 있습니다.</li>
+<li>같은 앱에서 새 commit 없이 self-heal이 여러 번 쌓이면, 직전 self-heal에서 5분 안에 생긴 drift는 복구가 최대 5분까지 늦어집니다. 업그레이드와 상관없는 동작이지만, 장애 대응이나 업그레이드 작업처럼 같은 리소스를 반복해서 고치기 쉬운 때에 눈에 띕니다. 급하면 수동 sync를 걸면 됩니다. self-managed는 위 플래그로 값을 조정할 수 있습니다. 관리형에서 직접 바꿀 수 있는 <code>argocd-cmd-params-cm</code> 키는 3개(<code>hydrator.enabled</code>, <code>application.namespaces</code>, <code>applicationsetcontroller.namespaces</code>)뿐이고, AWS 문서는 self-heal 타이밍 조정이 필요하면 AWS Support에 요청하라고 안내합니다.</li>
+</ul>
+<h3>blue/green으로 클러스터를 바꾼다면</h3>
+
+<p>in-place가 아니라 새 클러스터를 만들어 옮기는 blue/green이라면 사정이 다릅니다. capability는 클러스터에 딸린 리소스이므로, Argo CD를 두었던 클러스터를 없애려면 새 클러스터에 capability를 다시 만들어야 합니다. 이때 UI 주소와 webhook 주소가 바뀌는 문제가 생깁니다. 기본값으로 만들면 주소가 <code>argocd-&lt;ID&gt;-&lt;계정 ID&gt;.eks-capabilities.&lt;리전&gt;.amazonaws.com</code> 형식이고, 이번에 서로 다른 클러스터에 기본값으로 만든 두 capability의 ID는 서로 달랐습니다.</p>
+<p>spoke에 <code>endpointPrefix</code>를 <code>eks-cap-bg</code>로 지정해 Argo CD capability를 만들어 봤습니다. 385초 뒤 <code>ACTIVE</code>가 됐고, 주소는 <code>https://eks-cap-bg-&lt;계정 ID&gt;.eks-capabilities.ap-northeast-2.amazonaws.com</code>이었습니다. 이 capability를 지우고(100초) 같은 prefix로 다시 만들자 338초 뒤 <code>ACTIVE</code>가 됐고, 주소도 처음과 같았습니다. 같은 클러스터에서 지우고 다시 만드는 경우만 시험했지만, 주소에 클러스터를 가리키는 부분이 없으므로 다른 클러스터로 옮겨도 같은 주소를 쓸 수 있을 것으로 보입니다.</p>
+<p>대신 치를 비용이 있습니다. 주소가 계정과 리전 안에서 하나뿐이라면(시험하지 않음) 옛 클러스터와 새 클러스터가 같은 prefix를 동시에 가질 수 없습니다. 그러면 교체는 "지우고 다시 만들기"가 되고, 이번 측정 기준으로 약 7분(100초 + 338초) 동안 UI, webhook, 동기화가 모두 멈춥니다. 그 뒤 Application, ApplicationSet, cluster Secret을 Git에서 새 클러스터로 다시 적용해야 합니다. 이 객체들은 capability를 둔 클러스터의 Kubernetes 리소스이기 때문입니다. 멈추는 시간을 받아들일 수 없다면 새 prefix로 새 capability를 먼저 띄우고, Git 저장소의 webhook 주소를 바꾸는 쪽이 낫습니다. 이때 두 Argo CD가 같은 대상 클러스터를 동시에 동기화하지 않도록, 옛 쪽의 자동 sync를 끄거나 Application을 non-cascading으로 지운 뒤 새 쪽을 켜야 합니다. 새 capability role의 access entry도 대상 클러스터에 먼저 만들어 둬야 합니다(시험하지 않음). <code>endpointPrefix</code>는 생성 후 바꿀 수 없으니 처음 만들 때 정해야 합니다.</p>
+<p>그래서 Argo CD는 자주 교체하는 워크로드 클러스터가 아니라 따로 둔 hub 클러스터에 두는 편이 낫습니다. 그러면 워크로드 클러스터를 blue/green으로 바꿀 때 할 일은 새 클러스터에 access entry와 권한(아래 실측에서는 정책 3개)을 주고, cluster Secret의 ARN을 바꾸는 것으로 줄어듭니다. kro나 ACK의 CR을 배포한다면 그 API 그룹에 대한 RBAC도 함께 줘야 합니다.</p>
+<h3>실측 7: private 원격 클러스터 등록</h3>
+
+<p>spoke 클러스터의 API 엔드포인트는 private 전용이었고, 다른 VPC에 있는 워크스테이션에서는 접속할 수 없었습니다(<code>curl</code> 응답 없음). 관리형 Argo CD 컨트롤러는 고객 VPC가 아니라 AWS 소유 인프라에서 돌기 때문에, 그런데도 동기화가 됐으므로 AWS가 제공하는 연결을 거친 것으로 보입니다. 엔드포인트, 보안 그룹 규칙, 라우팅은 아무것도 추가하지 않았습니다. spoke에 hub의 Argo CD capability role로 access entry를 만들고, hub에서 했던 대로 <code>AmazonEKSEditPolicy</code>와 <code>AmazonEKSAdminViewPolicy</code>를 붙였습니다. 그런 다음 hub에 spoke의 ARN으로 cluster Secret과 Application을 만들었습니다.</p>
+<table>
+<thead>
+<tr>
+<th>순서</th>
+<th>결과</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Edit + AdminView만 붙이고 등록</td>
+<td>연결과 인증은 성공했지만 <code>namespaces is forbidden</code>으로 동기화 실패. Application의 <code>CreateNamespace=true</code>가 클러스터 범위의 namespace 생성 권한을 요구함</td>
+</tr>
+<tr>
+<td>등록 후 약 5분(303초)</td>
+<td>자동 재시도 5회(<code>retry.limit</code> 기본값)를 모두 쓰고 멈춤</td>
+</tr>
+<tr>
+<td>spoke에 <code>AmazonEKSArgoCDClusterPolicy</code> 추가 후 수동 sync</td>
+<td>11.1초 만에 <code>Synced</code>, <code>Healthy</code></td>
+</tr>
+</tbody>
+</table>
+<p>hub에서는 capability가 자기 access entry에 <code>AmazonEKSArgoCDClusterPolicy</code>를 자동으로 붙여 주기 때문에 같은 문제가 없었습니다. 원격 클러스터에서 Argo CD가 namespace를 만들게 하려면 이 정책을 직접 붙여야 했습니다. 이 정책은 namespace 말고도 CRD와 Argo CD 리소스에 대한 권한을 함께 주므로, 권한을 더 좁히고 싶다면 대상 namespace를 미리 만들어 두거나 namespace 생성만 허용하는 ClusterRole을 access entry 그룹에 바인딩하는 방법도 있습니다(시험하지 않음). AWS 문서의 예시는 <code>system:masters</code> 그룹을 쓰는데, 이번에는 cluster-admin 없이 세 정책 조합으로 동작했습니다. 권한을 고친 뒤에는 자동 재시도가 이미 끝난 상태라 동기화를 직접 다시 걸어야 했습니다.</p>
+<p>멀티 클러스터에서 고민할 점은 이렇습니다.</p>
+<ul>
+<li>hub 하나로 모을지, 클러스터마다 둘지 정해야 합니다. Application 요금은 대상 클러스터별 Application 수로 매기므로 어느 쪽이든 같고, capability 요금(서울 시간당 $0.034799, 한 달 약 $25.4)은 Argo CD 인스턴스 수만큼 늘어납니다. 비용과 관리 지점만 보면 hub가 낫습니다. 다만 hub의 capability role은 모든 spoke에 쓰기 권한을 갖습니다. hub 설정이 잘못되면 영향이 전체 클러스터로 번지므로, AppProject의 destination을 제한하거나, spoke에서 쓰기 정책(Edit)만 namespace 범위로 좁히고 읽기(AdminView)는 클러스터 범위로 두거나(시험하지 않음. 앞의 측정처럼 Argo CD는 클러스터 범위 읽기 권한이 없으면 동기화하지 못함), 팀별로 capability를 두는 방법을 함께 생각해야 합니다.</li>
+<li>배포 대상은 EKS만 됩니다. cluster Secret은 EKS ARN만 받습니다. 온프레미스 Kubernetes나 다른 클라우드의 클러스터처럼 EKS가 아닌 클러스터가 섞여 있다면 그 클러스터에는 관리형으로 배포할 수 없습니다.</li>
+<li>다른 계정의 클러스터는 대상 클러스터에 hub capability role로 access entry를 만들면 된다고 문서에 나옵니다. 이번에는 같은 계정, 같은 VPC의 spoke만 시험했습니다. 다른 VPC나 다른 계정에 있는 private 클러스터에도 네트워크 설정 없이 닿는다는 것은 문서 기준입니다.</li>
+<li>kro와 ACK는 자기 클러스터만 관리합니다. hub의 Argo CD가 spoke에 RGD 인스턴스나 ACK CR을 배포하려면 spoke에도 kro, ACK capability(또는 self-managed 컨트롤러)가 있어야 합니다. 어느 쪽에 둘지는 2편과 3편에서 다룹니다.</li>
+</ul>
+<h3>언제 고려하면 좋은가</h3>
+
+<p>관리형 Argo CD를 검토하기 좋은 시점은 이렇습니다.</p>
+<ul>
+<li>클러스터가 두 개 이상으로 늘기 전입니다. hub 위치, Identity Center 인스턴스, <code>endpointPrefix</code>는 만든 뒤 바꿀 수 없거나 바꾸기 번거로우므로 처음에 정하는 편이 수월합니다.</li>
+<li>private 클러스터나 다른 계정의 클러스터가 생길 때입니다. 피어링이나 Transit Gateway로 Argo CD에서 API 서버까지 네트워크 경로를 만들기 전에 검토하면, 문서대로라면 그 작업을 건너뛸 수 있습니다.</li>
+<li>self-managed Argo CD의 HA 구성이나 메이저 업그레이드를 다시 해야 할 때입니다. AWS 문서의 이전 절차는 기존 컨트롤러를 0으로 줄이고, Application과 Secret을 옮기고, <code>destination.server</code>를 ARN이나 이름으로 바꾸는 순서입니다. 컨트롤러를 0으로 줄인 동안에는 동기화가 멈춥니다. 이 절차는 시험하지 않았습니다.</li>
+</ul>
+<p>반대로 미루는 편이 나은 경우도 있습니다. Notifications나 CMP에 의존할 때, EKS가 아닌 클러스터가 배포 대상에 섞여 있을 때, Argo CD만 조직 Identity Center와 다른 IdP를 써야 할 때, 폴링 간격이나 self-heal 백오프를 직접 조정해야 할 때입니다.</p>
+<h2 id="value">11. 얻을 수 있는 것과 비용</h2>
 
 <p>관리형 Argo CD가 잘 맞는 경우는 이렇습니다.</p>
 <ul>
@@ -490,18 +607,20 @@ aws logs create-delivery --delivery-source-name eks-cap-demo-argocd-application 
 </ul>
 <p>반대로 Notifications로 배포 알림을 보내고 있거나, CMP로 사내 템플릿 도구를 붙였거나, <code>string</code> 같은 Lua 라이브러리를 쓰는 health check가 많다면 self-managed를 유지하는 편이 낫습니다.</p>
 <p>서울 리전 요금은 capability 시간당 $0.034799, Application 하나당 시간당 $0.001726입니다(2026-10-21 AWS Pricing API 조회). Application은 대상 클러스터별로 셉니다. 앱 9개를 한 달(730시간) 유지하면 $25.40 + $11.34로 약 $36.7, 앱 100개면 $25.40 + $126.00으로 약 $151입니다. self-managed는 이번 기본 설치에서 메모리를 최대 624Mi 썼습니다. m7g.large(8GiB, 서울 시간당 $0.1003)의 7.6%이므로 메모리 기준으로 노드 요금을 나누면 한 달 약 $5.6입니다. HA 구성이나 앱 수 증가에 따라 이 값은 커집니다. 비용만 보면 앱 9개에서도 self-managed가 약 7분의 1이고, 앱 수가 늘수록 차이가 커집니다. 관리형을 고르는 이유는 비용이 아니라 노출, SSO, 업그레이드, 멀티 클러스터 연결을 운영하지 않아도 된다는 점입니다.</p>
-<h2 id="limits">11. 이번 측정의 한계</h2>
+<h2 id="limits">12. 이번 측정의 한계</h2>
 
 <ul>
 <li><strong>시나리오마다 3회만 반복했습니다.</strong> 폴링 간격처럼 분포가 넓은 값은 3회로는 범위만 보여 줄 수 있습니다.</li>
 <li><strong>앱은 최대 9개였습니다.</strong> 앱 수백 개나 원격 클러스터 여러 개에서의 처리량은 측정하지 않았습니다(관리형 한도는 Application 3,000개, 원격 클러스터 100개).</li>
 <li><strong>self-managed는 기본값 단일 인스턴스였습니다.</strong> HA 구성의 리소스 사용량은 이보다 큽니다. self-managed webhook은 공개 엔드포인트를 만들지 않아 측정하지 않았습니다.</li>
-<li><strong>Notifications, CMP, VPC 엔드포인트 비공개 접근, 원격 클러스터 등록은 시험하지 않았습니다.</strong> 해당 내용은 문서 기준입니다.</li>
+<li><strong>Notifications, CMP, VPC 엔드포인트 비공개 접근, 다른 계정의 클러스터 등록은 시험하지 않았습니다.</strong> 해당 내용은 문서 기준입니다. 원격 클러스터는 hub와 같은 계정, 같은 VPC에 있는 private 클러스터 하나만 등록해 봤습니다.</li>
+<li><strong>업그레이드는 1.36에서 1.37로 한 번만 했고, 노드 그룹은 올리지 않았습니다.</strong> API 서버 버전이 오가던 3분 동안 kro와 ACK의 반영 시간은 재지 못했습니다. capability 버전이 바뀌는 시점이나 방식도 관찰하지 못했습니다.</li>
+<li><strong>Okta와 Entra ID 연동, 계정 인스턴스는 직접 구성하지 않았습니다.</strong> Identity Center 문서 기준입니다.</li>
 <li><strong>sync timeout 120초가 어디에 적용되는지는 확인하지 못했습니다.</strong> hook 하나가 150초 걸리는 경우만 시험했습니다.</li>
 </ul>
-<h2 id="more">12. 원시 결과, 재현 방법</h2>
+<h2 id="more">13. 원시 결과, 재현 방법</h2>
 
-<p>매니페스트는 <a href="https://github.com/Atom-oh/eks-capabilities-demo">Atom-oh/eks-capabilities-demo</a>에 있습니다. <code>apps/</code>에 앱, <code>argocd/</code>에 Application과 ApplicationSet이 있고, destination 클러스터 이름은 <code>eks-cap-demo</code>입니다. 측정 결과 JSON은 <a href="/assets/data/eks-capabilities-2026-10/">assets/data/eks-capabilities-2026-10/</a>에 있습니다.</p>
+<p>매니페스트는 <a href="https://github.com/Atom-oh/eks-capabilities-demo">Atom-oh/eks-capabilities-demo</a>에 있습니다. <code>apps/</code>에 앱, <code>argocd/</code>에 Application과 ApplicationSet이 있고, destination 클러스터 이름은 <code>eks-cap-demo</code>입니다. 측정 결과 JSON은 <a href="/assets/data/eks-capabilities-2026-10/">assets/data/eks-capabilities-2026-10/</a>에 있습니다. 업그레이드와 원격 클러스터 측정 결과는 같은 폴더의 <code>results-ops/</code>, 스크립트는 <code>scripts-ops/</code>에 있습니다.</p>
 <p>재현 순서는 다음과 같습니다.</p>
 <ol>
 <li>capability role을 만듭니다(서비스 보안 주체 <code>capabilities.eks.amazonaws.com</code>, 이번 시험처럼 공개 GitHub만 쓰면 권한 정책 없음).</li>
@@ -522,6 +641,12 @@ aws logs create-delivery --delivery-source-name eks-cap-demo-argocd-application 
 <li><a href="https://docs.aws.amazon.com/eks/latest/userguide/capabilities-controller-logs.html">Access EKS Capabilities controller logs</a></li>
 <li><a href="https://aws.amazon.com/about-aws/whats-new/2025/11/amazon-eks-capabilities/">Amazon EKS Capabilities 출시 발표(2025-11-30)</a></li>
 <li><a href="https://aws.amazon.com/eks/pricing/">Amazon EKS pricing</a></li>
+<li><a href="https://docs.aws.amazon.com/eks/latest/userguide/capabilities-considerations.html">EKS Capabilities considerations</a></li>
+<li><a href="https://docs.aws.amazon.com/eks/latest/userguide/argocd-troubleshooting.html">Troubleshoot issues with Argo CD capabilities</a></li>
+<li><a href="https://docs.aws.amazon.com/singlesignon/latest/userguide/awsapps-that-work-with-identity-center.html">AWS managed applications that you can use with IAM Identity Center</a></li>
+<li><a href="https://docs.aws.amazon.com/singlesignon/latest/userguide/gs-okta.html">Configure SAML and SCIM with Okta and IAM Identity Center</a></li>
+<li><a href="https://docs.aws.amazon.com/singlesignon/latest/userguide/manage-your-identity-source-considerations.html">Considerations for changing your identity source</a></li>
+<li><a href="https://argo-cd.readthedocs.io/en/stable/operator-manual/server-commands/argocd-application-controller/">argocd-application-controller 명령 옵션</a></li>
 </ul></div>
 <nav class="post-nav" aria-label="이전 글과 다음 글"><a href="/eks-automode-karpenter/"><span>← 이전 글</span>EKS Auto Mode와 Karpenter 1.15를 나란히 돌려 봤습니다: 스케일 아웃, Balanced consolidation, Drift, Spot 중단</a><a href="/eks-capabilities-kro/"><span>다음 글 →</span>EKS의 관리형 kro를 직접 써 봤습니다: OSS와 같은 0.9.4, 권한은 직접 열어야 하고 이름 충돌은 조심해야 합니다</a></nav>
 </article>

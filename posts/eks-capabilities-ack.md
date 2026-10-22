@@ -19,7 +19,8 @@ tags: eks, eks-capabilities, ack, platform-engineering
 3) 리소스 생성 시간은 관리형과 OSS 사이에 차이가 없었습니다(두 쪽 합쳐 Queue 1.0~1.2초, Bucket 3.1~3.3초, Table 10.2~11.5초). 관리형은 AWS 리소스에 <code>eks:eks-capability-arn</code>, <code>eks:kubernetes-namespace</code> 등 태그 5개를 붙이고, OSS는 <code>services.k8s.aws/*</code> 태그 2개를 붙입니다.<br>
 4) ACK 밖에서 바꾼 SQS 속성을 관리형과 OSS 모두 주기적으로 되돌린 경우는 없었습니다(최대 25분 관찰). 관리형에서 되돌아온 두 번은 모두 컨트롤러가 새로 시작된 직후였습니다(로그 전달 추가로 <code>UPDATING</code>을 거친 86초 뒤, capability 재생성 직후). 주기적인 resync가 아니라 컨트롤러 재시작이 계기로 보이지만, 로그로 확인하지는 않았습니다.<br>
 5) OSS에서 같은 IAM 분리를 하려면 feature gate <code>IAMRoleSelector=true</code>와 <code>enableCARM=false</code>를 함께 줘야 합니다. CARM(Cross Account Resource Management)은 IAMRoleSelector 이전의 계정 전환 방식이라 둘을 함께 켤 수 없습니다. feature gate만 켜고 <code>enableCARM</code>을 기본값(true)으로 두면 컨트롤러가 CrashLoopBackOff에 빠집니다.<br>
-6) 관리형 컨트롤러 버전은 OSS 최신보다 한 단계 낮았습니다(s3 1.12.2 대 1.13.1). 서비스를 끄는 <code>disabledServices</code>는 AWS CLI 2.38.3에서 동작했지만(약 13초), 이미 설치된 해당 서비스의 CRD는 지워지지 않았습니다. 측정에 처음 쓴 CLI 2.35.11에는 이 설정이 없었습니다.</div>
+6) 관리형 컨트롤러 버전은 OSS 최신보다 한 단계 낮았습니다(s3 1.12.2 대 1.13.1). 서비스를 끄는 <code>disabledServices</code>는 AWS CLI 2.38.3에서 동작했지만(약 13초), 이미 설치된 해당 서비스의 CRD는 지워지지 않았습니다. 측정에 처음 쓴 CLI 2.35.11에는 이 설정이 없었습니다.<br>
+7) 추가 측정(10월 22일)에서 클러스터를 1.36에서 1.37로 업그레이드하는 동안 ACK capability는 <code>ACTIVE</code>를 유지했고, 업그레이드 전후와 진행 중에 만든 Queue는 모두 1.5초 안팎에 동기화됐습니다(API 서버 버전이 오가던 3분은 측정하지 못함). 고민할 지점은 in-place 업그레이드가 아니라 blue/green 교체입니다. AWS 리소스를 새 클러스터로 넘길 때 두 클러스터가 같은 리소스를 동시에 관리하지 않도록 retain과 adoption 순서를 정해 둬야 합니다.</div>
 
 <nav class="toc" markdown="1">
 
@@ -34,10 +35,11 @@ tags: eks, eks-capabilities, ack, platform-engineering
 7. [실측 5: Argo CD, kro와 묶기](#together)
 8. [데모 영상](#video)
 9. [self-managed ACK와 비교](#oss)
-10. [얻을 수 있는 것과 비용](#value)
-11. [이번 측정의 한계](#limits)
-12. [원시 결과, 재현 방법](#more)
-13. [시리즈를 마치며](#series)
+10. [도입 전에 고민할 것: 클러스터 업그레이드와 멀티 클러스터](#ops)
+11. [얻을 수 있는 것과 비용](#value)
+12. [이번 측정의 한계](#limits)
+13. [원시 결과, 재현 방법](#more)
+14. [시리즈를 마치며](#series)
 
 </nav>
 
@@ -225,7 +227,37 @@ when flag 'enable-carm' is set to true
 
 정리하면, 관리형은 컨트롤러 수십 개의 설치, 업그레이드, IAM 연결을 한 번에 끝내고, 노드 리소스를 쓰지 않으며, 태그와 세션 태그로 추적이 쉽습니다. 대신 컨트롤러 버전과 resync 주기를 고를 수 없고 upstream보다 늦으며, FieldExport가 없습니다. OSS는 필요한 서비스만 설치하고 버전과 resync 주기를 직접 정할 수 있지만, 서비스가 늘어날 때마다 Helm release, Pod, IAM 연결이 하나씩 늘어나고 각각 업그레이드해야 합니다. 팀별 IAM 분리에는 설정 두 개를 맞춰야 합니다.
 
-<h2 id="value">10. 얻을 수 있는 것과 비용</h2>
+<h2 id="ops">10. 도입 전에 고민할 것: 클러스터 업그레이드와 멀티 클러스터</h2>
+
+10월 22일에 1편의 업그레이드 측정에 쓴 hub 클러스터(EKS 1.36, Argo CD, kro, ACK capability를 모두 켬)에서 1.37로 in-place 업그레이드했습니다. 측정 1회는 새 SQS Queue CR을 만든 뒤 `ACK.ResourceSynced=True`가 되기까지의 시간입니다. 이번에는 IAMRoleSelector 없이 capability role에 `eks-cap-upg-*` 큐 권한만 직접 줬습니다. 시각은 UTC입니다.
+
+| 구간 | 횟수 | Queue 동기화 |
+|---|---|---|
+| 업그레이드 전 | 3 | 1.49~3.53초 |
+| 업그레이드 진행 중(API 서버 버전이 오가기 전) 3회, 완료 직후 1회 | 4 | 1.52~1.58초 |
+| 업그레이드 후 | 5 | 1.47~1.57초 |
+
+컨트롤 플레인 업그레이드는 약 7분 걸렸고(02:48:48 요청, 02:55:52에 `ACTIVE`), 그동안 ACK capability는 계속 `ACTIVE`였습니다. 버전 `46.186.1-eks-1`과 health도 그대로였습니다. 업그레이드 진행 중에 만든 큐 3개와 완료 직후에 만든 큐 1개는 모두 정상으로 만들어졌습니다. 다만 API 서버 버전이 1.36.4와 1.37.0 사이를 오가던 3분(02:52:41~02:55:52) 동안에는 ACK 측정이 없었습니다. 같은 스크립트에서 앞서 도는 Argo CD 측정이 self-heal 백오프로 늦어졌기 때문입니다(1편).
+
+여기서 고민할 점은 이렇습니다.
+
+- in-place 업그레이드 자체는 고민거리가 아니었습니다. ACK가 관리하는 것은 AWS 리소스이고, CRD는 capability가 설치하고 관리합니다. self-managed라면 서비스별 컨트롤러마다 새 Kubernetes 버전을 지원하는지 확인해야 하는데, 관리형은 그 확인을 AWS에 맡깁니다. 다만 EKS upgrade insights에는 capability를 점검하는 항목이 없었습니다.
+- 더 큰 고민은 blue/green 교체입니다. AWS 리소스를 관리하는 주체는 그 리소스를 선언한 클러스터의 CR입니다. 새 클러스터로 옮기는 동안 두 클러스터의 ACK가 같은 리소스를 함께 관리하면, 양쪽이 서로 다른 desired state를 밀어 넣을 수 있습니다. 앞의 측정을 이어 붙이면 이런 순서를 생각할 수 있습니다. 옛 클러스터의 CR에 `deletion-policy: retain`을 달아 지우고, 새 클러스터에서 `adoption-policy: adopt-or-create`로 같은 리소스를 가져오는 것입니다. 앞에서 retain으로 지운 큐는 AWS에 남았고, adoption은 4.7초 걸렸습니다. 두 클러스터 사이에서 이 순서를 한 번에 시험하지는 않았습니다. 주석을 Git의 매니페스트에 미리 넣어 두면 교체 때 손으로 할 일이 줄어듭니다.
+- 앞에서 drift를 막는 방법으로 든 SCP나 IAM 조건과 함께 쓸 때는 주의해야 합니다. 리소스 태그 `eks:eks-capability-arn`과 호출자의 세션 태그가 같아야만 바꿀 수 있게 막아 두면, 새 클러스터의 capability는 ARN이 달라서 그 리소스를 가져오거나 고치지 못할 수 있습니다. 교체 기간에는 조건을 풀거나, capability ARN 대신 다른 태그(환경, 팀)로 조건을 거는 식의 설계가 필요합니다. adoption 뒤에 태그가 새 capability ARN으로 바뀌는지는 확인하지 않았습니다.
+
+멀티 클러스터에서는 ACK를 어디에 둘지가 고민입니다. AWS 문서는 세 가지 패턴을 소개합니다.
+
+| 패턴 | ACK 위치 | 맞는 경우 | 고민할 점 |
+|---|---|---|---|
+| 중앙(hub) | 관리 클러스터 하나 | 데이터베이스, IAM, VPC처럼 플랫폼 팀이 관리하는 리소스 | hub의 capability role이 모든 계정과 리소스에 권한을 가짐. hub에 문제가 생기면 그동안 AWS 리소스 변경이 반영되지 않음 |
+| 분산 | 워크로드 클러스터마다 | 앱 팀이 큐, 버킷을 워크로드 옆에서 직접 선언 | capability 요금과 IAMRoleSelector 설정이 클러스터 수만큼 늘어남 |
+| 혼합 | 둘 다 | 관리자 범위 리소스는 hub, 워크로드 범위 리소스는 spoke | 같은 리소스를 두 곳에서 선언하지 않도록 범위 규칙이 필요 |
+
+어느 패턴이든 같은 AWS 리소스를 두 클러스터가 선언하지 않게 하는 것이 핵심입니다. 리소스 이름에 클러스터나 환경 이름을 넣어 두면 충돌을 줄일 수 있습니다. 다른 계정의 리소스는 IAMRoleSelector로 대상 계정의 역할을 지정하는 방식이 문서에 나오지만, 이번에는 시험하지 않았습니다.
+
+관리형 ACK를 검토하기 좋은 시점은 Terraform이나 CloudFormation으로 따로 관리하던 앱 단위 AWS 리소스를 워크로드 매니페스트 옆으로 옮기고 싶을 때입니다. 클러스터를 blue/green으로 자주 교체하는 조직이라면 retain과 adoption 순서를 먼저 연습해 두는 것이 도입 조건입니다. 반대로 AWS 리소스의 수명이 클러스터보다 훨씬 길고 여러 클러스터가 함께 쓰는 리소스라면(공유 데이터베이스, 네트워크), 클러스터 하나의 CR에 그 수명을 묶지 않는 편이 낫습니다. hub에 두거나 기존 IaC 도구에 남겨 두는 쪽을 생각해 볼 만합니다.
+
+<h2 id="value">11. 얻을 수 있는 것과 비용</h2>
 
 관리형 ACK가 잘 맞는 경우는 이렇습니다.
 
@@ -236,15 +268,16 @@ when flag 'enable-carm' is set to true
 
 서울 리전 요금은 capability 시간당 $0.006038, ACK 리소스 하나당 시간당 $0.000061입니다(2026-10-21 AWS Pricing API 조회). 리소스 200개를 한 달(730시간) 유지하면 $4.41 + $8.91로 약 $13.3입니다. self-managed 컨트롤러 3개가 요청한 CPU 150m은 m7g.large(서울 시간당 $0.1003)의 7.5%이므로, 노드 비용으로 나누면 한 달 약 $5.5입니다. 서비스가 10개로 늘면 OSS 쪽은 약 $18이 됩니다. 비용 차이는 작고, 컨트롤러 수에 비례해 늘어나는 운영 부담이 더 큰 차이입니다.
 
-<h2 id="limits">11. 이번 측정의 한계</h2>
+<h2 id="limits">12. 이번 측정의 한계</h2>
 
 - **서비스는 S3, SQS, DynamoDB 세 개만 시험했습니다.** RDS처럼 생성이 오래 걸리거나 의존 관계가 복잡한 리소스는 다루지 않았습니다.
 - **drift 복구는 관리형 2회, OSS 1회만 측정했고, 25분까지만 기다렸습니다.** 관리형 복구가 컨트롤러 재시작 때문이라는 해석은 CloudTrail 호출 시각 두 건에 근거한 것이고, 컨트롤러 로그로 확인하지는 않았습니다.
 - **교차 계정 리소스 관리는 시험하지 않았습니다.** IAMRoleSelector가 교차 계정에도 쓰인다는 것은 문서 기준입니다.
+- **업그레이드는 1.36에서 1.37로 한 번, SQS만 측정했습니다.** API 서버 버전이 오가던 3분 동안의 동기화 시간은 재지 못했습니다. blue/green 교체 순서(retain 후 adoption)는 각각 따로 잰 결과를 이어 붙인 것이고, 두 클러스터 사이에서 한 번에 시험하지는 않았습니다.
 - **관리형과 OSS를 동시에 띄운 무중단 이전은 시험하지 않았습니다.**
 - **리소스 수는 최대 20개 안팎이었습니다.** 수백 개 규모에서의 처리량은 측정하지 않았습니다.
 
-<h2 id="more">12. 원시 결과, 재현 방법</h2>
+<h2 id="more">13. 원시 결과, 재현 방법</h2>
 
 매니페스트는 [Atom-oh/eks-capabilities-demo](https://github.com/Atom-oh/eks-capabilities-demo)의 `ack/`(네임스페이스, IAMRoleSelector, 팀별 리소스, adoption과 retain 예제)와 `ack-gitops/`(Argo CD가 동기화하는 Queue)에 있습니다. 측정 결과 JSON은 [assets/data/eks-capabilities-2026-10/](/assets/data/eks-capabilities-2026-10/)에 있습니다.
 
@@ -257,7 +290,7 @@ when flag 'enable-carm' is set to true
 
 시험이 끝난 뒤 ACK 리소스와 retain으로 남긴 AWS 리소스, IAM 역할, 클러스터를 모두 삭제했습니다.
 
-<h2 id="series">13. 시리즈를 마치며</h2>
+<h2 id="series">14. 시리즈를 마치며</h2>
 
 세 편에서 확인한 공통점은 두 가지입니다. 하나는 컨트롤러를 클러스터 밖으로 빼면 노드 리소스와 업그레이드 부담은 확실히 사라진다는 것입니다. 세 capability 모두 워커 노드에 Pod를 하나도 만들지 않았고, kro와 ACK의 성능은 OSS와 같았습니다. Argo CD는 drift 복구가 같았고, 기본 Git 폴링은 관리형이 더 느렸습니다(1편, self-managed webhook은 측정하지 않음). 다른 하나는 권한이 기본으로 좁다는 것입니다. Argo CD는 배포 대상 권한을, kro는 하위 리소스 권한을, ACK는 서비스별 IAM 권한을 직접 열어야 했습니다. 처음에는 막히지만, 열어 둔 권한이 access entry와 RBAC에 그대로 명시됩니다. OSS는 기본값이 넓어서(kro의 `*/*/*`, Argo CD 컨트롤러의 `*/*/*`), 같은 수준으로 좁히려면(kro의 `rbac.mode: aggregation` 등) 비슷한 작업이 필요합니다.
 

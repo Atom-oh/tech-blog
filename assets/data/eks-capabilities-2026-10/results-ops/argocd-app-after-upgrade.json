@@ -1,0 +1,106 @@
+{
+  "metadata": {
+    "name": "demo-web-hub"
+  },
+  "spec": {
+    "destination": {
+      "name": "eks-cap-hub",
+      "namespace": "demo-web"
+    },
+    "project": "default",
+    "source": {
+      "path": "apps/demo-web",
+      "repoURL": "https://github.com/Atom-oh/eks-capabilities-demo.git",
+      "targetRevision": "main"
+    },
+    "syncPolicy": {
+      "automated": {
+        "prune": true,
+        "selfHeal": true
+      },
+      "syncOptions": [
+        "CreateNamespace=true"
+      ]
+    }
+  },
+  "status": {
+    "sync": {
+      "comparedTo": {
+        "destination": {
+          "name": "eks-cap-hub",
+          "namespace": "demo-web"
+        },
+        "source": {
+          "path": "apps/demo-web",
+          "repoURL": "https://github.com/Atom-oh/eks-capabilities-demo.git",
+          "targetRevision": "main"
+        }
+      },
+      "revision": "1d0c5e7a1f66a8dfa367863f642a001453d9d071",
+      "status": "Synced"
+    },
+    "health": {
+      "lastTransitionTime": "2026-10-22T02:53:30Z",
+      "status": "Healthy"
+    },
+    "operationState": {
+      "finishedAt": "2026-10-22T02:57:41Z",
+      "message": "successfully synced (all tasks run)",
+      "operation": {
+        "initiatedBy": {
+          "automated": true
+        },
+        "retry": {
+          "limit": 5
+        },
+        "sync": {
+          "autoHealAttemptsCount": 7,
+          "prune": true,
+          "resources": [
+            {
+              "group": "apps",
+              "kind": "Deployment",
+              "name": "demo-web"
+            }
+          ],
+          "revision": "1d0c5e7a1f66a8dfa367863f642a001453d9d071",
+          "source": {
+            "path": "apps/demo-web",
+            "repoURL": "https://github.com/Atom-oh/eks-capabilities-demo.git",
+            "targetRevision": "main"
+          },
+          "syncOptions": [
+            "CreateNamespace=true"
+          ]
+        }
+      },
+      "phase": "Succeeded",
+      "startedAt": "2026-10-22T02:57:37Z",
+      "syncResult": {
+        "resources": [
+          {
+            "group": "apps",
+            "hookPhase": "Running",
+            "images": [
+              "nginxinc/nginx-unprivileged:1.30.6-alpine"
+            ],
+            "kind": "Deployment",
+            "message": "deployment.apps/demo-web configured",
+            "name": "demo-web",
+            "namespace": "demo-web",
+            "status": "Synced",
+            "syncPhase": "Sync",
+            "version": "v1"
+          }
+        ],
+        "revision": "1d0c5e7a1f66a8dfa367863f642a001453d9d071",
+        "source": {
+          "path": "apps/demo-web",
+          "repoURL": "https://github.com/Atom-oh/eks-capabilities-demo.git",
+          "targetRevision": "main"
+        }
+      }
+    },
+    "reconciledAt": "2026-10-22T02:57:41Z"
+  }
+}

@@ -21,3 +21,22 @@
 `scripts/`는 측정에 쓴 스크립트입니다. `render-cluster.sh`는 기존 VPC를 이름 태그로 찾아 eksctl 설정을 만듭니다. VPC 이름, 클러스터 이름, 리전은 환경에 맞게 바꿔야 합니다. `argocd-create.sh`는 `IDC_USERNAME`(Identity Center 사용자 이름)을 받아 ADMIN으로 매핑합니다. `argocd-env.sh`는 UI에서 만든 토큰 파일을 읽어 argocd CLI 환경 변수를 설정합니다.
 
 결과 파일의 계정 ID, Identity Center 인스턴스 ID, UUID는 자리표시자로 바꿨습니다.
+
+## 추가 측정: 클러스터 업그레이드와 멀티 클러스터 (2026-10-22)
+
+환경: hub `eks-cap-hub`(EKS 1.36 → 1.37, m7g.large 1대)에 관리형 Argo CD `3.4.7-eks-1`, kro `0.9.4-eks-1`, ACK `46.186.1-eks-1`. spoke `eks-cap-spoke`(EKS 1.37, 엔드포인트 private 전용, m7g.large 1대).
+
+| 파일 | 내용 |
+|---|---|
+| `results-ops/probes.jsonl` | 한 줄이 측정 1회. Argo CD self-heal(replicas 2→4 후 2로 돌아오기까지), kro 인스턴스 replicas 변경이 하위 Deployment에 반영되기까지, 새 SQS Queue CR의 `ACK.ResourceSynced=True`까지(초). `before-*` 업그레이드 전, `during-*` 업그레이드 중, `control-*` 업그레이드 없이 같은 간격, `after-cooldown` 6분 쉰 뒤. `cluster`는 측정이 끝난 시점의 상태 |
+| `results-ops/monitor.jsonl` | 약 19초마다(15초 대기 + 조회 시간) 기록한 클러스터 상태와 버전, capability 상태와 버전, API 서버 `/version`, Application 상태 |
+| `results-ops/describe-*-{before,after}.json` | 업그레이드 전후 `describe-capability` 요약 |
+| `results-ops/insights-*.txt` | 업그레이드 전후 EKS upgrade insights |
+| `results-ops/upgrade-start.txt`, `upgrade-end.txt` | 업그레이드 요청 시각, 측정 루프가 `describe-update` 성공을 확인한 시각(측정 1회가 끝난 뒤 확인하므로 실제 완료보다 늦음. 클러스터가 `ACTIVE`가 된 시각은 `monitor.jsonl` 기준 02:55:52) |
+| `results-ops/argocd-app-after-upgrade.json` | 업그레이드 측정 직후 Application 상태(`autoHealAttemptsCount: 7`) |
+| `results-ops/spoke-register.json` | private spoke 등록 결과와 권한 오류. `registered_utc`, `still_failing_after_s`, `failure_message`, `hub_spoke_network`는 측정 당시 터미널 출력(등록 시각, 303.7초 대기 후 Application 상태와 operationState 메시지)에서 나중에 옮겨 적은 값 |
+| `results-ops/endpoint-prefix-reuse.json` | `endpointPrefix`를 지정한 Argo CD capability를 지우고 같은 이름으로 다시 만들었을 때의 주소와 소요 시간 |
+
+시각은 모두 UTC입니다. `probe.sh`는 Argo CD, kro, ACK 순서로 재므로, Argo CD self-heal이 늦어지면 kro와 ACK 측정도 그만큼 늦게 시작합니다.
+
+`scripts-ops/`는 이 측정에 쓴 스크립트입니다(`render.sh`, `setup-hub.sh`, `probe.sh`, `monitor.sh`, `lib.sh`).

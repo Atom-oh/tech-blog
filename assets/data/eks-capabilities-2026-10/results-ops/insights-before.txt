@@ -1,0 +1,7 @@
+Amazon Linux 2 compatibility	PASSING
+Kubelet version skew	PASSING
+EKS add-on version compatibility	PASSING
+kube-proxy version skew	PASSING
+Cluster health issues	PASSING
+Deprecated APIs removed in Kubernetes v1.38	PASSING
+Deprecated APIs removed in Kubernetes v1.37	PASSING

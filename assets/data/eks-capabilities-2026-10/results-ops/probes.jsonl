@@ -1,0 +1,13 @@
+{"label":"before-1","start_utc":"02:48:00","cluster":"ACTIVE/1.36","argocd_selfheal_s":3.062,"kro_propagate_s":1.040,"ack_queue_synced_s":3.527,"queue":"upg-024804"}
+{"label":"before-2","start_utc":"02:48:09","cluster":"ACTIVE/1.36","argocd_selfheal_s":2.063,"kro_propagate_s":1.020,"ack_queue_synced_s":1.513,"queue":"upg-024813"}
+{"label":"before-3","start_utc":"02:48:15","cluster":"ACTIVE/1.36","argocd_selfheal_s":14.626,"kro_propagate_s":1.019,"ack_queue_synced_s":1.493,"queue":"upg-024831"}
+{"label":"during-1","start_utc":"02:48:57","cluster":"UPDATING/1.36","argocd_selfheal_s":2.054,"kro_propagate_s":1.065,"ack_queue_synced_s":1.529,"queue":"upg-024900"}
+{"label":"during-2","start_utc":"02:49:49","cluster":"UPDATING/1.36","argocd_selfheal_s":6.069,"kro_propagate_s":1.055,"ack_queue_synced_s":1.519,"queue":"upg-024956"}
+{"label":"during-3","start_utc":"02:50:44","cluster":"UPDATING/1.36","argocd_selfheal_s":112.918,"kro_propagate_s":1.016,"ack_queue_synced_s":1.575,"queue":"upg-025239"}
+{"label":"during-4","start_utc":"02:53:27","cluster":"ACTIVE/1.37","argocd_selfheal_s":254.452,"kro_propagate_s":1.053,"ack_queue_synced_s":1.573,"queue":"upg-025743"}
+{"label":"control-1","start_utc":"03:10:44","cluster":"ACTIVE/1.37","argocd_selfheal_s":2.311,"kro_propagate_s":1.147,"ack_queue_synced_s":1.557,"queue":"upg-031048"}
+{"label":"control-2","start_utc":"03:11:36","cluster":"ACTIVE/1.37","argocd_selfheal_s":251.231,"kro_propagate_s":1.012,"ack_queue_synced_s":1.476,"queue":"upg-031549"}
+{"label":"control-3","start_utc":"03:16:37","cluster":"ACTIVE/1.37","argocd_selfheal_s":251.663,"kro_propagate_s":1.014,"ack_queue_synced_s":1.472,"queue":"upg-032050"}
+{"label":"control-4","start_utc":"03:21:37","cluster":"ACTIVE/1.37","argocd_selfheal_s":252.232,"kro_propagate_s":1.042,"ack_queue_synced_s":1.489,"queue":"upg-032551"}
+{"label":"control-5","start_utc":"03:26:39","cluster":"ACTIVE/1.37","argocd_selfheal_s":251.302,"kro_propagate_s":1.017,"ack_queue_synced_s":1.573,"queue":"upg-033051"}
+{"label":"after-cooldown","note":"first drift 6 min after previous self-heal","argocd_selfheal_s":2.017}

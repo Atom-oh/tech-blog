@@ -1,0 +1,12 @@
+{
+  "capabilityName": "ack",
+  "type": "ACK",
+  "status": "ACTIVE",
+  "version": "46.186.1-eks-1",
+  "health": {
+    "issues": []
+  },
+  "deletePropagationPolicy": "RETAIN",
+  "createdAt": "2026-10-22T02:37:00.404000+00:00",
+  "modifiedAt": "2026-10-22T02:37:00.404000+00:00"
+}

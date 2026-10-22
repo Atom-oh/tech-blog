@@ -1,0 +1,8 @@
+{
+  "first_url": "https://eks-cap-bg-<ACCOUNT_ID>.eks-capabilities.ap-northeast-2.amazonaws.com",
+  "first_active_s": 385,
+  "delete_s": 100,
+  "recreate_url": "https://eks-cap-bg-<ACCOUNT_ID>.eks-capabilities.ap-northeast-2.amazonaws.com",
+  "recreate_active_s": 338,
+  "same_url": true
+}
