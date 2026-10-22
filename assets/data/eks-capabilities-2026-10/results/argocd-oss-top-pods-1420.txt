@@ -1,0 +1,8 @@
+NAME                                                CPU(cores)   MEMORY(bytes)   
+argocd-application-controller-0                     3m           204Mi           
+argocd-applicationset-controller-68685bc7c4-lrcxk   1m           32Mi            
+argocd-dex-server-85f6d95b7d-8jmhs                  1m           16Mi            
+argocd-notifications-controller-78c998f58-cnqvm     1m           29Mi            
+argocd-redis-744559cc95-rjwzb                       4m           5Mi             
+argocd-repo-server-5bd5cc86b4-mrxxh                 2m           29Mi            
+argocd-server-57f8cf9ddf-4ftp5                      1m           23Mi            

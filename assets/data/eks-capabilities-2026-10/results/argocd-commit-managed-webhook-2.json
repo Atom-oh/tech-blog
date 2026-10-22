@@ -1,0 +1,6 @@
+{
+  "label": "managed-webhook-2",
+  "version": "v9",
+  "push_to_synced_s": 7.046,
+  "push_to_configmap_s": 7.545
+}

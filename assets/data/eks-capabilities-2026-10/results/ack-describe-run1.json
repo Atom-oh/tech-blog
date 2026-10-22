@@ -1,0 +1,19 @@
+{
+    "capability": {
+        "capabilityName": "ack",
+        "arn": "arn:aws:eks:ap-northeast-2:<ACCOUNT_ID>:capability/eks-cap-demo/ack/ack/<UUID>",
+        "clusterName": "eks-cap-demo",
+        "type": "ACK",
+        "roleArn": "arn:aws:iam::<ACCOUNT_ID>:role/eks-cap-demo-ack",
+        "status": "ACTIVE",
+        "version": "46.186.1-eks-1",
+        "configuration": {},
+        "tags": {},
+        "health": {
+            "issues": []
+        },
+        "createdAt": "2026-10-21T09:20:51.390000+00:00",
+        "modifiedAt": "2026-10-21T09:20:51.390000+00:00",
+        "deletePropagationPolicy": "RETAIN"
+    }
+}

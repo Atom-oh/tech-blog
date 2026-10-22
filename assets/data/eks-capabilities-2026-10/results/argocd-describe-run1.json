@@ -1,0 +1,40 @@
+{
+    "capability": {
+        "capabilityName": "argocd",
+        "arn": "arn:aws:eks:ap-northeast-2:<ACCOUNT_ID>:capability/eks-cap-demo/argocd/argocd/<UUID>",
+        "clusterName": "eks-cap-demo",
+        "type": "ARGOCD",
+        "roleArn": "arn:aws:iam::<ACCOUNT_ID>:role/eks-cap-demo-argocd",
+        "status": "ACTIVE",
+        "version": "3.4.6-eks-2",
+        "configuration": {
+            "argoCd": {
+                "namespace": "argocd",
+                "awsIdc": {
+                    "idcInstanceArn": "arn:aws:sso:::instance/ssoins-<ID>",
+                    "idcRegion": "ap-northeast-2",
+                    "idcManagedApplicationArn": "arn:aws:sso::<ACCOUNT_ID>:application/ssoins-<ID>/apl-<ID>"
+                },
+                "rbacRoleMappings": [
+                    {
+                        "role": "ADMIN",
+                        "identities": [
+                            {
+                                "id": "<UUID>",
+                                "type": "SSO_USER"
+                            }
+                        ]
+                    }
+                ],
+                "serverUrl": "https://argocd-<ID>-<ACCOUNT_ID>.eks-capabilities.ap-northeast-2.amazonaws.com"
+            }
+        },
+        "tags": {},
+        "health": {
+            "issues": []
+        },
+        "createdAt": "2026-10-21T06:11:17.492000+00:00",
+        "modifiedAt": "2026-10-21T06:11:17.492000+00:00",
+        "deletePropagationPolicy": "RETAIN"
+    }
+}

@@ -124,7 +124,8 @@ def page(*, src, title, description, url, main, og_type="website", scripts="", p
 
 
 def artwork(p: dict) -> str:
-    theme = "hybrid" if "hybrid-nodes" in p["tags"] else "mesh"
+    theme = ("hybrid" if "hybrid-nodes" in p["tags"]
+             else "capabilities" if "eks-capabilities" in p["tags"] else "mesh")
     label = p["tags"][0] if p["tags"] else "engineering"
     return (f'<div class="post-art art-{theme}" aria-hidden="true">'
             f'<div class="art-label"><span>FIELD NOTES</span><span>{esc(label.upper())}</span></div>'

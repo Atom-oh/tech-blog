@@ -61,6 +61,7 @@ svg { display: block; }
 .post-art { display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; min-width: 0; background: #eee6db; }
 .art-mesh { background: #eee6db; color: #75644d; }
 .art-hybrid { background: #e4eae3; color: #536952; }
+.art-capabilities { background: #e5eaf1; color: #4f6787; }
 .post-art img { display: block; width: 100%; min-height: 0; object-fit: contain; }
 .art-label, .art-caption { display: flex; justify-content: space-between; align-items: center; font-family: var(--mono); font-size: 9px; line-height: 1.3; letter-spacing: 1px; padding: 22px 25px 0; }
 .art-label > span:last-child { border: 1px solid currentColor; border-radius: 3px; padding: 3px 6px; font-size: 8px; }
@@ -151,6 +152,7 @@ article h1 { font-size: clamp(28px, 3.3vw, 40px); line-height: 1.5; margin: 0 0 
 .prose li { margin: .4rem 0; }
 .prose strong { color: var(--text); }
 .prose .lead { color: var(--muted); font-size: 17px; line-height: 2; margin-bottom: 28px; }
+.prose .series { font-size: 14px; color: var(--muted); border-top: 1px solid #e3ddd3; border-bottom: 1px solid #e3ddd3; padding: 10px 0; margin: 0 0 24px; }
 .toc { background: #f1f1eb; border: 1px solid var(--border); border-radius: 8px; padding: 22px 26px; margin: 32px 0; font-size: 14px; }
 .toc p { margin-bottom: 12px; }
 .toc ol { margin: 0; padding-left: 1.4rem; }

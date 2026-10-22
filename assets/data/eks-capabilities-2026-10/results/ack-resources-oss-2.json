@@ -1,0 +1,8 @@
+{
+  "label": "oss-2",
+  "prefix": "m100520",
+  "bucket_s": 3.197,
+  "queue_s": 1.103,
+  "table_s": 11.543,
+  "team_b_bucket": "AccessDenied"
+}

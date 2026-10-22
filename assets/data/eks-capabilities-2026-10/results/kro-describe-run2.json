@@ -1,0 +1,19 @@
+{
+    "capability": {
+        "capabilityName": "kro",
+        "arn": "arn:aws:eks:ap-northeast-2:<ACCOUNT_ID>:capability/eks-cap-demo/kro/kro/<UUID>",
+        "clusterName": "eks-cap-demo",
+        "type": "KRO",
+        "roleArn": "arn:aws:iam::<ACCOUNT_ID>:role/eks-cap-demo-kro",
+        "status": "ACTIVE",
+        "version": "0.9.4-eks-1",
+        "configuration": {},
+        "tags": {},
+        "health": {
+            "issues": []
+        },
+        "createdAt": "2026-10-21T10:06:02.128000+00:00",
+        "modifiedAt": "2026-10-21T10:06:02.128000+00:00",
+        "deletePropagationPolicy": "RETAIN"
+    }
+}
