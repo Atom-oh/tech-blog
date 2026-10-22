@@ -1,0 +1,15 @@
+# Self-managed Argo CD 3.4.6 (chart 10.2.2) with the same settings used on the managed capability.
+crds:
+  install: false          # CRDs left behind by the capability (same 3.4.6 schema)
+configs:
+  cm:
+    ui.bannercontent: "eks-cap-demo: self-managed Argo CD 3.4.6 for comparison"
+    resource.customizations.health.platform.example.com_NginxApp: |
+      hs = {}
+      hs.status = "Progressing"
+      hs.message = "waiting for kro"
+      if obj.status ~= nil and obj.status.state == "ACTIVE" then
+        hs.status = "Healthy"
+        hs.message = "kro instance ACTIVE"
+      end
+      return hs

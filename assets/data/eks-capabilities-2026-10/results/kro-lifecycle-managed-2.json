@@ -1,0 +1,7 @@
+{
+  "label": "managed-2",
+  "create_to_active_s": 2.486,
+  "spec_update_to_deploy_s": 0.507,
+  "delete_children_gone_s": 1.016,
+  "delete_instance_gone_s": 3.522
+}

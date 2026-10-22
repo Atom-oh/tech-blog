@@ -1,0 +1,8 @@
+{
+  "label": "managed-1",
+  "prefix": "m122604",
+  "bucket_s": 3.139,
+  "queue_s": 1.060,
+  "table_s": 11.342,
+  "team_b_bucket": "AccessDenied"
+}

@@ -1,0 +1,4 @@
+self-managed Argo CD 3.4.6 (chart 10.2.2 defaults), custom health for platform.example.com_NginxApp:
+  tostring(os.time())  -> Unknown: attempt to index a non-table object(nil) with key time
+  string.upper("ok")   -> Unknown: attempt to index a non-table object(nil) with key upper
+managed 3.4.6-eks-2: same results; tostring(42) works on managed.

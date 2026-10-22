@@ -1,0 +1,7 @@
+{
+  "label": "oss-5",
+  "create_to_active_s": 3.441,
+  "spec_update_to_deploy_s": 0.495,
+  "delete_children_gone_s": 3.087,
+  "delete_instance_gone_s": 5.649
+}
