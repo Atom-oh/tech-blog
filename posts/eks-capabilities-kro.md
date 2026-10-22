@@ -18,7 +18,8 @@ tags: eks, eks-capabilities, kro, platform-engineering
 2) 기본으로 붙는 액세스 항목(access entry) 정책 <code>AmazonEKSKROPolicy</code>만으로는, RGD가 만든 API(이번에는 <code>platform.example.com</code> 그룹)를 watch하지 못해 RGD가 <code>ControllerReady=False</code>에서 멈춥니다. 메시지는 "cache sync timeout"이라 권한 문제로 읽히지 않습니다. access entry에 Kubernetes 그룹을 붙이고 RGD별 ClusterRole을 바인딩하자 해결됐습니다. 반대로 OSS Helm 차트는 기본값(<code>rbac.mode: unrestricted</code>)에서 컨트롤러에 <code>*/*/*</code> 권한을 줍니다.<br>
 3) 인스턴스 수명주기 성능은 관리형과 OSS가 같았습니다. 생성부터 ACTIVE까지 2.4~3.7초, spec 변경이 Deployment에 반영되기까지 약 0.5초(관리형 1회만 51.6초), 삭제 후 하위 리소스 정리까지 1~4초였습니다.<br>
 4) 관리형에서 OSS로, 다시 관리형으로 바꿔도 RGD와 인스턴스가 그대로 이어졌습니다. 단, capability를 지운 동안에는 인스턴스 변경이 반영되지 않습니다.<br>
-5) 가장 위험했던 것은 이름 충돌입니다. 같은 이름의 ACK Table CR이 이미 있으면 kro가 그 CR을 가져가 테이블 이름을 덮어썼고, ACK가 새 테이블을 만들면서 원래 테이블은 관리되지 않는 상태로 남았습니다. 인스턴스를 지우자 가져간 CR까지 삭제됐습니다. OSS에서도 똑같이 재현되므로 관리형만의 문제는 아닙니다.</div>
+5) 가장 위험했던 것은 이름 충돌입니다. 같은 이름의 ACK Table CR이 이미 있으면 kro가 그 CR을 가져가 테이블 이름을 덮어썼고, ACK가 새 테이블을 만들면서 원래 테이블은 관리되지 않는 상태로 남았습니다. 인스턴스를 지우자 가져간 CR까지 삭제됐습니다. OSS에서도 똑같이 재현되므로 관리형만의 문제는 아닙니다.<br>
+6) 추가 측정(10월 22일)에서 클러스터를 1.36에서 1.37로 업그레이드하는 동안 kro capability는 <code>ACTIVE</code>를 유지했고, 업그레이드 전후와 진행 중에 잰 인스턴스 변경은 모두 1초 안팎에 반영됐습니다(API 서버 버전이 오가던 3분은 측정하지 못함). kro capability는 자기 클러스터만 관리하므로, 여러 클러스터에서 같은 API를 쓰려면 클러스터마다 켜고 RGD를 배포해야 합니다.</div>
 
 <nav class="toc" markdown="1">
 
@@ -33,9 +34,10 @@ tags: eks, eks-capabilities, kro, platform-engineering
 7. [함정: 같은 이름의 기존 CR을 덮어씁니다](#collision)
 8. [데모 영상](#video)
 9. [self-managed kro와 비교](#oss)
-10. [얻을 수 있는 것과 비용](#value)
-11. [이번 측정의 한계](#limits)
-12. [원시 결과, 재현 방법](#more)
+10. [도입 전에 고민할 것: 클러스터 업그레이드와 멀티 클러스터](#ops)
+11. [얻을 수 있는 것과 비용](#value)
+12. [이번 측정의 한계](#limits)
+13. [원시 결과, 재현 방법](#more)
 
 </nav>
 
@@ -229,7 +231,32 @@ kro는 대상 이름의 객체가 이미 있어도 거부하지 않았습니다.
 
 AWS 문서의 OSS → 관리형 이전 절차는 리더 선출 lease를 `kube-system`으로 옮긴 뒤 capability를 만들라고 안내합니다. 문서 예시는 예전 Helm 경로(`oci://ghcr.io/awslabs/kro/kro-chart`)와 `--set leaderElection.namespace=kube-system`을 쓰는데, 현재 공식 차트는 `oci://registry.k8s.io/kro/charts/kro`이고 0.9.4 차트에서 해당 값의 키는 `config.leaderElectionNamespace`입니다. 이번 시험에서는 두 컨트롤러를 동시에 띄우지 않고 하나를 지운 뒤 다른 하나를 설치했기 때문에 lease 이전은 확인하지 않았습니다.
 
-<h2 id="value">10. 얻을 수 있는 것과 비용</h2>
+<h2 id="ops">10. 도입 전에 고민할 것: 클러스터 업그레이드와 멀티 클러스터</h2>
+
+10월 22일에 1편의 업그레이드 측정에 쓴 hub 클러스터(EKS 1.36, Argo CD, kro, ACK capability를 모두 켬)에서, 1.37로 in-place 업그레이드하는 동안 kro가 어떻게 동작하는지 쟀습니다. 측정 1회는 `NginxApp` 인스턴스의 replicas를 바꾼 뒤 하위 Deployment에 반영되기까지의 시간입니다. 시각은 UTC입니다.
+
+| 구간 | 횟수 | kro 반영 |
+|---|---|---|
+| 업그레이드 전 | 3 | 1.02~1.04초 |
+| 업그레이드 진행 중(API 서버 버전이 오가기 전) 3회, 완료 직후 1회 | 4 | 1.02~1.07초 |
+| 업그레이드 후 | 5 | 1.01~1.15초 |
+
+컨트롤 플레인 업그레이드는 약 7분 걸렸고(02:48:48 요청, 02:55:52에 `ACTIVE`), 그동안 kro capability는 계속 `ACTIVE`였습니다. 버전 `0.9.4-eks-1`과 health도 업그레이드 전과 같았습니다. 다만 API 서버 버전이 1.36.4와 1.37.0 사이를 오가던 3분(02:52:41~02:55:52) 동안에는 kro 측정이 없었습니다. 같은 스크립트에서 앞서 도는 Argo CD 측정이 self-heal 백오프로 늦어졌기 때문입니다(1편). 이 측정은 kubectl 호출과 0.5초 대기를 반복해 확인했으므로 해상도는 약 1초이고, 위의 인스턴스 수명주기 측정(약 0.5초)과 직접 비교할 수 없습니다. 업그레이드 전후 비교로만 보시기 바랍니다.
+
+여기서 고민할 점은 이렇습니다.
+
+- 클러스터 업그레이드보다 kro 버전이 바뀌는 쪽을 대비해야 합니다. kro API는 아직 `kro.run/v1alpha1`이라 버전에 따라 RGD 문법과 동작이 바뀔 수 있습니다. self-managed는 클러스터 업그레이드와 kro 업그레이드를 따로 계획할 수 있습니다. 관리형은 kro 버전을 AWS가 정합니다. 이번 측정 기간에 kro 버전은 바뀌지 않았지만, 같은 기간에 하루 간격으로 만든 두 Argo CD capability는 버전이 달랐습니다. 운영 RGD는 같은 capability를 켠 검증 클러스터에서 먼저 돌려 보는 편이 안전합니다.
+- blue/green으로 클러스터를 바꿀 때는 RGD와 권한을 함께 옮겨야 합니다. 관리형 kro는 RGD마다 하위 리소스 권한을 직접 열어야 했습니다. 그중 ClusterRole과 ClusterRoleBinding은 Git에 두고 Argo CD로 배포할 수 있지만, access entry에 `kro-workloads` 그룹을 붙이는 일은 EKS API 호출이라 Kubernetes 매니페스트로 표현되지 않습니다. 클러스터를 만드는 IaC(eksctl, Terraform 등)에 넣어 두어야 새 클러스터에서 빠지지 않습니다. 순서도 중요합니다. 권한보다 RGD가 먼저 들어가면 앞서 잰 것처럼 228초를 기다릴 수 있으므로, Argo CD의 sync wave로 RBAC를 RGD보다 먼저 적용하는 편이 낫습니다(sync wave 적용은 시험하지 않음).
+
+멀티 클러스터에서는 kro를 어디에 둘지가 고민입니다.
+
+- kro capability는 자기 클러스터의 리소스만 만듭니다. hub의 kro 인스턴스가 spoke에 Deployment를 직접 만들어 주지는 않습니다. 앱 팀이 각 클러스터에서 `NginxApp`을 쓰게 하려면 클러스터마다 kro capability(또는 self-managed kro)를 켜고, RGD를 Argo CD ApplicationSet 같은 도구로 모든 클러스터에 배포하는 구조가 됩니다.
+- AWS 문서는 hub에 kro를 두는 패턴도 소개하며, hub의 kro로 "모든 클러스터에서 쓰는 이식 가능한 플랫폼 추상화"를 만든다고 설명합니다. hub의 RGD가 ACK 리소스를 묶거나, spoke를 가리키는 Argo CD Application이나 ApplicationSet을 하위 리소스로 만들게 하면 hub 하나에서 여러 클러스터를 다룰 수 있습니다. 이 구성은 시험하지 않았습니다.
+- 클러스터마다 켜면 비용과 권한 작업이 클러스터 수만큼 늘어납니다. 서울 리전 capability 요금은 클러스터당 한 달 약 $4.4이고, RBAC 연결도 클러스터마다 해야 합니다. 모든 클러스터의 kro 버전을 하나로 맞춰야 한다면 버전을 고정할 수 있는 self-managed가 유리합니다. 관리형은 버전을 고정할 수 없고, 클러스터마다 같은 버전이 유지된다는 보장도 문서에 없습니다.
+
+관리형 kro를 검토하기 좋은 시점은 플랫폼 팀이 RGD로 표준 API를 만들기 시작할 때입니다. 이미 Argo CD나 ACK capability를 쓰고 있다면 권한과 로그를 같은 방식으로 관리할 수 있다는 이점도 있습니다. 반대로 kro의 새 기능이 나오자마자 써야 하거나, 여러 클러스터의 kro 버전과 업그레이드 시점을 직접 통제해야 한다면 self-managed가 맞습니다.
+
+<h2 id="value">11. 얻을 수 있는 것과 비용</h2>
 
 관리형 kro가 잘 맞는 경우는 이렇습니다.
 
@@ -241,15 +268,15 @@ AWS 문서의 OSS → 관리형 이전 절차는 리더 선출 lease를 `kube-sy
 
 비용은 작습니다. 서울 리전 기준 capability 요금은 시간당 $0.006038, 인스턴스 요금은 인스턴스 하나당 시간당 $0.000061입니다(2026-10-21 AWS Pricing API 조회). 인스턴스 100개를 한 달(730시간) 유지하면 $4.41 + $4.45로 약 $8.86입니다. self-managed kro가 요청한 256m CPU는 m7g.large(2 vCPU, 서울 시간당 $0.1003)의 12.8%이므로, CPU 요청 기준으로 노드 비용을 나누면 한 달 약 $9.4입니다. 비용만으로는 어느 쪽도 결정적이지 않고, 운영 부담과 권한 모델이 선택 기준이 됩니다.
 
-<h2 id="limits">11. 이번 측정의 한계</h2>
+<h2 id="limits">12. 이번 측정의 한계</h2>
 
 - **시나리오마다 2~5회만 반복했습니다.** 관리형 spec 변경의 51.6초 이상치는 원인을 확인하지 못했습니다.
 - **RGD는 2개, 인스턴스는 최대 6개였습니다.** 인스턴스 수백 개에서의 처리량과, AWS 문서([Capability Kubernetes resources](https://docs.aws.amazon.com/eks/latest/userguide/capability-kubernetes-resources.html))가 정한 RGD당 리소스 한도(64개)에 가까운 그래프는 시험하지 않았습니다.
 - **두 컨트롤러를 동시에 띄운 무중단 이전은 시험하지 않았습니다.** 한쪽을 지운 뒤 다른 쪽을 설치했습니다.
 - **권한 부여 후 228초 대기의 원인은 추정입니다.** 컨트롤러의 재시도 간격으로 보이지만, 컨트롤러 로그로 확인하지는 않았습니다.
-- **클러스터는 단일 리전, 단일 계정이었습니다.**
+- **클러스터는 단일 리전, 단일 계정이었습니다.** 업그레이드는 1.36에서 1.37로 한 번만 했고, API 서버 버전이 오가던 3분 동안의 kro 반영 시간은 재지 못했습니다. spoke에 kro를 켠 멀티 클러스터 구성과 hub RGD로 spoke를 다루는 구성은 시험하지 않았습니다.
 
-<h2 id="more">12. 원시 결과, 재현 방법</h2>
+<h2 id="more">13. 원시 결과, 재현 방법</h2>
 
 매니페스트는 [Atom-oh/eks-capabilities-demo](https://github.com/Atom-oh/eks-capabilities-demo)에 있습니다. `kro/`에 RGD, 인스턴스, ClusterRole이 있고, `kro-instances/`는 Argo CD가 동기화하는 인스턴스입니다. 측정 결과 JSON은 [assets/data/eks-capabilities-2026-10/](/assets/data/eks-capabilities-2026-10/)에 있습니다.
 

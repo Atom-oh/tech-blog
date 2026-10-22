@@ -1,0 +1,12 @@
+{
+  "spoke_endpoint": "private only (endpointPublicAccess=false)",
+  "workstation_reach": "unreachable (curl http=000)",
+  "first_try": "forbidden: namespaces create with Edit+AdminView only",
+  "fix": "associate AmazonEKSArgoCDClusterPolicy on spoke + new sync",
+  "sync_after_fix_s": 11.1,
+  "retry_note": "automated retry limit 5 exhausted; needed manual sync",
+  "registered_utc": "02:58:28",
+  "still_failing_after_s": 303.7,
+  "failure_message": "namespaces is forbidden ... Retrying attempt #5",
+  "hub_spoke_network": "same VPC (fsi-demo-vpc) private subnets; workstation in a different VPC"
+}
