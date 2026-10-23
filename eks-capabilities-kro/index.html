@@ -143,6 +143,8 @@
 </tbody>
 </table>
 <p>AWS 문서는 kro가 "같은 upstream 컨트롤러를 쓰고 완전히 호환된다"고 설명합니다. 이번 시험에서도 RGD와 CEL 표현식, 측정 결과가 OSS와 같았습니다. 차이는 거의 전부 권한과 운영 쪽에서 나왔습니다.</p>
+<figure class="diagram"><a href="/assets/eks-cap-kro-arch.svg"><img src="/assets/eks-cap-kro-arch.svg" alt="관리형 kro 동작 구조. RGD를 적용하면 kro가 1.1초 만에 CRD를 만들고, 인스턴스를 만들면 Deployment와 Service를 만든다. 자동 정책 AmazonEKSKROPolicy는 kro.run과 CRD만 다루므로 하위 리소스 권한은 그룹과 ClusterRole로 직접 열어야 한다." loading="lazy"></a><figcaption>관리형 kro의 동작 구조와 권한. RGD가 만든 API와 하위 리소스 권한이 없으면 forbidden이 아니라 cache sync timeout이 보입니다.</figcaption></figure>
+
 <h2 id="create">3. 실측 1: 생성과 클러스터에 남는 것</h2>
 
 <p>capability role에는 신뢰 정책만 두고 권한 정책은 붙이지 않았습니다. 명령은 다음과 같습니다.</p>
@@ -437,6 +439,8 @@ subjects:
 </tr>
 </tbody>
 </table>
+<figure class="diagram"><a href="/assets/eks-cap-upgrade-timeline.svg"><img src="/assets/eks-cap-upgrade-timeline.svg" alt="EKS 1.36에서 1.37로 업그레이드하는 7분 동안의 타임라인. 세 capability는 내내 ACTIVE였고, API 서버 버전이 오가던 3분 동안 kro와 ACK 측정은 없었다. Argo CD self-heal은 백오프로 113초, 254초까지 늘었다." loading="lazy"></a><figcaption>업그레이드 타임라인. 빗금은 API 서버 버전이 1.36.4와 1.37.0 사이를 오간 구간입니다. 막대 위치는 기록 시각 기준 근사입니다.</figcaption></figure>
+
 <p>컨트롤 플레인 업그레이드는 약 7분 걸렸고(02:48:48 요청, 02:55:52에 <code>ACTIVE</code>), 그동안 kro capability는 계속 <code>ACTIVE</code>였습니다. 버전 <code>0.9.4-eks-1</code>과 health도 업그레이드 전과 같았습니다. 다만 API 서버 버전이 1.36.4와 1.37.0 사이를 오가던 3분(02:52:41~02:55:52) 동안에는 kro 측정이 없었습니다. 같은 스크립트에서 앞서 도는 Argo CD 측정이 self-heal 백오프로 늦어졌기 때문입니다(1편). 이 측정은 kubectl 호출과 0.5초 대기를 반복해 확인했으므로 해상도는 약 1초이고, 위의 인스턴스 수명주기 측정(약 0.5초)과 직접 비교할 수 없습니다. 업그레이드 전후 비교로만 보시기 바랍니다.</p>
 <p>여기서 고민할 점은 이렇습니다.</p>
 <ul>
@@ -444,6 +448,8 @@ subjects:
 <li>blue/green으로 클러스터를 바꿀 때는 RGD와 권한을 함께 옮겨야 합니다. 관리형 kro는 RGD마다 하위 리소스 권한을 직접 열어야 했습니다. 그중 ClusterRole과 ClusterRoleBinding은 Git에 두고 Argo CD로 배포할 수 있지만, access entry에 <code>kro-workloads</code> 그룹을 붙이는 일은 EKS API 호출이라 Kubernetes 매니페스트로 표현되지 않습니다. 클러스터를 만드는 IaC(eksctl, Terraform 등)에 넣어 두어야 새 클러스터에서 빠지지 않습니다. 순서도 중요합니다. 권한보다 RGD가 먼저 들어가면 앞서 잰 것처럼 228초를 기다릴 수 있으므로, Argo CD의 sync wave로 RBAC를 RGD보다 먼저 적용하는 편이 낫습니다(sync wave 적용은 시험하지 않음).</li>
 </ul>
 <p>멀티 클러스터에서는 kro를 어디에 둘지가 고민입니다.</p>
+<figure class="diagram"><a href="/assets/eks-cap-kro-multicluster.svg"><img src="/assets/eks-cap-kro-multicluster.svg" alt="여러 클러스터에서 kro를 두는 두 구성. A는 클러스터마다 kro를 켜고 Argo CD ApplicationSet으로 RGD와 RBAC를 배포한다. B는 hub에만 kro를 두고 RGD가 ACK 리소스와 spoke용 Argo CD Application을 만든다." loading="lazy"></a><figcaption>kro를 클러스터마다 둘지, hub에만 둘지. 두 구성 모두 여러 클러스터로는 시험하지 않았습니다.</figcaption></figure>
+
 <ul>
 <li>kro capability는 자기 클러스터의 리소스만 만듭니다. hub의 kro 인스턴스가 spoke에 Deployment를 직접 만들어 주지는 않습니다. 앱 팀이 각 클러스터에서 <code>NginxApp</code>을 쓰게 하려면 클러스터마다 kro capability(또는 self-managed kro)를 켜고, RGD를 Argo CD ApplicationSet 같은 도구로 모든 클러스터에 배포하는 구조가 됩니다.</li>
 <li>AWS 문서는 hub에 kro를 두는 패턴도 소개하며, hub의 kro로 "모든 클러스터에서 쓰는 이식 가능한 플랫폼 추상화"를 만든다고 설명합니다. hub의 RGD가 ACK 리소스를 묶거나, spoke를 가리키는 Argo CD Application이나 ApplicationSet을 하위 리소스로 만들게 하면 hub 하나에서 여러 클러스터를 다룰 수 있습니다. 이 구성은 시험하지 않았습니다.</li>

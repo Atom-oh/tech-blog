@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="770" viewBox="0 0 1120 770" role="img" aria-labelledby="title desc">
+  <title id="title">관리형 Argo CD의 연결 구조</title>
+  <desc id="desc">사용자는 AWS가 호스팅하는 UI와 API 엔드포인트로 접속하고, 로그인은 IAM Identity Center가 처리한다. Okta나 Entra ID는 Identity Center의 외부 ID 소스로 SAML과 SCIM으로 연결한다. Argo CD 컨트롤러는 AWS 소유 인프라에서 돌며 Git 저장소를 폴링하거나 webhook을 받는다. 컨트롤러는 capability role로 고객 계정 EKS 클러스터의 API 서버를 호출하며, 권한은 access entry로 정해진다. 자동으로 붙는 정책은 Argo CD 리소스용이고, 배포 권한인 Edit, AdminView와 CRD별 RBAC는 직접 추가해야 한다. Application과 cluster Secret은 클러스터의 argocd 네임스페이스에 있다.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto-start-reverse"><path d="M0 0 8 4 0 8" fill="none" stroke="#405267" stroke-width="1.6"/></marker>
+  </defs>
+  <rect width="1120" height="770" rx="20" fill="#fbfaf7"/>
+  <g font-family="Noto Sans CJK KR, sans-serif">
+    <text x="42" y="49" fill="#5f6670" font-size="18" font-weight="600" letter-spacing="2">EKS CAPABILITY · ARGO CD</text>
+    <text x="42" y="93" fill="#222e3b" font-size="31" font-weight="700">컨트롤러는 AWS 쪽에, 배포 권한은 access entry에</text>
+
+    <!-- left column -->
+    <rect x="40" y="180" width="260" height="62" rx="12" fill="#edf0f3" stroke="#c4cbd1"/>
+    <text x="170" y="219" text-anchor="middle" fill="#26394b" font-size="21">사용자 · argocd CLI</text>
+
+    <rect x="40" y="310" width="260" height="86" rx="12" fill="#fff4df" stroke="#b88632"/>
+    <text x="170" y="347" text-anchor="middle" fill="#654814" font-size="21" font-weight="700">IAM Identity Center</text>
+    <text x="170" y="377" text-anchor="middle" fill="#765c2e" font-size="16">사용자 · 그룹 ID 발급</text>
+
+    <rect x="40" y="458" width="260" height="72" rx="12" fill="#ffffff" stroke="#9aa5b1" stroke-dasharray="6 5"/>
+    <text x="170" y="490" text-anchor="middle" fill="#26394b" font-size="20">Okta · Entra ID</text>
+    <text x="170" y="516" text-anchor="middle" fill="#5f6670" font-size="15">외부 ID 소스 (선택)</text>
+    <path d="M170 458V404" fill="none" stroke="#405267" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+    <text x="182" y="436" fill="#5f6670" font-size="15">SAML · SCIM</text>
+
+    <rect x="40" y="610" width="260" height="66" rx="12" fill="#edf0f3" stroke="#c4cbd1"/>
+    <text x="170" y="650" text-anchor="middle" fill="#26394b" font-size="20">Git 저장소 (GitHub)</text>
+
+    <!-- AWS owned -->
+    <rect x="340" y="130" width="350" height="580" rx="16" fill="#f1f5fb" stroke="#6f8fb8" stroke-width="1.6" stroke-dasharray="7 5"/>
+    <text x="362" y="162" fill="#1f3b63" font-size="19" font-weight="700">AWS 소유 인프라</text>
+
+    <rect x="362" y="180" width="306" height="92" rx="12" fill="#e3ecf8" stroke="#4a6fa5" stroke-width="1.6"/>
+    <text x="515" y="210" text-anchor="middle" fill="#1f3b63" font-size="20" font-weight="700">UI · API 엔드포인트</text>
+    <text x="515" y="236" text-anchor="middle" fill="#33557f" font-size="15">&lt;prefix&gt;-&lt;계정&gt;.eks-capabilities</text>
+    <text x="515" y="258" text-anchor="middle" fill="#33557f" font-size="15">.&lt;리전&gt;.amazonaws.com</text>
+
+    <rect x="362" y="300" width="306" height="210" rx="12" fill="#e3ecf8" stroke="#4a6fa5" stroke-width="2"/>
+    <text x="515" y="338" text-anchor="middle" fill="#1f3b63" font-size="24" font-weight="700">Argo CD capability</text>
+    <text x="515" y="370" text-anchor="middle" fill="#33557f" font-size="16">워커 노드 Pod 0개</text>
+    <text x="515" y="396" text-anchor="middle" fill="#33557f" font-size="16">버전은 AWS가 정함</text>
+    <line x1="384" y1="418" x2="646" y2="418" stroke="#b9c9de"/>
+    <text x="515" y="446" text-anchor="middle" fill="#1f3b63" font-size="16" font-weight="600">rbacRoleMappings</text>
+    <text x="515" y="472" text-anchor="middle" fill="#33557f" font-size="15">Identity Center 사용자 · 그룹</text>
+    <text x="515" y="494" text-anchor="middle" fill="#33557f" font-size="15">→ ADMIN · EDITOR · VIEWER</text>
+
+    <rect x="362" y="560" width="306" height="116" rx="12" fill="#ffffff" stroke="#4a6fa5" stroke-width="1.6"/>
+    <text x="515" y="594" text-anchor="middle" fill="#1f3b63" font-size="20" font-weight="700">capability role</text>
+    <text x="515" y="622" text-anchor="middle" fill="#33557f" font-size="15">신뢰 주체</text>
+    <text x="515" y="645" text-anchor="middle" fill="#33557f" font-size="15">capabilities.eks.amazonaws.com</text>
+    <path d="M515 560V518" fill="none" stroke="#405267" stroke-width="1.6" stroke-dasharray="6 5"/>
+
+    <!-- customer cluster -->
+    <rect x="770" y="130" width="315" height="580" rx="16" fill="#ffffff" stroke="#9aa5b1" stroke-width="1.6"/>
+    <text x="792" y="162" fill="#26394b" font-size="19" font-weight="700">고객 계정 · EKS 클러스터</text>
+
+    <rect x="792" y="180" width="271" height="58" rx="12" fill="#edf0f3" stroke="#c4cbd1"/>
+    <text x="927" y="216" text-anchor="middle" fill="#26394b" font-size="20">Kubernetes API 서버</text>
+
+    <rect x="792" y="262" width="271" height="232" rx="12" fill="#fbfaf7" stroke="#9aa5b1"/>
+    <text x="810" y="292" fill="#26394b" font-size="19" font-weight="700">access entry</text>
+    <text x="810" y="320" fill="#245c4b" font-size="15" font-weight="700">자동으로 생김</text>
+    <text x="810" y="343" fill="#245c4b" font-size="14">AmazonEKSArgoCDClusterPolicy</text>
+    <text x="810" y="364" fill="#245c4b" font-size="14">AmazonEKSArgoCDPolicy (argocd ns)</text>
+    <text x="810" y="398" fill="#8a4b12" font-size="15" font-weight="700">배포하려면 직접 추가</text>
+    <text x="810" y="421" fill="#8a4b12" font-size="14">AmazonEKSEditPolicy</text>
+    <text x="810" y="442" fill="#8a4b12" font-size="14">AmazonEKSAdminViewPolicy</text>
+    <text x="810" y="463" fill="#8a4b12" font-size="14">그룹 → kro · ACK API용 ClusterRole</text>
+    <path d="M927 238V256" fill="none" stroke="#405267" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+    <rect x="792" y="514" width="271" height="92" rx="12" fill="#e7f4ef" stroke="#3c7c68"/>
+    <text x="810" y="544" fill="#245c4b" font-size="18" font-weight="700">argocd 네임스페이스</text>
+    <text x="810" y="569" fill="#245c4b" font-size="14">Application · ApplicationSet</text>
+    <text x="810" y="590" fill="#245c4b" font-size="14">cluster Secret (server: EKS ARN)</text>
+
+    <rect x="792" y="626" width="271" height="62" rx="12" fill="#edf0f3" stroke="#c4cbd1"/>
+    <text x="927" y="663" text-anchor="middle" fill="#26394b" font-size="18">배포된 워크로드</text>
+
+    <!-- flows -->
+    <path d="M300 211H354" fill="none" stroke="#405267" stroke-width="2" marker-end="url(#arrow)"/>
+    <path d="M362 255H325V353H308" fill="none" stroke="#405267" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="318" y="296" text-anchor="end" fill="#5f6670" font-size="15">로그인</text>
+    <path d="M354 470H325V643H308" fill="none" stroke="#405267" stroke-width="2" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+    <text x="316" y="572" text-anchor="end" fill="#5f6670" font-size="15">↓ 폴링 (문서상 6분)</text>
+    <text x="316" y="594" text-anchor="end" fill="#5f6670" font-size="15">↑ webhook (/api/webhook)</text>
+    <path d="M668 340H730V209H784" fill="none" stroke="#405267" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <text x="744" y="275" text-anchor="middle" fill="#5f6670" font-size="15" transform="rotate(90 744 275)">API 호출</text>
+    <path d="M668 618H730V380H784" fill="none" stroke="#405267" stroke-width="1.6" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+    <text x="744" y="500" text-anchor="middle" fill="#5f6670" font-size="15" transform="rotate(90 744 500)">access entry의 주체</text>
+
+    <!-- legend -->
+    <path d="M42 738H92" stroke="#405267" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="104" y="743" fill="#5f6670" font-size="15">호출 · 트래픽</text>
+    <path d="M232 738H282" stroke="#405267" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+    <text x="294" y="743" fill="#5f6670" font-size="15">설정 · 신뢰 관계</text>
+    <text x="1078" y="743" text-anchor="end" fill="#8a929b" font-size="14">간략화한 구성도</text>
+  </g>
+</svg>

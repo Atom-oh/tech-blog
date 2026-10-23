@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="800" viewBox="0 0 1120 800" role="img" aria-labelledby="title desc">
+  <title id="title">Argo CD, kro, ACK capability를 함께 쓸 때의 흐름</title>
+  <desc id="desc">구성상 Argo CD가 Git에 선언한 OrderService 인스턴스를 클러스터에 동기화한다. kro가 이 인스턴스를 ACK의 Queue CR과 Table CR, ConfigMap, Deployment로 펼친다. ACK가 CR을 보고 고객 계정에 SQS 큐와 DynamoDB 테이블을 만들고 CR status에 큐 URL과 테이블 ARN을 기록하면, kro가 그 값을 ConfigMap에 넣는다. ACK CRD는 EKS 기본 access policy에 포함되지 않으므로 Argo CD와 kro 쪽에 API 그룹 RBAC를 따로 줘야 했다. Git의 Queue CR은 6.5초 만에 Synced, OrderService 인스턴스는 13.2~34.3초 만에 ACTIVE가 됐다. 두 측정은 따로 했고 세 단계를 한 번에 잇지는 않았다.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#405267" stroke-width="1.6"/></marker>
+  </defs>
+  <rect width="1120" height="800" rx="20" fill="#fbfaf7"/>
+  <g font-family="Noto Sans CJK KR, sans-serif">
+    <text x="42" y="49" fill="#5f6670" font-size="18" font-weight="600" letter-spacing="2">ARGO CD + KRO + ACK</text>
+    <text x="42" y="93" fill="#222e3b" font-size="31" font-weight="700">Git 선언 하나가 AWS 리소스와 워크로드가 되기까지</text>
+
+    <rect x="40" y="160" width="112" height="64" rx="12" fill="#edf0f3" stroke="#c4cbd1"/>
+    <text x="96" y="198" text-anchor="middle" fill="#26394b" font-size="18">Git</text>
+
+    <!-- AWS owned band -->
+    <rect x="172" y="125" width="908" height="124" rx="16" fill="#f1f5fb" stroke="#6f8fb8" stroke-width="1.6" stroke-dasharray="7 5"/>
+    <text x="1062" y="146" text-anchor="end" fill="#1f3b63" font-size="15" font-weight="700">AWS 소유 인프라</text>
+    <rect x="190" y="156" width="230" height="78" rx="12" fill="#e3ecf8" stroke="#4a6fa5" stroke-width="2"/>
+    <text x="305" y="188" text-anchor="middle" fill="#1f3b63" font-size="20" font-weight="700">Argo CD</text>
+    <text x="305" y="216" text-anchor="middle" fill="#8a2c20" font-size="14">+ kro · ACK API 그룹 RBAC</text>
+    <rect x="470" y="156" width="230" height="78" rx="12" fill="#e3ecf8" stroke="#4a6fa5" stroke-width="2"/>
+    <text x="585" y="188" text-anchor="middle" fill="#1f3b63" font-size="20" font-weight="700">kro</text>
+    <text x="585" y="216" text-anchor="middle" fill="#8a2c20" font-size="14">+ ACK 리소스 RBAC</text>
+    <rect x="830" y="156" width="230" height="78" rx="12" fill="#e3ecf8" stroke="#4a6fa5" stroke-width="2"/>
+    <text x="945" y="188" text-anchor="middle" fill="#1f3b63" font-size="20" font-weight="700">ACK</text>
+    <text x="945" y="216" text-anchor="middle" fill="#8a2c20" font-size="14">+ IAMRoleSelector · IAM 권한</text>
+
+    <!-- cluster band -->
+    <rect x="40" y="272" width="1040" height="290" rx="16" fill="#ffffff" stroke="#9aa5b1" stroke-width="1.6"/>
+    <text x="60" y="302" fill="#26394b" font-size="18" font-weight="700">EKS 클러스터</text>
+
+    <rect x="190" y="320" width="230" height="84" rx="12" fill="#fff4df" stroke="#b88632"/>
+    <text x="208" y="350" fill="#654814" font-size="17" font-weight="700">OrderService 인스턴스</text>
+    <text x="208" y="377" fill="#765c2e" font-size="14">RGD가 만든 API · Git에 선언</text>
+
+    <rect x="470" y="320" width="230" height="84" rx="12" fill="#e7f4ef" stroke="#3c7c68"/>
+    <text x="488" y="350" fill="#245c4b" font-size="17" font-weight="700">Queue CR · Table CR</text>
+    <text x="488" y="377" fill="#245c4b" font-size="14">ACK API · status에 URL · ARN</text>
+
+    <rect x="470" y="448" width="230" height="84" rx="12" fill="#edf0f3" stroke="#c4cbd1"/>
+    <text x="488" y="478" fill="#26394b" font-size="17" font-weight="700">ConfigMap → Deployment</text>
+    <text x="488" y="505" fill="#5f6670" font-size="14">큐 URL · 테이블 ARN을 환경 변수로</text>
+
+    <rect x="190" y="448" width="230" height="84" rx="12" fill="#fbfaf7" stroke="#c4cbd1"/>
+    <text x="208" y="474" fill="#26394b" font-size="14" font-weight="700">측정 (따로 시험)</text>
+    <text x="208" y="499" fill="#26394b" font-size="14">Argo CD → Queue CR: 6.5초</text>
+    <text x="208" y="520" fill="#26394b" font-size="14">kro → OrderService: 13.2~34.3초</text>
+
+    <!-- AWS account -->
+    <rect x="40" y="585" width="1040" height="86" rx="16" fill="#ffffff" stroke="#9aa5b1" stroke-width="1.6"/>
+    <text x="60" y="634" fill="#26394b" font-size="18" font-weight="700">고객 AWS 계정</text>
+    <rect x="620" y="600" width="200" height="56" rx="12" fill="#fff4df" stroke="#b88632"/>
+    <text x="720" y="634" text-anchor="middle" fill="#654814" font-size="17">SQS 큐</text>
+    <rect x="860" y="600" width="200" height="56" rx="12" fill="#fff4df" stroke="#b88632"/>
+    <text x="960" y="634" text-anchor="middle" fill="#654814" font-size="17">DynamoDB 테이블</text>
+
+    <!-- flows -->
+    <path d="M152 192H182" fill="none" stroke="#405267" stroke-width="2" marker-end="url(#arrow)"/>
+    <path d="M305 234V312" fill="none" stroke="#405267" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="317" y="282" fill="#5f6670" font-size="14">동기화</text>
+    <path d="M470 195H445V350H428" fill="none" stroke="#405267" stroke-width="1.6" marker-end="url(#arrow)"/>
+    <text x="450" y="268" fill="#5f6670" font-size="14" transform="rotate(90 450 268)">watch</text>
+    <path d="M585 234V312" fill="none" stroke="#405267" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="597" y="282" fill="#5f6670" font-size="14">펼쳐서 생성</text>
+    <path d="M585 404V440" fill="none" stroke="#405267" stroke-width="2" stroke-dasharray="2 4" marker-end="url(#arrow)"/>
+    <text x="597" y="428" fill="#5f6670" font-size="14">status 값 주입</text>
+    <path d="M830 195H760V362H708" fill="none" stroke="#405267" stroke-width="1.6" marker-end="url(#arrow)"/>
+    <text x="772" y="300" fill="#5f6670" font-size="14">watch</text>
+    <path d="M945 234V592" fill="none" stroke="#405267" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <path d="M945 560H720V592" fill="none" stroke="#405267" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <text x="957" y="420" fill="#5f6670" font-size="14">AWS API 호출</text>
+    <text x="957" y="440" fill="#5f6670" font-size="14">결과를 CR status에</text>
+
+    <rect x="40" y="690" width="1040" height="64" rx="12" fill="#fbe9e7" stroke="#b5483a"/>
+    <text x="60" y="716" fill="#8a2c20" font-size="15" font-weight="700">이름 충돌 주의</text>
+    <text x="60" y="740" fill="#8a2c20" font-size="14">kro가 같은 이름의 기존 Table CR을 가져가 테이블 이름을 바꾸자 ACK가 새 테이블을 만들고 원래 테이블은 관리 밖으로 남음. 하위 리소스 이름을 RGD마다 분리</text>
+
+    <path d="M42 780H92" stroke="#405267" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="104" y="785" fill="#5f6670" font-size="14">생성 · 호출 · watch</text>
+    <path d="M250 780H300" stroke="#405267" stroke-width="2" stroke-dasharray="2 4" marker-end="url(#arrow)"/>
+    <text x="312" y="785" fill="#5f6670" font-size="14">status 값 전달</text>
+    <text x="1078" y="785" text-anchor="end" fill="#8a929b" font-size="14">빨간 글씨: 직접 연 권한 · 전체 경로를 한 번에 시험하지는 않음</text>
+  </g>
+</svg>

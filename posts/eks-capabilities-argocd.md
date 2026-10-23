@@ -68,7 +68,9 @@ EKS Capabilities는 2025년 11월 30일에 정식 출시됐고, 2026년 6월에 
 | 로그 | CloudWatch Vended Logs로 CloudWatch Logs, S3, Amazon Data Firehose에 전달 |
 | 요금 | capability 시간당 요금 + 관리하는 리소스 수에 비례한 요금 |
 
-Argo CD에는 몇 가지가 더 붙습니다. 로그인은 IAM Identity Center로만 할 수 있고(로컬 사용자 없음), 권한은 capability 설정의 `rbacRoleMappings`로 Identity Center 사용자나 그룹을 ADMIN, EDITOR, VIEWER에 매핑합니다. UI와 API는 `https://<prefix>.eks-capabilities.<region>.amazonaws.com` 형식의 AWS 호스팅 주소로 열리고, VPC 엔드포인트를 지정하면 공개 접근을 막을 수 있습니다.
+Argo CD에는 몇 가지가 더 붙습니다. 로그인은 IAM Identity Center로만 할 수 있고(로컬 사용자 없음), 권한은 capability 설정의 `rbacRoleMappings`로 Identity Center 사용자나 그룹을 ADMIN, EDITOR, VIEWER에 매핑합니다. UI와 API는 `https://<prefix>-<계정 ID>.eks-capabilities.<region>.amazonaws.com` 형식의 AWS 호스팅 주소로 열리고, VPC 엔드포인트를 지정하면 공개 접근을 막을 수 있습니다.
+
+<figure class="diagram"><a href="/assets/eks-cap-argocd-arch.svg"><img src="/assets/eks-cap-argocd-arch.svg" alt="관리형 Argo CD 연결 구조. 컨트롤러와 UI 엔드포인트는 AWS 소유 인프라에 있고, 로그인은 IAM Identity Center(Okta, Entra ID는 SAML과 SCIM으로 연결)가 맡는다. 컨트롤러는 capability role로 EKS API 서버를 호출하며, 배포 권한은 access entry에 직접 추가해야 한다." loading="lazy"></a><figcaption>관리형 Argo CD의 연결 구조. 자동으로 붙는 정책만으로는 배포할 수 없고, 오른쪽의 '배포하려면 직접 추가' 권한을 직접 붙여야 했습니다.</figcaption></figure>
 
 <h2 id="create">3. 실측 1: 생성과 클러스터에 남는 것</h2>
 
@@ -276,6 +278,8 @@ hub 클러스터를 1.36에서 1.37로 in-place 업그레이드하면서 전후�
 | 대조: 업그레이드 후 같은 방식으로 | 5 | 2.3초, 이후 251~252초 | 1.01~1.15초 | 1.47~1.57초 |
 | 대조: 마지막 self-heal 6분 뒤 1회 | 1 | 2.0초 | - | - |
 
+<figure class="diagram"><a href="/assets/eks-cap-upgrade-timeline.svg"><img src="/assets/eks-cap-upgrade-timeline.svg" alt="EKS 1.36에서 1.37로 업그레이드하는 7분 동안의 타임라인. 세 capability는 내내 ACTIVE였고, API 서버 버전이 오가던 3분 동안 kro와 ACK 측정은 없었다. Argo CD self-heal은 백오프로 113초, 254초까지 늘었다." loading="lazy"></a><figcaption>업그레이드 타임라인. 빗금은 API 서버 버전이 1.36.4와 1.37.0 사이를 오간 구간입니다. 막대 위치는 기록 시각 기준 근사입니다.</figcaption></figure>
+
 표를 읽을 때 주의할 점이 있습니다. kro와 ACK는 Argo CD self-heal이 끝난 뒤에 재기 때문에, 업그레이드 중 4회 가운데 3회는 API 서버 버전이 오가기 전(02:52:40까지)에, 1회는 업그레이드가 끝난 뒤(02:57:43)에 쟀습니다. API 서버 버전이 오가던 3분 동안 kro와 ACK의 반영 시간은 재지 못했습니다. 이 구간에서 확인한 것은 capability가 `ACTIVE`였다는 점과, 02:53:38에 Argo CD가 drift를 `OutOfSync`로 잡아냈다는 점뿐입니다. kubectl 호출과 0.5초 대기를 반복해 확인했으므로 해상도는 약 1초입니다.
 
 업그레이드 중에 Argo CD self-heal이 113초, 254초로 늘어나서 처음에는 업그레이드 영향으로 보였습니다. 그런데 업그레이드가 끝난 클러스터에서 같은 방식으로 다시 재자 똑같이 251~252초가 나왔습니다. 원인은 업그레이드가 아니라 upstream Argo CD의 self-heal 백오프였습니다. 같은 앱에서 self-heal이 반복되면 애플리케이션 컨트롤러가 직전 시도부터 다음 시도까지 기다리는 시간을 2초부터 3배씩 늘리고, 300초를 넘기지 않습니다(`--self-heal-backoff-timeout-seconds` 2, `--self-heal-backoff-factor` 3, `--self-heal-backoff-cap-seconds` 300이 기본값). 업그레이드 중 마지막 측정의 self-heal 직후(02:57:41) Application에는 `autoHealAttemptsCount: 7`이 남아 있었습니다. 앞 측정의 self-heal이 끝난 뒤 다음 drift를 만들기까지 약 50초를 두었으므로, 300초에서 그만큼을 뺀 약 250초를 기다린 셈입니다. 마지막 self-heal에서 6분, 13분이 지난 뒤에는 2.0초, 2.3초였습니다. 시도 횟수가 초기화된 것이 아니라 300초 대기가 이미 지나 있었기 때문입니다. 실제로 13분 쉰 뒤 2.3초가 나온 바로 다음 측정은 다시 251초였습니다. upstream 코드상 횟수는 새 revision으로 동기화하거나 수동으로 sync하면 초기화되는 것으로 보이지만 시험하지는 않았습니다. kro와 ACK는 측정한 모든 구간에서 1~2초였습니다.
@@ -299,6 +303,8 @@ spoke에 `endpointPrefix`를 `eks-cap-bg`로 지정해 Argo CD capability를 만
 <h3>실측 7: private 원격 클러스터 등록</h3>
 
 spoke 클러스터의 API 엔드포인트는 private 전용이었고, 다른 VPC에 있는 워크스테이션에서는 접속할 수 없었습니다(`curl` 응답 없음). 워크스테이션에서는 닿지 않았지만 동기화는 됐습니다. 관리형 Argo CD 컨트롤러는 고객 VPC가 아니라 AWS 소유 인프라에서 돌므로, AWS가 제공하는 연결을 거친 것으로 보입니다. 엔드포인트, 보안 그룹 규칙, 라우팅은 아무것도 추가하지 않았습니다. spoke에 hub의 Argo CD capability role로 access entry를 만들고, hub에서 했던 대로 `AmazonEKSEditPolicy`와 `AmazonEKSAdminViewPolicy`를 붙였습니다. 그런 다음 hub에 spoke의 ARN으로 cluster Secret과 Application을 만들었습니다.
+
+<figure class="diagram"><a href="/assets/eks-cap-argocd-multicluster.svg"><img src="/assets/eks-cap-argocd-multicluster.svg" alt="hub와 spoke 구성. hub에 만든 Argo CD capability가 private 전용 spoke에도 네트워크 설정 없이 연결됐고, spoke access entry에 Edit, AdminView에 더해 AmazonEKSArgoCDClusterPolicy를 붙이자 동기화됐다. EKS가 아닌 클러스터는 문서상 등록할 수 없다." loading="lazy"></a><figcaption>hub에서 private spoke를 관리한 구성. spoke 쪽 권한을 두 단계로 늘려 가며 확인했습니다. 아래 두 상자는 문서와 추론에 기댄 내용입니다.</figcaption></figure>
 
 | 순서 | 결과 |
 |---|---|
