@@ -12,9 +12,9 @@
   <meta property="og:description" content="온프렘을 시뮬레이션한 클러스터에서 Hybrid Nodes gateway, bursting, GPU 추론, ALB, Pod IP 가시성, PrivateLink, CoreDNS 단절을 실측한 기록">
   <meta property="og:url" content="https://blog.atomai.click/eks-hybrid-nodes-demos/">
   <meta property="og:site_name" content="Atom 기술 블로그">
-  <link rel="alternate" type="application/rss+xml" title="Atom 기술 블로그" href="/feed.xml">
-  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/assets/style.css">
+  <link rel="alternate" type="application/rss+xml" title="Atom 기술 블로그" href="../feed.xml">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../assets/style.css">
   <meta name="theme-color" content="#faf9f6">
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-GWVLEW5JLL"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-GWVLEW5JLL');</script>
@@ -22,15 +22,15 @@
 <body class="article-page">
 <a class="skip-link" href="#main">본문으로 건너뛰기</a>
 <header class="site-header"><div class="inner">
-  <a class="brand" href="/" aria-label="Atom 기술 블로그 홈">
+  <a class="brand" href="../index.html" aria-label="Atom 기술 블로그 홈">
     <svg class="brand-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true"><circle cx="20" cy="20" r="3" fill="currentColor"/><ellipse cx="20" cy="20" rx="17" ry="7" stroke="currentColor" stroke-width="1.8" transform="rotate(-45 20 20)"/><ellipse cx="20" cy="20" rx="17" ry="7" stroke="currentColor" stroke-width="1.8" transform="rotate(45 20 20)"/></svg>
     <span>atom<span class="brand-dot">.</span></span><span class="brand-caption">기술 블로그</span>
   </a>
-  <nav class="site-nav" aria-label="주 메뉴"><a href="/">글 목록</a><a href="/tags/">태그</a><a class="rss-link" href="/feed.xml"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="5" cy="15" r="1.5" fill="currentColor"/><path d="M4 9a7 7 0 0 1 7 7M4 4a12 12 0 0 1 12 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>RSS</a></nav>
+  <nav class="site-nav" aria-label="주 메뉴"><a href="../index.html">글 목록</a><a href="../tags/index.html">태그</a><a class="rss-link" href="../feed.xml"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="5" cy="15" r="1.5" fill="currentColor"/><path d="M4 9a7 7 0 0 1 7 7M4 4a12 12 0 0 1 12 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>RSS</a></nav>
 </div></header>
 <main id="main" class="wrap">
 <article>
-<header class="post-head"><a class="back-link" href="/">← 모든 글</a><p class="eyebrow">ENGINEERING NOTES</p><h1>EKS Hybrid Nodes를 직접 돌려 봤습니다: gateway를 아껴 써야 하는 이유부터 SNAT 없는 연결, PrivateLink, 링크 단절까지</h1><div class="post-author"><span class="author-avatar" aria-hidden="true">a.</span><span><strong>Atom</strong><time datetime="2026-10-19">2026.10.19</time></span></div><ul class="tags"><li><a href="/tags/#eks">#eks</a></li><li><a href="/tags/#hybrid-nodes">#hybrid-nodes</a></li><li><a href="/tags/#cilium">#cilium</a></li><li><a href="/tags/#networking">#networking</a></li></ul></header>
+<header class="post-head"><a class="back-link" href="../index.html">← 모든 글</a><p class="eyebrow">ENGINEERING NOTES</p><h1>EKS Hybrid Nodes를 직접 돌려 봤습니다: gateway를 아껴 써야 하는 이유부터 SNAT 없는 연결, PrivateLink, 링크 단절까지</h1><div class="post-author"><span class="author-avatar" aria-hidden="true">a.</span><span><strong>Atom</strong><time datetime="2026-10-19">2026.10.19</time></span></div><ul class="tags"><li><a href="../tags/index.html#eks">#eks</a></li><li><a href="../tags/index.html#hybrid-nodes">#hybrid-nodes</a></li><li><a href="../tags/index.html#cilium">#cilium</a></li><li><a href="../tags/index.html#networking">#networking</a></li></ul></header>
 <div class="prose"><p class="lead">EKS Hybrid Nodes Deep Dive 세션의 5부(라이브 데모)를 준비하며 실제 클러스터에서 직접 테스트했습니다. 이 글에는 세션에서 보여 드린 영상 다섯 편의 내용에 더해, 발표에서 다 설명하지 못한 설정과 실패 원인까지 정리했습니다. 수치는 모두 2026년 10월 15일부터 19일 사이에 측정했습니다. 시나리오마다 1~3회만 측정했으므로 작은 차이는 오차로 봐야 합니다.</p>
 
 <div class="callout bad"><strong>시뮬레이션 환경입니다</strong>온프렘 서버와 VPN이 없어서, 두 번째 VPC를 Transit Gateway(TGW)로 연결하고 그 안의 EC2를 hybrid node로 등록했습니다. EC2를 hybrid node로 사용하는 방식은 프로덕션에서 지원되지 않습니다. 노드가 조인하면 hybrid node 요금도 부과됩니다. 실제 구성(온프렘 서버, DX 또는 VPN)에서는 노드 CIDR과 호스트만 바뀌지만, 지연과 처리량은 다시 측정해야 합니다.</div>
@@ -553,12 +553,12 @@ vtep:
 <li><a href="https://karpenter.sh/preview/concepts/pod-deletion-cost/">Karpenter: pod deletion cost</a></li>
 <li>세션 자료: <a href="https://presentation.atomai.click/eks-hybrid-nodes/toc.html">Deep Dive 덱 목차</a>, <a href="https://presentation.atomai.click/eks-hybrid-nodes/05-live-demo.html">5부 라이브 데모</a>, <a href="https://presentation.atomai.click/eks-hybrid-nodes/demo-guide.html">데모 구현 가이드</a></li>
 </ul></div>
-<nav class="post-nav" aria-label="이전 글과 다음 글"><span></span><a href="/eks-automode-karpenter/"><span>다음 글 →</span>EKS Auto Mode와 Karpenter 1.15를 나란히 돌려 봤습니다: 스케일 아웃, Balanced consolidation, Drift, Spot 중단</a></nav>
+<nav class="post-nav" aria-label="이전 글과 다음 글"><span></span><a href="../eks-automode-karpenter/index.html"><span>다음 글 →</span>EKS Auto Mode와 Karpenter 1.15를 나란히 돌려 봤습니다: 스케일 아웃, Balanced consolidation, Drift, Spot 중단</a></nav>
 </article>
 </main>
 <footer class="site-footer"><div class="inner">
-  <div><a class="footer-brand" href="/">atom.</a><p>직접 구성하고, 측정하고, 기록합니다.</p></div>
-  <div class="footer-links"><a href="https://presentation.atomai.click/">발표 자료 <span aria-hidden="true">↗</span></a><a href="/feed.xml">RSS 구독 <span aria-hidden="true">↗</span></a><span>© 2026 Atom</span></div>
+  <div><a class="footer-brand" href="../index.html">atom.</a><p>직접 구성하고, 측정하고, 기록합니다.</p></div>
+  <div class="footer-links"><a href="https://presentation.atomai.click/">발표 자료 <span aria-hidden="true">↗</span></a><a href="../feed.xml">RSS 구독 <span aria-hidden="true">↗</span></a><span>© 2026 Atom</span></div>
 </div></footer>
 <script>
 document.querySelectorAll('video').forEach(function (v) {

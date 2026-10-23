@@ -1,0 +1,21 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:08.000 line:0 position:50% align:center size:90%
+자동 복구도 준비된 다른 AZ의 Reader를 활용합니다
+
+2
+00:00:08.000 --> 00:00:18.000 line:0 position:50% align:center size:90%
+Aurora가 Writer의 문제를 감지합니다
+
+3
+00:00:18.000 --> 00:00:28.000 line:0 position:50% align:center size:90%
+Failover 경로에서 Reader를 승격합니다
+
+4
+00:00:28.000 --> 00:00:38.000 line:0 position:50% align:center size:90%
+애플리케이션이 새 Writer로 연결합니다
+
+5
+00:00:38.000 --> 00:00:50.000 line:0 position:50% align:center size:90%
+자동 전환도 쓰기 복구까지 확인합니다

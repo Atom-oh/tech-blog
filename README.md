@@ -34,3 +34,5 @@ AWS와 Kubernetes 기술 글을 모은 정적 블로그. GitHub Pages(main 브�
 ```
 python3 build.py && python3 -m http.server 8080
 ```
+
+생성된 HTML의 영상·이미지·스타일과 내부 링크는 페이지 위치를 기준으로 한 상대 경로를 사용합니다. HTML 파일을 직접 열어도 영상 경로가 유지됩니다. 브라우저의 로컬 파일 보안 정책 때문에 자막까지 확인하려면 위 HTTP 미리보기 서버를 사용하세요.

@@ -7,12 +7,14 @@ Markdown that may contain inline HTML. Output: <slug>/index.html, index.html, ta
 feed.xml, sitemap.xml. Everything written here is generated output: edit posts/ and rerun.
 """
 import html
+import posixpath
 import re
 import shutil
 import sys
 from datetime import datetime, timezone
 from email.utils import format_datetime
 from pathlib import Path
+from urllib.parse import urlsplit, urlunsplit
 
 import markdown
 
@@ -124,7 +126,7 @@ def page(*, src, title, description, url, main, og_type="website", scripts="", p
 
 
 def artwork(p: dict) -> str:
-    theme = ("hybrid" if "hybrid-nodes" in p["tags"]
+    theme = ("aurora" if "aurora" in p["tags"] else "hybrid" if "hybrid-nodes" in p["tags"]
              else "capabilities" if "eks-capabilities" in p["tags"] else "mesh")
     label = p["tags"][0] if p["tags"] else "engineering"
     return (f'<div class="post-art art-{theme}" aria-hidden="true">'
@@ -142,9 +144,37 @@ def item(p: dict, heading="h2") -> str:
             f'<p>{esc(p["description"])}</p>{tag_links(p["tags"])}</div></li>')
 
 
+def relative_links(content: str, rel: str) -> str:
+    """Resolve site links from each HTML file, including direct file previews."""
+    parent = posixpath.dirname(rel) or "."
+
+    def replace(match):
+        url = urlsplit(match.group("url"))
+        target = url.path.lstrip("/")
+        directory = False
+        if url.path.endswith("/"):
+            if target.startswith("assets/") and not (ROOT / target / "index.html").is_file():
+                if (ROOT / target / "README.md").is_file():
+                    target += "README.md"
+                else:
+                    directory = True
+            else:
+                target += "index.html"
+        path = posixpath.relpath(target, parent)
+        if directory:
+            path += "/"
+        value = urlunsplit(("", "", path, url.query, url.fragment))
+        return match.group("prefix") + match.group("quote") + value + match.group("quote")
+
+    return re.sub(r"""(?P<prefix>\s(?:href|src|poster)\s*=\s*)(?P<quote>["'])(?P<url>/(?!/)[^"']*)(?P=quote)""",
+                  replace, content)
+
+
 def write(rel: str, content: str) -> None:
     out = ROOT / rel
     out.parent.mkdir(parents=True, exist_ok=True)
+    if out.suffix == ".html":
+        content = relative_links(content, rel)
     out.write_text(content, encoding="utf-8")
     print(f"wrote {rel}")
 

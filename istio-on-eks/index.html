@@ -12,9 +12,9 @@
   <meta property="og:description" content="EKS 1.36과 Istio 1.31.2에서 base, sidecar, ambient L4, ambient L7(waypoint) 네 모드를 같은 워크로드로 측정했습니다. 지연과 프록시 CPU, 롤아웃 중 오류와 retry가 가린 실패, ztunnel에서 조용히 무시되는 L7 DENY 정책, 모드별로 남는 텔레메트리를 정리하고 도입과 운영 판단에 연결했습니다.">
   <meta property="og:url" content="https://blog.atomai.click/istio-on-eks/">
   <meta property="og:site_name" content="Atom 기술 블로그">
-  <link rel="alternate" type="application/rss+xml" title="Atom 기술 블로그" href="/feed.xml">
-  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/assets/style.css">
+  <link rel="alternate" type="application/rss+xml" title="Atom 기술 블로그" href="../feed.xml">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../assets/style.css">
   <meta name="theme-color" content="#faf9f6">
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-GWVLEW5JLL"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-GWVLEW5JLL');</script>
@@ -22,15 +22,15 @@
 <body class="article-page">
 <a class="skip-link" href="#main">본문으로 건너뛰기</a>
 <header class="site-header"><div class="inner">
-  <a class="brand" href="/" aria-label="Atom 기술 블로그 홈">
+  <a class="brand" href="../index.html" aria-label="Atom 기술 블로그 홈">
     <svg class="brand-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true"><circle cx="20" cy="20" r="3" fill="currentColor"/><ellipse cx="20" cy="20" rx="17" ry="7" stroke="currentColor" stroke-width="1.8" transform="rotate(-45 20 20)"/><ellipse cx="20" cy="20" rx="17" ry="7" stroke="currentColor" stroke-width="1.8" transform="rotate(45 20 20)"/></svg>
     <span>atom<span class="brand-dot">.</span></span><span class="brand-caption">기술 블로그</span>
   </a>
-  <nav class="site-nav" aria-label="주 메뉴"><a href="/">글 목록</a><a href="/tags/">태그</a><a class="rss-link" href="/feed.xml"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="5" cy="15" r="1.5" fill="currentColor"/><path d="M4 9a7 7 0 0 1 7 7M4 4a12 12 0 0 1 12 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>RSS</a></nav>
+  <nav class="site-nav" aria-label="주 메뉴"><a href="../index.html">글 목록</a><a href="../tags/index.html">태그</a><a class="rss-link" href="../feed.xml"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="5" cy="15" r="1.5" fill="currentColor"/><path d="M4 9a7 7 0 0 1 7 7M4 4a12 12 0 0 1 12 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>RSS</a></nav>
 </div></header>
 <main id="main" class="wrap">
 <article>
-<header class="post-head"><a class="back-link" href="/">← 모든 글</a><p class="eyebrow">ENGINEERING NOTES</p><h1>EKS에서 Istio sidecar와 ambient를 직접 재 봤습니다: 지연, 롤아웃 실패, L7 정책 함정, 관측성까지</h1><div class="post-author"><span class="author-avatar" aria-hidden="true">a.</span><span><strong>Atom</strong><time datetime="2026-10-21">2026.10.21</time></span></div><ul class="tags"><li><a href="/tags/#istio">#istio</a></li><li><a href="/tags/#service-mesh">#service-mesh</a></li><li><a href="/tags/#eks">#eks</a></li><li><a href="/tags/#ambient">#ambient</a></li></ul></header>
+<header class="post-head"><a class="back-link" href="../index.html">← 모든 글</a><p class="eyebrow">ENGINEERING NOTES</p><h1>EKS에서 Istio sidecar와 ambient를 직접 재 봤습니다: 지연, 롤아웃 실패, L7 정책 함정, 관측성까지</h1><div class="post-author"><span class="author-avatar" aria-hidden="true">a.</span><span><strong>Atom</strong><time datetime="2026-10-21">2026.10.21</time></span></div><ul class="tags"><li><a href="../tags/index.html#istio">#istio</a></li><li><a href="../tags/index.html#service-mesh">#service-mesh</a></li><li><a href="../tags/index.html#eks">#eks</a></li><li><a href="../tags/index.html#ambient">#ambient</a></li></ul></header>
 <div class="prose"><p class="lead">Istio 문서는 양이 많고, 모드마다 동작이 다릅니다. 이 글은 EKS 기준으로 정리해 둔 Istio 문서 세트를 한 편으로 다시 엮으면서, 판단이 갈리는 지점을 실제 클러스터에서 측정해 덧붙인 것입니다. 같은 echo 서비스를 네 가지 데이터 플레인(메시 없음, sidecar, ambient L4, ambient L7)에 올리고 지연, 프록시 CPU, 롤아웃 중 오류, 인가 정책, outlier detection, 텔레메트리를 비교했습니다. 측정은 2026년 10월 20일과 21일에 했고, 원시 결과와 재현 스크립트를 글 끝에 공개합니다.</p>
 
 <div class="callout"><strong>시험 환경 요약</strong>EKS 1.36.4, Istio 1.31.2(ambient profile에서 sidecar 주입도 함께 사용), Graviton m7g.xlarge 3대(client 1대, server 2대, 모두 ap-northeast-2a 한 AZ), 부하 도구 fortio 1.76.0. 워크로드는 아무 일도 하지 않는 echo 서버라서, 수치는 "프록시 계층이 더하는 몫"을 보여 줄 뿐 실제 애플리케이션의 지연을 뜻하지 않습니다. 시나리오마다 2~3회만 반복했습니다.</div>
@@ -167,7 +167,7 @@
 </table>
 <p>기본적으로 각 Envoy는 메시 전체의 서비스 정보를 받습니다. <code>Sidecar</code> 리소스로 가져올 호스트 범위를 좁히면 구성 크기와 프록시 메모리를 줄일 수 있지만, 이것은 구성 범위 제어일 뿐 egress 방화벽이 아닙니다.</p>
 <h3>Sidecar 모드</h3>
-<p>등록된 파드마다 Envoy 컨테이너를 주입하고, 파드의 트래픽을 가로채 Envoy를 거치게 합니다. 요청 하나가 client 쪽 Envoy와 server 쪽 Envoy를 모두 지나므로 L7 프록시를 두 번 통과합니다. 파드 단위로 세밀하게 제어할 수 있지만, 파드마다 프록시 리소스가 들고 프록시를 바꾸려면 파드를 다시 만들어야 합니다. 최근 Istio는 <code>istio-proxy</code>를 native sidecar(<code>restartPolicy: Always</code>인 init container)로 주입할 수 있어서, 이 경우 <code>spec.containers</code>에는 앱 컨테이너만 보이고 READY는 2/2로 표시됩니다(앞선 <a href="/eks-hybrid-nodes-demos/">EKS Hybrid Nodes 시험</a>에서 Istio 1.30으로 확인).</p>
+<p>등록된 파드마다 Envoy 컨테이너를 주입하고, 파드의 트래픽을 가로채 Envoy를 거치게 합니다. 요청 하나가 client 쪽 Envoy와 server 쪽 Envoy를 모두 지나므로 L7 프록시를 두 번 통과합니다. 파드 단위로 세밀하게 제어할 수 있지만, 파드마다 프록시 리소스가 들고 프록시를 바꾸려면 파드를 다시 만들어야 합니다. 최근 Istio는 <code>istio-proxy</code>를 native sidecar(<code>restartPolicy: Always</code>인 init container)로 주입할 수 있어서, 이 경우 <code>spec.containers</code>에는 앱 컨테이너만 보이고 READY는 2/2로 표시됩니다(앞선 <a href="../eks-hybrid-nodes-demos/index.html">EKS Hybrid Nodes 시험</a>에서 Istio 1.30으로 확인).</p>
 <h3>Ambient 모드</h3>
 <p>sidecar 없이 두 계층으로 나눕니다. Istio 1.24에서 core 기능이 GA가 되었습니다.</p>
 <ul>
@@ -917,14 +917,14 @@ istioctl ztunnel-config policies -o json     # ambient: ztunnel이 실제로 받
 
 <p>측정 결과 JSON과 재현 스크립트를 공개합니다. 스크립트에서 VPC, 서브넷, 계정, 접속 IP는 자리표시자로 바꿨습니다.</p>
 <ul>
-<li><a href="/assets/data/istio-lab-2026-10/README.md">결과 설명 (README)</a></li>
-<li>지연과 CPU: <a href="/assets/data/istio-lab-2026-10/latency-20261021-0121.json">latency-20261021-0121.json</a></li>
-<li>롤아웃: <a href="/assets/data/istio-lab-2026-10/rollout-20261021-0051.json">rollout-20261021-0051.json</a>, <a href="/assets/data/istio-lab-2026-10/rollout-20261020-1413.json">첫 회차 rollout-20261020-1413.json</a></li>
-<li>인가 정책: <a href="/assets/data/istio-lab-2026-10/policy-20261020-1340.json">policy-20261020-1340.json</a>, <a href="/assets/data/istio-lab-2026-10/policy-20261020-1327-first-attempt-10s-wait.json">첫 시도 (10초 대기)</a></li>
-<li>mTLS: <a href="/assets/data/istio-lab-2026-10/mtls-20261020-1342.json">mtls-20261020-1342.json</a></li>
-<li>텔레메트리: <a href="/assets/data/istio-lab-2026-10/obs-20261020-1325.json">obs-20261020-1325.json</a></li>
-<li>outlier detection: <a href="/assets/data/istio-lab-2026-10/outlier-20261020-1351.json">outlier-20261020-1351.json</a>, <a href="/assets/data/istio-lab-2026-10/outlier-conn-20261021-0028.json">연결 단위 outlier-conn-20261021-0028.json</a></li>
-<li>재현 스크립트: <a href="/assets/data/istio-lab-2026-10/lab/cluster.yaml">cluster.yaml</a>, <a href="/assets/data/istio-lab-2026-10/lab/01-istio.sh">01-istio.sh</a>, <a href="/assets/data/istio-lab-2026-10/lab/manifests/workloads.sh">workloads.sh</a>, <a href="/assets/data/istio-lab-2026-10/lab/tests/run.py">run.py</a></li>
+<li><a href="../assets/data/istio-lab-2026-10/README.md">결과 설명 (README)</a></li>
+<li>지연과 CPU: <a href="../assets/data/istio-lab-2026-10/latency-20261021-0121.json">latency-20261021-0121.json</a></li>
+<li>롤아웃: <a href="../assets/data/istio-lab-2026-10/rollout-20261021-0051.json">rollout-20261021-0051.json</a>, <a href="../assets/data/istio-lab-2026-10/rollout-20261020-1413.json">첫 회차 rollout-20261020-1413.json</a></li>
+<li>인가 정책: <a href="../assets/data/istio-lab-2026-10/policy-20261020-1340.json">policy-20261020-1340.json</a>, <a href="../assets/data/istio-lab-2026-10/policy-20261020-1327-first-attempt-10s-wait.json">첫 시도 (10초 대기)</a></li>
+<li>mTLS: <a href="../assets/data/istio-lab-2026-10/mtls-20261020-1342.json">mtls-20261020-1342.json</a></li>
+<li>텔레메트리: <a href="../assets/data/istio-lab-2026-10/obs-20261020-1325.json">obs-20261020-1325.json</a></li>
+<li>outlier detection: <a href="../assets/data/istio-lab-2026-10/outlier-20261020-1351.json">outlier-20261020-1351.json</a>, <a href="../assets/data/istio-lab-2026-10/outlier-conn-20261021-0028.json">연결 단위 outlier-conn-20261021-0028.json</a></li>
+<li>재현 스크립트: <a href="../assets/data/istio-lab-2026-10/lab/cluster.yaml">cluster.yaml</a>, <a href="../assets/data/istio-lab-2026-10/lab/01-istio.sh">01-istio.sh</a>, <a href="../assets/data/istio-lab-2026-10/lab/manifests/workloads.sh">workloads.sh</a>, <a href="../assets/data/istio-lab-2026-10/lab/tests/run.py">run.py</a></li>
 </ul>
 <p>재현 순서는 <code>eksctl create cluster -f cluster.yaml</code>, <code>./01-istio.sh</code>, <code>python3 tests/run.py &lt;latency|rollout|policy|mtls|obs|outlier|outlier-conn&gt;</code>, 끝나면 <code>./teardown.sh</code>입니다. 시험 클러스터는 측정이 끝난 뒤 삭제했습니다.</p>
 <p>이 글에서 줄인 개념과 YAML 예제는 원본 문서 세트에 자세히 있습니다.</p>
@@ -952,12 +952,12 @@ istioctl ztunnel-config policies -o json     # ambient: ztunnel이 실제로 받
 <li><a href="https://kubernetes-sigs.github.io/aws-load-balancer-controller/">AWS Load Balancer Controller</a>, <a href="https://docs.aws.amazon.com/vpc-lattice/latest/ug/what-is-vpc-lattice.html">Amazon VPC Lattice란</a></li>
 <li><a href="https://github.com/fortio/fortio">fortio</a></li>
 </ul></div>
-<nav class="post-nav" aria-label="이전 글과 다음 글"><a href="/eks-capabilities-kro/"><span>← 이전 글</span>EKS의 관리형 kro를 직접 써 봤습니다: OSS와 같은 0.9.4, 권한은 직접 열어야 하고 이름 충돌은 조심해야 합니다</a><a href="/eks-capabilities-ack/"><span>다음 글 →</span>EKS의 관리형 ACK를 직접 써 봤습니다: CRD 267개를 Pod 없이, 네임스페이스별 IAM 분리, 25분 안에 복구되지 않은 drift와 OSS 비교</a></nav>
+<nav class="post-nav" aria-label="이전 글과 다음 글"><a href="../eks-capabilities-kro/index.html"><span>← 이전 글</span>EKS의 관리형 kro를 직접 써 봤습니다: OSS와 같은 0.9.4, 권한은 직접 열어야 하고 이름 충돌은 조심해야 합니다</a><a href="../eks-capabilities-ack/index.html"><span>다음 글 →</span>EKS의 관리형 ACK를 직접 써 봤습니다: CRD 267개를 Pod 없이, 네임스페이스별 IAM 분리, 25분 안에 복구되지 않은 drift와 OSS 비교</a></nav>
 </article>
 </main>
 <footer class="site-footer"><div class="inner">
-  <div><a class="footer-brand" href="/">atom.</a><p>직접 구성하고, 측정하고, 기록합니다.</p></div>
-  <div class="footer-links"><a href="https://presentation.atomai.click/">발표 자료 <span aria-hidden="true">↗</span></a><a href="/feed.xml">RSS 구독 <span aria-hidden="true">↗</span></a><span>© 2026 Atom</span></div>
+  <div><a class="footer-brand" href="../index.html">atom.</a><p>직접 구성하고, 측정하고, 기록합니다.</p></div>
+  <div class="footer-links"><a href="https://presentation.atomai.click/">발표 자료 <span aria-hidden="true">↗</span></a><a href="../feed.xml">RSS 구독 <span aria-hidden="true">↗</span></a><span>© 2026 Atom</span></div>
 </div></footer>
 
 </body>

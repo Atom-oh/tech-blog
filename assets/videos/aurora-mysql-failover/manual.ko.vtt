@@ -1,0 +1,21 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:08.000 line:0 position:50% align:center size:90%
+먼저 Writer와 다른 AZ의 Reader를 확인합니다
+
+2
+00:00:08.000 --> 00:00:18.000 line:0 position:50% align:center size:90%
+운영자가 승격할 Reader를 지정합니다
+
+3
+00:00:18.000 --> 00:00:28.000 line:0 position:50% align:center size:90%
+Reader가 Writer로 승격됩니다
+
+4
+00:00:28.000 --> 00:00:38.000 line:0 position:50% align:center size:90%
+같은 Endpoint로 새 Writer에 재접속합니다
+
+5
+00:00:38.000 --> 00:00:50.000 line:0 position:50% align:center size:90%
+완료 기준은 역할 변경과 쓰기 성공입니다

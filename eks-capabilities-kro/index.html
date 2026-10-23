@@ -12,9 +12,9 @@
   <meta property="og:description" content="EKS Capabilities의 kro를 EKS 1.36 클러스터에 만들어 RGD 생성, 인스턴스 수명주기, ACK와의 결합을 측정하고, 같은 시나리오를 self-managed kro 0.9.4로 반복했습니다. 기본 권한으로는 컨트롤러가 시작하지 못하는 문제, 같은 이름의 기존 CR을 덮어써 DynamoDB 테이블을 고아로 만든 사례, OSS 대비 장단점을 정리했습니다.">
   <meta property="og:url" content="https://blog.atomai.click/eks-capabilities-kro/">
   <meta property="og:site_name" content="Atom 기술 블로그">
-  <link rel="alternate" type="application/rss+xml" title="Atom 기술 블로그" href="/feed.xml">
-  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/assets/style.css">
+  <link rel="alternate" type="application/rss+xml" title="Atom 기술 블로그" href="../feed.xml">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../assets/style.css">
   <meta name="theme-color" content="#faf9f6">
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-GWVLEW5JLL"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-GWVLEW5JLL');</script>
@@ -22,16 +22,16 @@
 <body class="article-page">
 <a class="skip-link" href="#main">본문으로 건너뛰기</a>
 <header class="site-header"><div class="inner">
-  <a class="brand" href="/" aria-label="Atom 기술 블로그 홈">
+  <a class="brand" href="../index.html" aria-label="Atom 기술 블로그 홈">
     <svg class="brand-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true"><circle cx="20" cy="20" r="3" fill="currentColor"/><ellipse cx="20" cy="20" rx="17" ry="7" stroke="currentColor" stroke-width="1.8" transform="rotate(-45 20 20)"/><ellipse cx="20" cy="20" rx="17" ry="7" stroke="currentColor" stroke-width="1.8" transform="rotate(45 20 20)"/></svg>
     <span>atom<span class="brand-dot">.</span></span><span class="brand-caption">기술 블로그</span>
   </a>
-  <nav class="site-nav" aria-label="주 메뉴"><a href="/">글 목록</a><a href="/tags/">태그</a><a class="rss-link" href="/feed.xml"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="5" cy="15" r="1.5" fill="currentColor"/><path d="M4 9a7 7 0 0 1 7 7M4 4a12 12 0 0 1 12 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>RSS</a></nav>
+  <nav class="site-nav" aria-label="주 메뉴"><a href="../index.html">글 목록</a><a href="../tags/index.html">태그</a><a class="rss-link" href="../feed.xml"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="5" cy="15" r="1.5" fill="currentColor"/><path d="M4 9a7 7 0 0 1 7 7M4 4a12 12 0 0 1 12 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>RSS</a></nav>
 </div></header>
 <main id="main" class="wrap">
 <article>
-<header class="post-head"><a class="back-link" href="/">← 모든 글</a><p class="eyebrow">ENGINEERING NOTES</p><h1>EKS의 관리형 kro를 직접 써 봤습니다: OSS와 같은 0.9.4, 권한은 직접 열어야 하고 이름 충돌은 조심해야 합니다</h1><div class="post-author"><span class="author-avatar" aria-hidden="true">a.</span><span><strong>Atom</strong><time datetime="2026-10-21">2026.10.21</time></span></div><ul class="tags"><li><a href="/tags/#eks">#eks</a></li><li><a href="/tags/#eks-capabilities">#eks-capabilities</a></li><li><a href="/tags/#kro">#kro</a></li><li><a href="/tags/#platform-engineering">#platform-engineering</a></li></ul></header>
-<div class="prose"><p class="series">EKS Capabilities 직접 써 보기: <a href="/eks-capabilities-argocd/">1편 Argo CD</a> · <strong>2편 kro</strong> · <a href="/eks-capabilities-ack/">3편 ACK</a></p>
+<header class="post-head"><a class="back-link" href="../index.html">← 모든 글</a><p class="eyebrow">ENGINEERING NOTES</p><h1>EKS의 관리형 kro를 직접 써 봤습니다: OSS와 같은 0.9.4, 권한은 직접 열어야 하고 이름 충돌은 조심해야 합니다</h1><div class="post-author"><span class="author-avatar" aria-hidden="true">a.</span><span><strong>Atom</strong><time datetime="2026-10-21">2026.10.21</time></span></div><ul class="tags"><li><a href="../tags/index.html#eks">#eks</a></li><li><a href="../tags/index.html#eks-capabilities">#eks-capabilities</a></li><li><a href="../tags/index.html#kro">#kro</a></li><li><a href="../tags/index.html#platform-engineering">#platform-engineering</a></li></ul></header>
+<div class="prose"><p class="series">EKS Capabilities 직접 써 보기: <a href="../eks-capabilities-argocd/index.html">1편 Argo CD</a> · <strong>2편 kro</strong> · <a href="../eks-capabilities-ack/index.html">3편 ACK</a></p>
 
 <p class="lead">kro(Kube Resource Orchestrator)는 여러 Kubernetes 리소스를 하나의 API로 묶어 주는 도구입니다. EKS Capabilities로 켜면 kro 컨트롤러가 클러스터 밖 AWS 관리 인프라에서 돌고, 클러스터에는 CRD만 남습니다. 이번 편에서는 "컨트롤러를 AWS에 맡기면 무엇이 달라지고, 무엇은 여전히 내가 챙겨야 하나"를 실제 클러스터에서 확인했습니다. 같은 RGD(ResourceGraphDefinition)와 측정 스크립트를 관리형 kro와 self-managed kro 0.9.4에 번갈아 돌렸고, 3편에서 다룰 ACK와 묶은 구성도 함께 시험했습니다. 측정은 2026년 10월 21일에 했고, 원시 결과와 매니페스트는 글 끝에 공개합니다.</p>
 
@@ -471,7 +471,7 @@ subjects:
 </ul>
 <h2 id="more">13. 원시 결과, 재현 방법</h2>
 
-<p>매니페스트는 <a href="https://github.com/Atom-oh/eks-capabilities-demo">Atom-oh/eks-capabilities-demo</a>에 있습니다. <code>kro/</code>에 RGD, 인스턴스, ClusterRole이 있고, <code>kro-instances/</code>는 Argo CD가 동기화하는 인스턴스입니다. 측정 결과 JSON은 <a href="/assets/data/eks-capabilities-2026-10/">assets/data/eks-capabilities-2026-10/</a>에 있습니다.</p>
+<p>매니페스트는 <a href="https://github.com/Atom-oh/eks-capabilities-demo">Atom-oh/eks-capabilities-demo</a>에 있습니다. <code>kro/</code>에 RGD, 인스턴스, ClusterRole이 있고, <code>kro-instances/</code>는 Argo CD가 동기화하는 인스턴스입니다. 측정 결과 JSON은 <a href="../assets/data/eks-capabilities-2026-10/README.md">assets/data/eks-capabilities-2026-10/</a>에 있습니다.</p>
 <p>재현 순서는 다음과 같습니다.</p>
 <ol>
 <li>capability role을 만듭니다(서비스 보안 주체 <code>capabilities.eks.amazonaws.com</code>, 권한 정책 없음).</li>
@@ -490,12 +490,12 @@ subjects:
 <li><a href="https://aws.amazon.com/eks/pricing/">Amazon EKS pricing</a></li>
 <li><a href="https://github.com/kubernetes-sigs/kro/releases/tag/v0.9.4">kro 0.9.4 release</a></li>
 </ul></div>
-<nav class="post-nav" aria-label="이전 글과 다음 글"><a href="/eks-capabilities-argocd/"><span>← 이전 글</span>EKS의 관리형 Argo CD를 직접 써 봤습니다: 노드에 Pod 0개, webhook 7초 동기화, 배포 권한 함정과 OSS 비교</a><a href="/istio-on-eks/"><span>다음 글 →</span>EKS에서 Istio sidecar와 ambient를 직접 재 봤습니다: 지연, 롤아웃 실패, L7 정책 함정, 관측성까지</a></nav>
+<nav class="post-nav" aria-label="이전 글과 다음 글"><a href="../eks-capabilities-argocd/index.html"><span>← 이전 글</span>EKS의 관리형 Argo CD를 직접 써 봤습니다: 노드에 Pod 0개, webhook 7초 동기화, 배포 권한 함정과 OSS 비교</a><a href="../istio-on-eks/index.html"><span>다음 글 →</span>EKS에서 Istio sidecar와 ambient를 직접 재 봤습니다: 지연, 롤아웃 실패, L7 정책 함정, 관측성까지</a></nav>
 </article>
 </main>
 <footer class="site-footer"><div class="inner">
-  <div><a class="footer-brand" href="/">atom.</a><p>직접 구성하고, 측정하고, 기록합니다.</p></div>
-  <div class="footer-links"><a href="https://presentation.atomai.click/">발표 자료 <span aria-hidden="true">↗</span></a><a href="/feed.xml">RSS 구독 <span aria-hidden="true">↗</span></a><span>© 2026 Atom</span></div>
+  <div><a class="footer-brand" href="../index.html">atom.</a><p>직접 구성하고, 측정하고, 기록합니다.</p></div>
+  <div class="footer-links"><a href="https://presentation.atomai.click/">발표 자료 <span aria-hidden="true">↗</span></a><a href="../feed.xml">RSS 구독 <span aria-hidden="true">↗</span></a><span>© 2026 Atom</span></div>
 </div></footer>
 <script>
 document.querySelectorAll('video').forEach(function (v) {

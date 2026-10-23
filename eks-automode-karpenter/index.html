@@ -12,9 +12,9 @@
   <meta property="og:description" content="EKS 1.37에서 Auto Mode 클러스터와 직접 설치한 Karpenter 1.15.0 클러스터를 같은 조건으로 만들고 스케일 아웃, consolidation, Drift, Spot 중단을 실측한 기록">
   <meta property="og:url" content="https://blog.atomai.click/eks-automode-karpenter/">
   <meta property="og:site_name" content="Atom 기술 블로그">
-  <link rel="alternate" type="application/rss+xml" title="Atom 기술 블로그" href="/feed.xml">
-  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/assets/style.css">
+  <link rel="alternate" type="application/rss+xml" title="Atom 기술 블로그" href="../feed.xml">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../assets/style.css">
   <meta name="theme-color" content="#faf9f6">
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-GWVLEW5JLL"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-GWVLEW5JLL');</script>
@@ -22,15 +22,15 @@
 <body class="article-page">
 <a class="skip-link" href="#main">본문으로 건너뛰기</a>
 <header class="site-header"><div class="inner">
-  <a class="brand" href="/" aria-label="Atom 기술 블로그 홈">
+  <a class="brand" href="../index.html" aria-label="Atom 기술 블로그 홈">
     <svg class="brand-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true"><circle cx="20" cy="20" r="3" fill="currentColor"/><ellipse cx="20" cy="20" rx="17" ry="7" stroke="currentColor" stroke-width="1.8" transform="rotate(-45 20 20)"/><ellipse cx="20" cy="20" rx="17" ry="7" stroke="currentColor" stroke-width="1.8" transform="rotate(45 20 20)"/></svg>
     <span>atom<span class="brand-dot">.</span></span><span class="brand-caption">기술 블로그</span>
   </a>
-  <nav class="site-nav" aria-label="주 메뉴"><a href="/">글 목록</a><a href="/tags/">태그</a><a class="rss-link" href="/feed.xml"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="5" cy="15" r="1.5" fill="currentColor"/><path d="M4 9a7 7 0 0 1 7 7M4 4a12 12 0 0 1 12 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>RSS</a></nav>
+  <nav class="site-nav" aria-label="주 메뉴"><a href="../index.html">글 목록</a><a href="../tags/index.html">태그</a><a class="rss-link" href="../feed.xml"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="5" cy="15" r="1.5" fill="currentColor"/><path d="M4 9a7 7 0 0 1 7 7M4 4a12 12 0 0 1 12 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>RSS</a></nav>
 </div></header>
 <main id="main" class="wrap">
 <article>
-<header class="post-head"><a class="back-link" href="/">← 모든 글</a><p class="eyebrow">ENGINEERING NOTES</p><h1>EKS Auto Mode와 Karpenter 1.15를 나란히 돌려 봤습니다: 스케일 아웃, Balanced consolidation, Drift, Spot 중단</h1><div class="post-author"><span class="author-avatar" aria-hidden="true">a.</span><span><strong>Atom</strong><time datetime="2026-10-21">2026.10.21</time></span></div><ul class="tags"><li><a href="/tags/#eks">#eks</a></li><li><a href="/tags/#karpenter">#karpenter</a></li><li><a href="/tags/#auto-mode">#auto-mode</a></li><li><a href="/tags/#autoscaling">#autoscaling</a></li></ul></header>
+<header class="post-head"><a class="back-link" href="../index.html">← 모든 글</a><p class="eyebrow">ENGINEERING NOTES</p><h1>EKS Auto Mode와 Karpenter 1.15를 나란히 돌려 봤습니다: 스케일 아웃, Balanced consolidation, Drift, Spot 중단</h1><div class="post-author"><span class="author-avatar" aria-hidden="true">a.</span><span><strong>Atom</strong><time datetime="2026-10-21">2026.10.21</time></span></div><ul class="tags"><li><a href="../tags/index.html#eks">#eks</a></li><li><a href="../tags/index.html#karpenter">#karpenter</a></li><li><a href="../tags/index.html#auto-mode">#auto-mode</a></li><li><a href="../tags/index.html#autoscaling">#autoscaling</a></li></ul></header>
 <div class="prose"><p class="lead">EKS Auto Mode와 Karpenter 세션의 데모 영상을 만들면서, 같은 VPC에 EKS 1.37 클러스터 두 개를 만들어 같은 워크로드를 돌렸습니다. 하나는 EKS Auto Mode, 다른 하나는 Karpenter 1.15.0을 직접 설치한 클러스터입니다. 이 글에는 세션에서 보여 드린 영상 네 편의 내용과 함께, 영상에 담지 못한 설정과 구성 중에 막힌 지점을 정리했습니다. 영상 네 편의 측정은 모두 2026년 10월 20일 UTC 13시 50분부터 14시 25분 사이에 했고, 각 시나리오는 한 번(consolidation은 두 번)씩만 돌렸습니다. 숫자는 동작을 확인하는 용도로만 보시고, 성능 비교로 쓰지 마시기 바랍니다.</p>
 
 <div class="callout warn"><strong>먼저 결론: 노드를 고르는 판단은 같고, 차이는 운영 책임과 기본값입니다</strong>같은 NodePool 조건과 같은 Pod 요청에 두 클러스터는 같은 인스턴스 유형을 같은 대수만큼 골랐습니다. Auto Mode 안에서도 판단하는 것은 Karpenter입니다. 실무에서 차이가 나는 부분은 두 가지였습니다. 첫째, <strong>EKS 1.37에서 consolidationPolicy를 비워 두면 Auto Mode는 <code>Balanced</code>, 직접 설치한 Karpenter는 <code>WhenEmptyOrUnderutilized</code>가 들어갑니다.</strong> 정책은 Git에 명시해 두는 편이 안전합니다. 둘째, Spot 중단 처리는 Auto Mode에서는 AWS가 맡고, 직접 운영하면 SQS interruption queue와 EventBridge 규칙을 팀이 구성합니다. 그리고 Karpenter 클러스터에서만 확인한 결과(Auto Mode는 FIS EC2 액션을 지원하지 않습니다)로, Spot 중단 경고를 받자마자 노드를 비웠습니다. 2분을 기다려 주지 않으므로, Spot에서 버티는 힘은 replica를 여러 노드에 나눠 두는 배치에서 나옵니다.</div>
@@ -378,12 +378,12 @@ kubectl --context akd-auto patch nodeclass demo --type merge \
 <li><a href="https://kubernetes.io/blog/2026/09/10/kubernetes-v1-37-scheduler-preemption-for-in-place-pod-resize-alpha/">Kubernetes v1.37: Scheduler Preemption for In-Place Pod Resize (Alpha)</a></li>
 <li>세션 자료: <a href="https://presentation.atomai.click/eks-automode-karpenter/">EKS Auto Mode와 Karpenter (65분) 덱</a></li>
 </ul></div>
-<nav class="post-nav" aria-label="이전 글과 다음 글"><a href="/eks-hybrid-nodes-demos/"><span>← 이전 글</span>EKS Hybrid Nodes를 직접 돌려 봤습니다: gateway를 아껴 써야 하는 이유부터 SNAT 없는 연결, PrivateLink, 링크 단절까지</a><a href="/eks-capabilities-argocd/"><span>다음 글 →</span>EKS의 관리형 Argo CD를 직접 써 봤습니다: 노드에 Pod 0개, webhook 7초 동기화, 배포 권한 함정과 OSS 비교</a></nav>
+<nav class="post-nav" aria-label="이전 글과 다음 글"><a href="../eks-hybrid-nodes-demos/index.html"><span>← 이전 글</span>EKS Hybrid Nodes를 직접 돌려 봤습니다: gateway를 아껴 써야 하는 이유부터 SNAT 없는 연결, PrivateLink, 링크 단절까지</a><a href="../eks-capabilities-argocd/index.html"><span>다음 글 →</span>EKS의 관리형 Argo CD를 직접 써 봤습니다: 노드에 Pod 0개, webhook 7초 동기화, 배포 권한 함정과 OSS 비교</a></nav>
 </article>
 </main>
 <footer class="site-footer"><div class="inner">
-  <div><a class="footer-brand" href="/">atom.</a><p>직접 구성하고, 측정하고, 기록합니다.</p></div>
-  <div class="footer-links"><a href="https://presentation.atomai.click/">발표 자료 <span aria-hidden="true">↗</span></a><a href="/feed.xml">RSS 구독 <span aria-hidden="true">↗</span></a><span>© 2026 Atom</span></div>
+  <div><a class="footer-brand" href="../index.html">atom.</a><p>직접 구성하고, 측정하고, 기록합니다.</p></div>
+  <div class="footer-links"><a href="https://presentation.atomai.click/">발표 자료 <span aria-hidden="true">↗</span></a><a href="../feed.xml">RSS 구독 <span aria-hidden="true">↗</span></a><span>© 2026 Atom</span></div>
 </div></footer>
 <script>
 document.querySelectorAll('video').forEach(function (v) {

@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=1280, height=720">
+<title>Aurora MySQL 자동 Failover — 동작 시뮬레이션</title>
+<script src="assets/gsap.min.js"></script><style>
+@font-face{font-family:DemoKR;src:url('assets/demo-kr.woff') format('woff');font-weight:400;font-display:block}
+*{box-sizing:border-box}html,body{margin:0;width:1280px;height:720px;overflow:hidden;background:#0b1220;color:#f2f5fa}
+body{font-family:DemoKR,sans-serif}
+#aurora-main{width:100%;height:100%;position:relative;overflow:hidden}
+.clip{position:absolute;inset:0;background:#0b1220}
+.topline{position:absolute;left:64px;right:64px;top:80px;display:flex;justify-content:space-between;align-items:center;font-size:19px;color:#b8c8dc}
+.badge{border:1px solid #5b718c;border-radius:20px;padding:5px 15px;color:#e7eef8;background:#18263a}
+.heading{position:absolute;left:64px;top:125px;margin:0;font-size:38px;font-weight:700;line-height:1.3;letter-spacing:-1.1px}
+.subtitle{position:absolute;left:64px;top:184px;margin:0;font-size:24px;color:#c3cfdf}
+.diagram{position:absolute;left:0;top:0;width:1280px;height:720px}
+.app,.endpoint,.node,.az-label,.storage,.notice,.check{position:absolute}
+.app{left:70px;top:271px;width:230px;height:83px;display:grid;place-items:center;border:1px solid #7f91a8;border-radius:13px;background:#1a2b40;font-size:27px}
+.endpoint{left:70px;top:391px;width:230px;height:70px;display:grid;place-items:center;border:1px solid #7f91a8;border-radius:12px;background:#162236;font-size:23px}
+.az{position:absolute;top:229px;width:344px;height:285px;border:1.5px dashed #698099;border-radius:15px;background:#101c2d}
+.az-a{left:363px}.az-b{left:801px}.az-label{top:17px;left:23px;font-size:22px;color:#c3cfdf}
+.node{top:76px;left:25px;width:293px;height:158px;border:2px solid #b7a07c;border-radius:14px;background:#352e26;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+.node.reader{border-color:#70b6a3;background:#14352f}.node.failed{border-color:#ec8d90;background:#3e222c}
+.role{font-size:27px;font-weight:700}.id{font:22px DemoKR,sans-serif;color:#e6ebf2}.node-note{font-size:19px;color:#e0e8f2}
+.storage{left:70px;top:549px;width:1075px;height:63px;border:1px solid #66778e;border-radius:12px;background:#172239;display:flex;align-items:center;justify-content:center;font-size:23px;color:#dbe6f3;gap:17px}
+.storage strong{color:#c7c0ff}.storage .pill{border-left:1px solid #66778e;padding-left:19px}
+.notice{left:368px;top:525px;font-size:18px;color:#e8bac1}
+.caption{position:absolute;left:64px;right:64px;bottom:43px;border-top:1px solid #35475e;padding-top:12px;font-size:22px;color:#e7edf6;display:flex;justify-content:space-between;gap:20px}
+.caption span{color:#bdcadd;font-size:18px}.page{font-size:20px;color:#c8d4e3}
+.check{left:76px;top:236px;width:1128px}
+.check-row{display:flex;align-items:center;gap:28px;padding:24px 28px;margin-bottom:15px;background:#18283b;border:1px solid #4f647c;border-radius:13px;font-size:28px}
+.check-num{width:46px;height:46px;display:grid;place-items:center;border-radius:50%;border:1px solid #8bb7d7;color:#d3e6f6;font-size:24px}
+.check-row small{display:block;color:#bfcde0;font-size:21px;margin-top:6px}
+.terminal-host{position:absolute;left:64px;top:230px;width:1152px;height:382px;--ctr-font-size:23px;--font-mono:DemoKR,monospace;--surface:#152438;--border:#748aa4;--muted:#b8c8dc;--bg:#0b1220;--fg:#f1f5fa}
+.failure-label{position:absolute;left:70px;top:490px;font-size:22px;color:#f5b0b4}
+.paths{position:absolute;inset:0;width:1280px;height:720px;overflow:visible}
+.route{stroke:#a2c9ed;stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.hold-line{stroke:#536881;stroke-width:1.7;fill:none}
+.failure-mark{font-size:33px;position:absolute;left:670px;top:300px;color:#f7b2b8}
+</style></head><body>
+<div id="aurora-main" data-composition-id="aurora-main" data-start="0" data-width="1280" data-height="720" data-duration="50" data-fps="24">
+
+<section id="scene-1" class="clip" data-start="0" data-duration="8" data-track-index="1">
+<div class="topline"><span>AURORA MYSQL / 자동 FAILOVER</span><span class="badge">동작 시뮬레이션 · 실제 녹화 아님</span></div>
+<h1 class="heading">자동 복구도 준비된 다른 AZ의 Reader를 활용합니다</h1><p class="subtitle">AZ A의 Writer와 AZ B의 Reader가 있는 예시입니다.</p>
+
+<div class="diagram">
+<svg class="paths" viewBox="0 0 1280 720" aria-hidden="true">
+<defs><marker id="arrow-normal" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#a2c9ed" stroke-width="1.8"/></marker></defs>
+<path class="hold-line" d="M185 354V391"/>
+<path class="hold-line" d="M535 514V549M973 514V549"/>
+<path class="route" d="M300 426H333V383H388" marker-end="url(#arrow-normal)"/>
+</svg>
+<div class="app">애플리케이션</div><div class="endpoint">Writer Endpoint</div>
+<div class="az az-a"><span class="az-label">AZ A</span><div class="node "><span class="role">Writer</span><span class="id">demo-a</span><span class="node-note">SQL 쓰기 처리</span></div></div>
+<div class="az az-b"><span class="az-label">AZ B</span><div class="node reader"><span class="role">Reader · tier 0</span><span class="id">demo-b</span><span class="node-note">다른 AZ의 승격 후보</span></div></div>
+<div class="storage"><strong>공유 클러스터 볼륨</strong><span class="pill">스토리지 복사본 6개 · 3개 AZ</span></div>
+</div>
+<div class="caption">한 리전 내부의 Writer 전환<span>재생 시간 ≠ Failover 소요 시간</span><b class="page">01 / 05</b></div>
+</section>
+<section id="scene-2" class="clip" data-start="8" data-duration="10" data-track-index="1">
+<div class="topline"><span>AURORA MYSQL / 자동 FAILOVER</span><span class="badge">동작 시뮬레이션 · 실제 녹화 아님</span></div>
+<h1 class="heading">Aurora가 Writer의 문제를 감지합니다</h1><p class="subtitle">항상 다른 인스턴스로 전환하는 것은 아닙니다.</p>
+
+<div class="diagram">
+<svg class="paths" viewBox="0 0 1280 720" aria-hidden="true">
+<defs><marker id="arrow-failure" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#a2c9ed" stroke-width="1.8"/></marker></defs>
+<path class="hold-line" d="M185 354V391"/>
+<path class="hold-line" d="M535 514V549M973 514V549"/>
+<path class="route" d="M300 426H333V383H388" marker-end="url(#arrow-failure)"/>
+</svg>
+<div class="app">애플리케이션</div><div class="endpoint">Writer Endpoint</div>
+<div class="az az-a"><span class="az-label">AZ A</span><div class="node failed"><span class="role">Writer 장애</span><span class="id">demo-a</span><span class="node-note">연결·쓰기 실패 가능</span></div></div>
+<div class="az az-b"><span class="az-label">AZ B</span><div class="node reader"><span class="role">Reader · tier 0</span><span class="id">demo-b</span><span class="node-note">사용 가능한 후보</span></div></div>
+<div class="storage"><strong>공유 클러스터 볼륨</strong><span class="pill">스토리지 복사본 6개 · 3개 AZ</span></div>
+<div class="failure-label">연결 오류 → 제한된 재시도</div><div class="failure-mark">×</div></div>
+<div class="caption">한 리전 내부의 Writer 전환<span>재생 시간 ≠ Failover 소요 시간</span><b class="page">02 / 05</b></div>
+</section>
+<section id="scene-3" class="clip" data-start="18" data-duration="10" data-track-index="1">
+<div class="topline"><span>AURORA MYSQL / 자동 FAILOVER</span><span class="badge">동작 시뮬레이션 · 실제 녹화 아님</span></div>
+<h1 class="heading">Failover 경로에서 Reader를 승격합니다</h1><p class="subtitle">복구 경로는 재시작 또는 전환 등 상태에 따라 결정됩니다.</p>
+
+<div class="diagram">
+<svg class="paths" viewBox="0 0 1280 720" aria-hidden="true">
+<defs><marker id="arrow-switch" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#a2c9ed" stroke-width="1.8"/></marker></defs>
+<path class="hold-line" d="M185 354V391"/>
+<path class="hold-line" d="M535 514V549M973 514V549"/>
+<path class="route" d="M300 426H333V383H388" marker-end="url(#arrow-switch)"/>
+</svg>
+<div class="app">애플리케이션</div><div class="endpoint">Writer Endpoint</div>
+<div class="az az-a"><span class="az-label">AZ A</span><div class="node failed"><span class="role">사용 불가</span><span class="id">demo-a</span><span class="node-note">장애 인스턴스</span></div></div>
+<div class="az az-b"><span class="az-label">AZ B</span><div class="node "><span class="role">새 Writer</span><span class="id">demo-b</span><span class="node-note">후보 상태와 tier 고려</span></div></div>
+<div class="storage"><strong>공유 클러스터 볼륨</strong><span class="pill">스토리지 복사본 6개 · 3개 AZ</span></div>
+<div class="failure-label">연결 오류 → 제한된 재시도</div><div class="failure-mark">×</div></div>
+<div class="caption">한 리전 내부의 Writer 전환<span>재생 시간 ≠ Failover 소요 시간</span><b class="page">03 / 05</b></div>
+</section>
+<section id="scene-4" class="clip" data-start="28" data-duration="10" data-track-index="1">
+<div class="topline"><span>AURORA MYSQL / 자동 FAILOVER</span><span class="badge">동작 시뮬레이션 · 실제 녹화 아님</span></div>
+<h1 class="heading">애플리케이션이 새 Writer로 연결합니다</h1><p class="subtitle">Aurora의 역할 변경 뒤에도 앱의 재접속 처리가 필요합니다.</p>
+
+<div class="diagram">
+<svg class="paths" viewBox="0 0 1280 720" aria-hidden="true">
+<defs><marker id="arrow-reconnect" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#a2c9ed" stroke-width="1.8"/></marker></defs>
+<path class="hold-line" d="M185 354V391"/>
+<path class="hold-line" d="M535 514V549M973 514V549"/>
+<path class="route" d="M300 426H331V219H783V383H826" marker-end="url(#arrow-reconnect)"/>
+</svg>
+<div class="app">애플리케이션</div><div class="endpoint">Writer Endpoint</div>
+<div class="az az-a"><span class="az-label">AZ A</span><div class="node failed"><span class="role">복구 상태 확인</span><span class="id">demo-a</span><span class="node-note">복귀 시점은 별도 확인</span></div></div>
+<div class="az az-b"><span class="az-label">AZ B</span><div class="node "><span class="role">Writer</span><span class="id">demo-b</span><span class="node-note">새 연결로 쓰기 재개</span></div></div>
+<div class="storage"><strong>공유 클러스터 볼륨</strong><span class="pill">스토리지 복사본 6개 · 3개 AZ</span></div>
+<div class="failure-mark">×</div></div>
+<div class="caption">한 리전 내부의 Writer 전환<span>재생 시간 ≠ Failover 소요 시간</span><b class="page">04 / 05</b></div>
+</section>
+<section id="scene-5" class="clip" data-start="38" data-duration="12" data-track-index="1">
+<div class="topline"><span>AURORA MYSQL / 자동 FAILOVER</span><span class="badge">동작 시뮬레이션 · 실제 녹화 아님</span></div>
+<h1 class="heading">자동 전환도 쓰기 복구까지 확인합니다</h1><p class="subtitle">이 영상은 장애 감지와 복구 시간을 측정한 결과가 아닙니다.</p>
+<div class="check"><div class="check-row"><span class="check-num">1</span><div>다른 AZ의 Reader<small>사용 가능한 승격 후보와 용량을 준비합니다.</small></div></div><div class="check-row"><span class="check-num">2</span><div>Writer 역할 + 실제 쓰기<small>새 Writer에서 INSERT 후 조회까지 확인합니다.</small></div></div><div class="check-row"><span class="check-num">3</span><div>자동 복구의 범위 구분<small>수동 전환·crash 쿼리로 자연 장애 감지를 입증하지 않습니다.</small></div></div></div>
+<div class="caption">한 리전 내부의 Writer 전환<span>재생 시간 ≠ Failover 소요 시간</span><b class="page">05 / 05</b></div>
+</section>
+</div><script>
+const tl = gsap.timeline({paused:true});
+document.querySelectorAll('section.clip').forEach((scene) => {
+ const start = Number(scene.dataset.start);
+ const children = scene.querySelectorAll('.heading, .subtitle, .app, .endpoint, .az, .storage, .check-row, .failure-label, .failure-mark');
+ tl.fromTo(children, {opacity:0, y:12}, {opacity:1, y:0, duration:0.55, stagger:0.06, ease:'power3.out'}, start + 0.1);
+ scene.querySelectorAll('.route').forEach((path) => {
+  const length = path.getTotalLength();
+  path.style.strokeDasharray = String(length);
+  path.style.strokeDashoffset = String(length);
+  tl.fromTo(path, {strokeDashoffset:length}, {strokeDashoffset:0,duration:1.4,ease:'power2.out'}, start + 0.7);
+ });
+});
+window.__timelines['aurora-main'] = tl;
+</script></body></html>

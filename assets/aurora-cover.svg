@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="300" viewBox="0 0 480 300" fill="none">
+  <defs><pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#a8bbce" opacity=".5"/></pattern></defs>
+  <rect width="480" height="300" fill="url(#dots)"/>
+  <g stroke-width="1.8">
+    <rect x="66" y="65" width="145" height="129" rx="10" stroke="#7996ae" stroke-dasharray="5 5"/>
+    <rect x="270" y="65" width="145" height="129" rx="10" stroke="#7996ae" stroke-dasharray="5 5"/>
+    <path d="M112 110v50c0 19 54 19 54 0v-50" fill="#f1d4ac" stroke="#9c753f"/>
+    <ellipse cx="139" cy="110" rx="27" ry="10" fill="#e7c18d" stroke="#9c753f"/>
+    <path d="M112 134c0 19 54 19 54 0" stroke="#9c753f"/>
+    <path d="M316 110v50c0 19 54 19 54 0v-50" fill="#b9d8d1" stroke="#528576"/>
+    <ellipse cx="343" cy="110" rx="27" ry="10" fill="#9fc8bd" stroke="#528576"/>
+    <path d="M316 134c0 19 54 19 54 0" stroke="#528576"/>
+    <path d="M191 135h90m-12-9 12 9-12 9" stroke="#496e92"/>
+    <path d="M139 194v32m204-32v32" stroke="#7996ae"/>
+    <rect x="66" y="226" width="349" height="30" rx="7" fill="#d4dfeb" stroke="#7996ae"/>
+    <path d="M122 237v8m59-8v8m59-8v8m59-8v8m59-8v8" stroke="#7996ae"/>
+  </g>
+  <g font-family="sans-serif" font-size="12" fill="#4f6880" text-anchor="middle"><text x="139" y="89">WRITER · AZ A</text><text x="343" y="89">READER · AZ B</text></g>
+</svg>
