@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="770" viewBox="0 0 1120 770" role="img" aria-labelledby="title desc">
+  <title id="title">여러 클러스터에서 kro를 두는 두 가지 구성</title>
+  <desc id="desc">구성 A는 클러스터마다 kro capability를 켜고, hub의 Argo CD ApplicationSet이 RGD와 RBAC를 모든 클러스터에 배포한다. access entry에 Kubernetes 그룹을 붙이는 일은 EKS API 호출이므로 클러스터를 만드는 IaC에 넣는다. 구성 B는 hub에만 kro를 두고, hub의 RGD가 ACK 리소스와 spoke를 가리키는 Argo CD Application을 하위 리소스로 만든다. spoke는 kro 없이 Argo CD가 배포한 매니페스트만 받는다. 두 구성 모두 여러 클러스터로는 시험하지 않았다.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#405267" stroke-width="1.6"/></marker>
+  </defs>
+  <rect width="1120" height="770" rx="20" fill="#fbfaf7"/>
+  <g font-family="Noto Sans CJK KR, sans-serif">
+    <text x="42" y="49" fill="#5f6670" font-size="18" font-weight="600" letter-spacing="2">MULTI-CLUSTER · KRO</text>
+    <text x="42" y="93" fill="#222e3b" font-size="31" font-weight="700">kro는 자기 클러스터에만 리소스를 만듭니다. 어디에 둘까요?</text>
+
+    <!-- panel A -->
+    <rect x="40" y="125" width="505" height="590" rx="16" fill="#ffffff" stroke="#9aa5b1" stroke-width="1.6"/>
+    <text x="60" y="158" fill="#26394b" font-size="20" font-weight="700">A. 클러스터마다 kro</text>
+    <text x="60" y="183" fill="#5f6670" font-size="14">RGD를 모든 클러스터에 배포해 같은 API를 제공</text>
+
+    <rect x="60" y="202" width="465" height="64" rx="12" fill="#edf0f3" stroke="#c4cbd1"/>
+    <text x="78" y="229" fill="#26394b" font-size="16" font-weight="700">Git: RGD + ClusterRole · ClusterRoleBinding</text>
+    <text x="78" y="252" fill="#5f6670" font-size="14">sync wave로 RBAC를 RGD보다 먼저 적용</text>
+    <path d="M292 266V290" fill="none" stroke="#405267" stroke-width="2" marker-end="url(#arrow)"/>
+    <rect x="60" y="298" width="465" height="54" rx="12" fill="#e3ecf8" stroke="#4a6fa5"/>
+    <text x="292" y="331" text-anchor="middle" fill="#1f3b63" font-size="17" font-weight="700">hub의 Argo CD · ApplicationSet</text>
+    <path d="M171 352V384" fill="none" stroke="#405267" stroke-width="2" marker-end="url(#arrow)"/>
+    <path d="M414 352V384" fill="none" stroke="#405267" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <g>
+      <rect x="60" y="392" width="222" height="140" rx="12" fill="#fbfaf7" stroke="#9aa5b1"/>
+      <text x="78" y="420" fill="#26394b" font-size="16" font-weight="700">spoke-1</text>
+      <rect x="78" y="432" width="186" height="30" rx="7" fill="#e3ecf8" stroke="#4a6fa5"/>
+      <text x="171" y="452" text-anchor="middle" fill="#1f3b63" font-size="14" font-weight="600">kro capability</text>
+      <text x="78" y="486" fill="#26394b" font-size="14">RGD → NginxApp API</text>
+      <text x="78" y="510" fill="#26394b" font-size="14">→ Deployment · Service</text>
+    </g>
+    <g>
+      <rect x="303" y="392" width="222" height="140" rx="12" fill="#fbfaf7" stroke="#9aa5b1"/>
+      <text x="321" y="420" fill="#26394b" font-size="16" font-weight="700">spoke-2</text>
+      <rect x="321" y="432" width="186" height="30" rx="7" fill="#e3ecf8" stroke="#4a6fa5"/>
+      <text x="414" y="452" text-anchor="middle" fill="#1f3b63" font-size="14" font-weight="600">kro capability</text>
+      <text x="321" y="486" fill="#26394b" font-size="14">RGD → NginxApp API</text>
+      <text x="321" y="510" fill="#26394b" font-size="14">→ Deployment · Service</text>
+    </g>
+
+    <rect x="60" y="552" width="465" height="48" rx="12" fill="#fff4df" stroke="#b88632" stroke-dasharray="6 5"/>
+    <text x="292" y="582" text-anchor="middle" fill="#654814" font-size="14">access entry의 kro-workloads 그룹은 클러스터 IaC에 넣음</text>
+
+    <text x="60" y="636" fill="#245c4b" font-size="14">+ 앱 팀이 각 클러스터에서 같은 API를 바로 씀</text>
+    <text x="60" y="662" fill="#8a2c20" font-size="14">− capability 요금(클러스터당 월 약 $4.4)과 RBAC 작업이 늘어남</text>
+    <text x="60" y="688" fill="#8a2c20" font-size="14">− 클러스터마다 kro 버전이 같다는 보장이 문서에 없음</text>
+
+    <!-- panel B -->
+    <rect x="575" y="125" width="505" height="590" rx="16" fill="#ffffff" stroke="#9aa5b1" stroke-width="1.6"/>
+    <text x="595" y="158" fill="#26394b" font-size="20" font-weight="700">B. hub에만 kro</text>
+    <text x="595" y="183" fill="#5f6670" font-size="14">AWS 문서의 hub 패턴. hub의 RGD가 배포 단위를 만듦</text>
+
+    <rect x="595" y="202" width="465" height="200" rx="12" fill="#fbfaf7" stroke="#9aa5b1"/>
+    <text x="613" y="230" fill="#26394b" font-size="16" font-weight="700">hub 클러스터</text>
+    <rect x="613" y="244" width="222" height="30" rx="7" fill="#e3ecf8" stroke="#4a6fa5"/>
+    <text x="724" y="264" text-anchor="middle" fill="#1f3b63" font-size="14" font-weight="600">kro · Argo CD · ACK capability</text>
+    <rect x="613" y="290" width="200" height="48" rx="10" fill="#fff4df" stroke="#b88632"/>
+    <text x="713" y="320" text-anchor="middle" fill="#654814" font-size="15" font-weight="700">RGD 인스턴스</text>
+    <path d="M813 314H850V272H868" fill="none" stroke="#405267" stroke-width="2" marker-end="url(#arrow)"/>
+    <path d="M813 314H850V354H868" fill="none" stroke="#405267" stroke-width="2" marker-end="url(#arrow)"/>
+    <rect x="876" y="250" width="166" height="44" rx="10" fill="#edf0f3" stroke="#c4cbd1"/>
+    <text x="959" y="278" text-anchor="middle" fill="#26394b" font-size="14">ACK 리소스</text>
+    <rect x="876" y="332" width="166" height="44" rx="10" fill="#e7f4ef" stroke="#3c7c68"/>
+    <text x="959" y="360" text-anchor="middle" fill="#245c4b" font-size="14">Argo CD Application</text>
+    <text x="613" y="370" fill="#5f6670" font-size="14">kro role에 Application ·</text>
+    <text x="613" y="388" fill="#5f6670" font-size="14">ACK API 권한 필요</text>
+
+    <path d="M959 376V424H803V444" fill="none" stroke="#405267" stroke-width="2" marker-end="url(#arrow)"/>
+    <path d="M959 376V444" fill="none" stroke="#405267" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="700" y="436" text-anchor="middle" fill="#5f6670" font-size="14">Argo CD가 동기화</text>
+
+    <rect x="700" y="452" width="160" height="80" rx="12" fill="#fbfaf7" stroke="#9aa5b1"/>
+    <text x="780" y="484" text-anchor="middle" fill="#26394b" font-size="16" font-weight="700">spoke-1</text>
+    <text x="780" y="510" text-anchor="middle" fill="#5f6670" font-size="14">kro 없음</text>
+    <rect x="880" y="452" width="160" height="80" rx="12" fill="#fbfaf7" stroke="#9aa5b1"/>
+    <text x="960" y="484" text-anchor="middle" fill="#26394b" font-size="16" font-weight="700">spoke-2</text>
+    <text x="960" y="510" text-anchor="middle" fill="#5f6670" font-size="14">kro 없음</text>
+
+    <text x="595" y="636" fill="#245c4b" font-size="14">+ 추상화를 hub 한곳에서 정의 · 버전도 하나</text>
+    <text x="595" y="662" fill="#8a2c20" font-size="14">− hub에 권한과 장애 영향이 모임</text>
+    <text x="595" y="688" fill="#8a2c20" font-size="14">− spoke 앱 팀은 kro API를 직접 쓰지 못함</text>
+
+    <text x="1078" y="745" text-anchor="end" fill="#8a929b" font-size="14">두 구성 모두 여러 클러스터로는 시험하지 않음 · 간략화한 구성도</text>
+  </g>
+</svg>

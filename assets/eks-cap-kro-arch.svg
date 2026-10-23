@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="770" viewBox="0 0 1120 770" role="img" aria-labelledby="title desc">
+  <title id="title">관리형 kro가 RGD로 API를 만들고 하위 리소스를 만드는 구조</title>
+  <desc id="desc">kro 컨트롤러는 AWS 소유 인프라에서 돌며 capability role로 클러스터 API를 호출한다. 플랫폼 팀이 NginxApp RGD를 적용하면 kro가 1.1초 만에 nginxapps.platform.example.com CRD를 만든다. 앱 팀이나 Argo CD가 NginxApp 인스턴스를 만들면 kro가 Deployment와 Service를 만든다. 자동으로 붙는 AmazonEKSKROPolicy는 kro.run 그룹과 CRD만 다루므로, RGD가 정한 API와 하위 리소스 권한은 access entry에 Kubernetes 그룹을 붙이고 ClusterRole을 바인딩해 직접 줘야 한다. 권한이 없으면 forbidden이 아니라 cache sync timeout이 보이고, 권한을 나중에 넣으면 228초를 기다렸다.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#405267" stroke-width="1.6"/></marker>
+  </defs>
+  <rect width="1120" height="770" rx="20" fill="#fbfaf7"/>
+  <g font-family="Noto Sans CJK KR, sans-serif">
+    <text x="42" y="49" fill="#5f6670" font-size="18" font-weight="600" letter-spacing="2">EKS CAPABILITY · KRO</text>
+    <text x="42" y="93" fill="#222e3b" font-size="31" font-weight="700">RGD가 새 API를 만들고, 하위 리소스 권한은 따로 엽니다</text>
+
+    <!-- AWS owned -->
+    <rect x="40" y="130" width="270" height="580" rx="16" fill="#f1f5fb" stroke="#6f8fb8" stroke-width="1.6" stroke-dasharray="7 5"/>
+    <text x="60" y="162" fill="#1f3b63" font-size="19" font-weight="700">AWS 소유 인프라</text>
+    <rect x="60" y="190" width="230" height="150" rx="12" fill="#e3ecf8" stroke="#4a6fa5" stroke-width="2"/>
+    <text x="175" y="228" text-anchor="middle" fill="#1f3b63" font-size="23" font-weight="700">kro capability</text>
+    <text x="175" y="260" text-anchor="middle" fill="#33557f" font-size="15">upstream과 같은 컨트롤러</text>
+    <text x="175" y="284" text-anchor="middle" fill="#33557f" font-size="15">0.9.4-eks-1 · AWS가 정함</text>
+    <text x="175" y="308" text-anchor="middle" fill="#33557f" font-size="15">워커 노드 Pod 0개</text>
+    <rect x="60" y="440" width="230" height="110" rx="12" fill="#ffffff" stroke="#4a6fa5" stroke-width="1.6"/>
+    <text x="175" y="476" text-anchor="middle" fill="#1f3b63" font-size="20" font-weight="700">capability role</text>
+    <text x="175" y="504" text-anchor="middle" fill="#33557f" font-size="15">IAM 정책 불필요</text>
+    <text x="175" y="527" text-anchor="middle" fill="#33557f" font-size="14">kro는 AWS API를 부르지 않음</text>
+    <path d="M175 440V348" fill="none" stroke="#405267" stroke-width="1.6" stroke-dasharray="6 5"/>
+
+    <!-- cluster -->
+    <rect x="340" y="130" width="740" height="580" rx="16" fill="#ffffff" stroke="#9aa5b1" stroke-width="1.6"/>
+    <text x="362" y="162" fill="#26394b" font-size="19" font-weight="700">EKS 클러스터</text>
+    <line x1="352" y1="182" x2="352" y2="404" stroke="#4a6fa5" stroke-width="3" stroke-linecap="round"/>
+
+    <rect x="372" y="182" width="230" height="96" rx="12" fill="#fff4df" stroke="#b88632"/>
+    <text x="388" y="210" fill="#765c2e" font-size="14">플랫폼 팀이 적용</text>
+    <text x="388" y="236" fill="#654814" font-size="18" font-weight="700">RGD · NginxApp</text>
+    <text x="388" y="261" fill="#765c2e" font-size="14">group: platform.example.com</text>
+    <path d="M602 230H690" fill="none" stroke="#405267" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="646" y="216" text-anchor="middle" fill="#5f6670" font-size="14">kro가 생성</text>
+    <text x="646" y="252" text-anchor="middle" fill="#5f6670" font-size="14">1.1초</text>
+    <rect x="698" y="182" width="362" height="96" rx="12" fill="#e7f4ef" stroke="#3c7c68"/>
+    <text x="716" y="210" fill="#245c4b" font-size="14">새 API</text>
+    <text x="716" y="236" fill="#245c4b" font-size="17" font-weight="700">CRD nginxapps.platform.example.com</text>
+    <text x="716" y="261" fill="#245c4b" font-size="14">앱 팀이 쓸 kind NginxApp이 등록됨</text>
+
+    <rect x="372" y="308" width="230" height="96" rx="12" fill="#fff4df" stroke="#b88632"/>
+    <text x="388" y="336" fill="#765c2e" font-size="14">앱 팀 또는 Argo CD가 생성</text>
+    <text x="388" y="362" fill="#654814" font-size="18" font-weight="700">NginxApp 인스턴스</text>
+    <text x="388" y="387" fill="#765c2e" font-size="14">생성 → ACTIVE 2.5~3.7초</text>
+    <path d="M602 356H690" fill="none" stroke="#405267" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="646" y="342" text-anchor="middle" fill="#5f6670" font-size="14">kro가 생성</text>
+        <rect x="698" y="308" width="174" height="96" rx="12" fill="#edf0f3" stroke="#c4cbd1"/>
+    <text x="785" y="352" text-anchor="middle" fill="#26394b" font-size="18">Deployment</text>
+    <text x="785" y="378" text-anchor="middle" fill="#5f6670" font-size="14">replicas 변경 대부분 0.5초</text>
+    <rect x="886" y="308" width="174" height="96" rx="12" fill="#edf0f3" stroke="#c4cbd1"/>
+    <text x="973" y="352" text-anchor="middle" fill="#26394b" font-size="18">Service</text>
+    <text x="973" y="378" text-anchor="middle" fill="#5f6670" font-size="14">인스턴스 삭제 시 함께 정리</text>
+
+    <!-- permissions -->
+    <text x="362" y="448" fill="#26394b" font-size="18" font-weight="700">kro capability role의 access entry</text>
+    <rect x="362" y="462" width="300" height="122" rx="12" fill="#e7f4ef" stroke="#3c7c68"/>
+    <text x="380" y="490" fill="#245c4b" font-size="15" font-weight="700">자동으로 생김</text>
+    <text x="380" y="515" fill="#245c4b" font-size="15">AmazonEKSKROPolicy</text>
+    <text x="380" y="540" fill="#245c4b" font-size="14">kro.run 그룹 · CRD 관리</text>
+    <text x="380" y="564" fill="#245c4b" font-size="14">→ RGD 읽기, CRD 생성까지</text>
+
+    <rect x="678" y="462" width="382" height="122" rx="12" fill="#fff4df" stroke="#b88632"/>
+    <text x="696" y="490" fill="#8a4b12" font-size="15" font-weight="700">직접 추가 (RGD마다)</text>
+    <text x="696" y="515" fill="#654814" font-size="14">그룹 kro-workloads → ClusterRoleBinding</text>
+    <text x="696" y="540" fill="#654814" font-size="14">→ ClusterRole kro:controller:reviewed-nginxapps</text>
+    <text x="696" y="564" fill="#765c2e" font-size="14">nginxapps · deployments · services · ingresses</text>
+
+    <rect x="362" y="602" width="698" height="88" rx="12" fill="#fbe9e7" stroke="#b5483a"/>
+    <text x="380" y="630" fill="#8a2c20" font-size="15" font-weight="700">직접 추가가 없으면</text>
+    <text x="380" y="654" fill="#8a2c20" font-size="14">RGD가 Inactive, ControllerReady=False · cache sync timeout (forbidden으로 나오지 않음)</text>
+    <text x="380" y="676" fill="#8a2c20" font-size="14">RBAC를 RGD 뒤에 넣으면 228초 대기, 먼저 넣으면 바로 Active</text>
+
+    <!-- flows -->
+    <path d="M290 265H344" fill="none" stroke="#405267" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <text x="317" y="252" text-anchor="middle" fill="#5f6670" font-size="14">watch</text>
+    <text x="317" y="290" text-anchor="middle" fill="#5f6670" font-size="14">생성</text>
+    <path d="M290 523H354" fill="none" stroke="#405267" stroke-width="1.6" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+
+    <!-- legend -->
+    <path d="M42 738H92" stroke="#405267" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="104" y="743" fill="#5f6670" font-size="15">호출 · 생성</text>
+    <path d="M212 738H262" stroke="#405267" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+    <text x="274" y="743" fill="#5f6670" font-size="15">설정 · 신뢰 관계</text>
+    <text x="1078" y="743" text-anchor="end" fill="#8a929b" font-size="14">Argo CD로 인스턴스를 배포하면 Argo CD 쪽에도 nginxapps 권한이 필요</text>
+  </g>
+</svg>

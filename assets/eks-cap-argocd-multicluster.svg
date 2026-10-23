@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="790" viewBox="0 0 1120 790" role="img" aria-labelledby="title desc">
+  <title id="title">관리형 Argo CD로 hub와 private spoke 클러스터를 관리하는 구조</title>
+  <desc id="desc">Argo CD capability는 hub 클러스터에 만들었고 AWS 소유 인프라에서 돈다. hub의 argocd 네임스페이스에는 hub와 spoke의 EKS ARN으로 만든 cluster Secret과 Application이 있다. Argo CD는 API 엔드포인트가 private 전용인 spoke에도 네트워크 설정 추가 없이 연결됐지만, 다른 VPC의 워크스테이션은 spoke에 접속하지 못했다. spoke에는 hub의 capability role로 access entry를 직접 만들어야 한다. Edit와 AdminView 정책만으로는 namespaces is forbidden으로 실패했고, AmazonEKSArgoCDClusterPolicy를 추가한 뒤 수동 sync로 11.1초 만에 Synced가 됐다. 문서에 따르면 cluster Secret은 EKS ARN만 받으므로 EKS가 아닌 클러스터는 등록할 수 없다. blue/green 교체 시 할 일은 측정 결과에서 추론한 것이다.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#405267" stroke-width="1.6"/></marker>
+    <marker id="arrow-red" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#b5483a" stroke-width="1.6"/></marker>
+  </defs>
+  <rect width="1120" height="790" rx="20" fill="#fbfaf7"/>
+  <g font-family="Noto Sans CJK KR, sans-serif">
+    <text x="42" y="49" fill="#5f6670" font-size="18" font-weight="600" letter-spacing="2">HUB-AND-SPOKE · 실측 7</text>
+    <text x="42" y="93" fill="#222e3b" font-size="31" font-weight="700">spoke는 ARN으로 등록하고, 권한은 spoke에서 줍니다</text>
+
+    <!-- AWS owned Argo CD -->
+    <rect x="290" y="122" width="530" height="128" rx="16" fill="#f1f5fb" stroke="#6f8fb8" stroke-width="1.6" stroke-dasharray="7 5"/>
+    <text x="310" y="150" fill="#1f3b63" font-size="17" font-weight="700">AWS 소유 인프라</text>
+    <rect x="320" y="162" width="470" height="72" rx="12" fill="#e3ecf8" stroke="#4a6fa5" stroke-width="2"/>
+    <text x="555" y="193" text-anchor="middle" fill="#1f3b63" font-size="22" font-weight="700">Argo CD capability (hub에 생성)</text>
+    <text x="555" y="221" text-anchor="middle" fill="#33557f" font-size="15">hub의 capability role 하나로 두 클러스터를 호출</text>
+
+    <!-- workstation -->
+    <rect x="862" y="162" width="218" height="72" rx="12" fill="#edf0f3" stroke="#c4cbd1"/>
+    <text x="971" y="193" text-anchor="middle" fill="#26394b" font-size="19">워크스테이션</text>
+    <text x="971" y="219" text-anchor="middle" fill="#5f6670" font-size="15">다른 VPC</text>
+
+    <!-- hub cluster -->
+    <rect x="40" y="320" width="500" height="290" rx="16" fill="#ffffff" stroke="#9aa5b1" stroke-width="1.6"/>
+    <text x="60" y="352" fill="#26394b" font-size="20" font-weight="700">hub 클러스터</text>
+    <text x="520" y="352" text-anchor="end" fill="#5f6670" font-size="15">EKS 1.36 → 1.37 업그레이드</text>
+
+    <rect x="60" y="370" width="222" height="130" rx="12" fill="#e7f4ef" stroke="#3c7c68"/>
+    <text x="76" y="398" fill="#245c4b" font-size="17" font-weight="700">argocd 네임스페이스</text>
+    <text x="76" y="424" fill="#245c4b" font-size="14">cluster Secret: hub ARN</text>
+    <text x="76" y="447" fill="#245c4b" font-size="14">cluster Secret: spoke ARN</text>
+    <text x="76" y="470" fill="#245c4b" font-size="14">Application (hub용, spoke용)</text>
+
+    <rect x="298" y="370" width="222" height="130" rx="12" fill="#fbfaf7" stroke="#9aa5b1"/>
+    <text x="314" y="398" fill="#26394b" font-size="17" font-weight="700">access entry</text>
+    <text x="314" y="424" fill="#245c4b" font-size="14">자동: ArgoCDClusterPolicy</text>
+    <text x="314" y="447" fill="#245c4b" font-size="14">자동: ArgoCDPolicy</text>
+    <text x="314" y="470" fill="#8a4b12" font-size="14">추가: Edit · AdminView</text>
+
+    <rect x="60" y="518" width="460" height="72" rx="12" fill="#edf0f3" stroke="#c4cbd1"/>
+    <text x="290" y="549" text-anchor="middle" fill="#26394b" font-size="17">kro · ACK capability도 hub에 둠</text>
+    <text x="290" y="574" text-anchor="middle" fill="#5f6670" font-size="14">kro와 ACK는 자기 클러스터만 관리</text>
+
+    <!-- spoke cluster -->
+    <rect x="580" y="320" width="500" height="290" rx="16" fill="#ffffff" stroke="#9aa5b1" stroke-width="1.6"/>
+    <text x="600" y="352" fill="#26394b" font-size="20" font-weight="700">spoke 클러스터</text>
+    <text x="1060" y="352" text-anchor="end" fill="#5f6670" font-size="15">EKS 1.37 · API private 전용</text>
+
+    <rect x="600" y="370" width="460" height="220" rx="12" fill="#fbfaf7" stroke="#9aa5b1"/>
+    <text x="616" y="398" fill="#26394b" font-size="17" font-weight="700">access entry (hub의 capability role로 직접 생성)</text>
+    <text x="616" y="432" fill="#26394b" font-size="15" font-weight="600">① AmazonEKSEditPolicy + AmazonEKSAdminViewPolicy</text>
+    <text x="638" y="457" fill="#8a2c20" font-size="14">연결·인증은 성공, namespaces is forbidden</text>
+    <text x="638" y="479" fill="#8a2c20" font-size="14">자동 재시도 5회(약 303초)를 쓰고 멈춤</text>
+    <line x1="616" y1="498" x2="1044" y2="498" stroke="#e0ddd5"/>
+    <text x="616" y="526" fill="#26394b" font-size="15" font-weight="600">② + AmazonEKSArgoCDClusterPolicy</text>
+    <text x="638" y="551" fill="#245c4b" font-size="14">수동 sync 후 11.1초 만에 Synced · Healthy</text>
+    <text x="638" y="573" fill="#5f6670" font-size="14">CreateNamespace=true가 namespace 생성 권한을 요구</text>
+
+    <!-- flows -->
+    <path d="M420 234V312" fill="none" stroke="#405267" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <text x="432" y="282" fill="#5f6670" font-size="15">API 호출</text>
+    <path d="M690 234V312" fill="none" stroke="#405267" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <text x="702" y="272" fill="#5f6670" font-size="15">API 호출</text>
+    <text x="702" y="294" fill="#5f6670" font-size="14">엔드포인트 · SG · 라우팅 추가 없음</text>
+    <path d="M971 234V312" fill="none" stroke="#b5483a" stroke-width="2" marker-end="url(#arrow-red)"/>
+    <g stroke="#b5483a" stroke-width="3"><path d="M961 263l20 20M981 263l-20 20"/></g>
+    <text x="992" y="280" fill="#8a2c20" font-size="14">응답 없음</text>
+
+    <!-- bottom notes -->
+    <rect x="40" y="640" width="500" height="88" rx="12" fill="#f3f1ec" stroke="#c9c3b6" stroke-dasharray="6 5"/>
+    <text x="60" y="672" fill="#5f6670" font-size="17" font-weight="700">EKS가 아닌 클러스터 (문서 기준)</text>
+    <text x="60" y="700" fill="#5f6670" font-size="14">cluster Secret은 EKS ARN만 받으므로 배포 대상이 될 수 없음</text>
+
+    <rect x="580" y="640" width="500" height="88" rx="12" fill="#fff4df" stroke="#b88632"/>
+    <text x="600" y="672" fill="#654814" font-size="17" font-weight="700">blue/green으로 바꿀 때 (추론 · 시험 안 함)</text>
+    <text x="600" y="700" fill="#765c2e" font-size="14">새 클러스터에 access entry와 정책 3개 + 필요한 RBAC,</text>
+    <text x="600" y="720" fill="#765c2e" font-size="14">hub의 cluster Secret은 ARN만 교체</text>
+
+    <!-- legend -->
+    <path d="M42 760H92" stroke="#405267" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="104" y="765" fill="#5f6670" font-size="15">호출</text>
+    <path d="M170 760H220" stroke="#b5483a" stroke-width="2" marker-end="url(#arrow-red)"/>
+    <text x="232" y="765" fill="#5f6670" font-size="15">시도했지만 닿지 않음</text>
+    <text x="1078" y="765" text-anchor="end" fill="#8a929b" font-size="14">두 클러스터는 같은 VPC의 private 서브넷 · 간략화한 구성도</text>
+  </g>
+</svg>

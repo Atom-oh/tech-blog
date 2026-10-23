@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="640" viewBox="0 0 1120 640" role="img" aria-labelledby="title desc">
+  <title id="title">ACK 리소스를 blue/green 클러스터 사이에서 옮기는 순서</title>
+  <desc id="desc">옛 클러스터의 CR에 deletion-policy retain을 달고 CR을 지우면 AWS 리소스는 남는다. 그다음 새 클러스터에 adoption-policy adopt-or-create 주석을 달고 spec에 같은 AWS 리소스 이름(spec.queueName, spec.name)을 쓴 CR을 만들면 ACK가 기존 리소스를 가져온다. retain은 Queue로, adoption은 Bucket으로 4.7초를 확인했지만 두 클러스터 사이에서 이 순서를 한 번에 시험하지는 않았다. 두 클러스터의 ACK가 같은 리소스를 동시에 선언하지 않도록 첫 단계가 끝난 뒤 두 번째 단계를 해야 한다. SCP나 IAM 조건이 리소스의 eks:eks-capability-arn 태그와 호출자 세션 태그의 일치를 요구하면, 새 capability는 ARN이 달라 가져오기가 막힐 수 있다.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#405267" stroke-width="1.6"/></marker>
+  </defs>
+  <rect width="1120" height="640" rx="20" fill="#fbfaf7"/>
+  <g font-family="Noto Sans CJK KR, sans-serif">
+    <text x="42" y="49" fill="#5f6670" font-size="18" font-weight="600" letter-spacing="2">BLUE/GREEN · ACK</text>
+    <text x="42" y="93" fill="#222e3b" font-size="31" font-weight="700">retain으로 놓고, adopt-or-create로 가져옵니다</text>
+
+    <!-- old cluster -->
+    <rect x="40" y="130" width="320" height="250" rx="16" fill="#f1f5fb" stroke="#4a6fa5" stroke-width="1.6"/>
+    <text x="60" y="162" fill="#1f3b63" font-size="19" font-weight="700">옛 클러스터 (blue)</text>
+    <rect x="60" y="182" width="280" height="110" rx="12" fill="#ffffff" stroke="#4a6fa5"/>
+    <text x="78" y="212" fill="#1f3b63" font-size="17" font-weight="700">Queue CR</text>
+    <text x="78" y="240" fill="#33557f" font-size="14">annotations:</text>
+    <text x="92" y="262" fill="#33557f" font-size="14">services.k8s.aws/deletion-policy:</text>
+    <text x="92" y="281" fill="#1f3b63" font-size="14" font-weight="700">retain</text>
+    <text x="60" y="324" fill="#26394b" font-size="16" font-weight="700">① CR 삭제</text>
+    <text x="60" y="348" fill="#5f6670" font-size="14">AWS 리소스는 지우지 않음</text>
+    <text x="60" y="368" fill="#5f6670" font-size="14">(실측: Queue가 AWS에 남음)</text>
+
+    <!-- AWS -->
+    <rect x="400" y="130" width="320" height="250" rx="16" fill="#ffffff" stroke="#9aa5b1" stroke-width="1.6"/>
+    <text x="420" y="162" fill="#26394b" font-size="19" font-weight="700">고객 AWS 계정</text>
+    <rect x="420" y="182" width="280" height="110" rx="12" fill="#fff4df" stroke="#b88632" stroke-width="2"/>
+    <text x="560" y="222" text-anchor="middle" fill="#654814" font-size="20" font-weight="700">SQS 큐 · S3 버킷 등</text>
+    <text x="560" y="252" text-anchor="middle" fill="#765c2e" font-size="14">교체 동안 그대로 서비스</text>
+    <text x="560" y="274" text-anchor="middle" fill="#765c2e" font-size="14">태그 eks:eks-capability-arn = 옛 ARN</text>
+    <text x="420" y="324" fill="#5f6670" font-size="14">관리 주체가 잠시 없는 구간</text>
+    <text x="420" y="348" fill="#5f6670" font-size="14">①과 ② 사이에는 어느 ACK도</text>
+    <text x="420" y="368" fill="#5f6670" font-size="14">이 리소스를 관리하지 않음</text>
+
+    <!-- new cluster -->
+    <rect x="760" y="130" width="320" height="250" rx="16" fill="#e7f4ef" stroke="#3c7c68" stroke-width="1.6"/>
+    <text x="780" y="162" fill="#245c4b" font-size="19" font-weight="700">새 클러스터 (green)</text>
+    <rect x="780" y="182" width="280" height="110" rx="12" fill="#ffffff" stroke="#3c7c68"/>
+    <text x="798" y="212" fill="#245c4b" font-size="17" font-weight="700">같은 AWS 리소스 이름을 쓴 CR</text>
+    <text x="798" y="240" fill="#245c4b" font-size="14">annotations:</text>
+    <text x="812" y="262" fill="#245c4b" font-size="14">services.k8s.aws/adoption-policy:</text>
+    <text x="812" y="281" fill="#245c4b" font-size="14" font-weight="700">adopt-or-create</text>
+    <text x="780" y="324" fill="#26394b" font-size="16" font-weight="700">② 기존 리소스 가져오기</text>
+    <text x="780" y="348" fill="#5f6670" font-size="14">실측: Bucket 4.7초, adopted: "true"</text>
+    <text x="780" y="368" fill="#5f6670" font-size="14">주석은 Git 매니페스트에 미리</text>
+
+    <!-- flows -->
+    <path d="M340 237H412" fill="none" stroke="#405267" stroke-width="1.6" stroke-dasharray="6 5"/>
+    <g stroke="#405267" stroke-width="2.5"><path d="M368 229l14 14M382 229l-14 14"/></g>
+    <path d="M780 237H708" fill="none" stroke="#405267" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <text x="744" y="225" text-anchor="middle" fill="#5f6670" font-size="14">②</text>
+
+    <!-- rules -->
+    <rect x="40" y="410" width="1040" height="78" rx="12" fill="#ffffff" stroke="#c4cbd1"/>
+    <text x="60" y="440" fill="#26394b" font-size="16" font-weight="700">순서가 핵심</text>
+    <text x="60" y="466" fill="#5f6670" font-size="14">두 클러스터의 ACK가 같은 리소스를 동시에 선언하면 서로 다른 desired state를 밀어 넣을 수 있음. ①이 끝난 뒤 ②</text>
+
+    <rect x="40" y="504" width="1040" height="96" rx="12" fill="#fbe9e7" stroke="#b5483a"/>
+    <text x="60" y="534" fill="#8a2c20" font-size="16" font-weight="700">drift를 막으려고 건 SCP · IAM 조건과 부딪힐 수 있음</text>
+    <text x="60" y="560" fill="#8a2c20" font-size="14">리소스 태그 eks:eks-capability-arn과 호출자 세션 태그가 같아야만 바꿀 수 있게 하면, 새 capability는 ARN이 달라 ②가 막힐 수 있음</text>
+    <text x="60" y="584" fill="#8a2c20" font-size="14">교체 기간에 조건을 풀거나, capability ARN 대신 환경 · 팀 태그로 조건을 거는 설계가 필요</text>
+
+    <path d="M42 620H92" stroke="#405267" stroke-width="1.6" stroke-dasharray="6 5"/>
+    <g stroke="#405267" stroke-width="2"><path d="M61 614l12 12M73 614l-12 12"/></g>
+    <text x="104" y="625" fill="#5f6670" font-size="14">관리 끊김</text>
+    <path d="M190 620H240" stroke="#405267" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="252" y="625" fill="#5f6670" font-size="14">가져오기</text>
+    <text x="1078" y="625" text-anchor="end" fill="#8a929b" font-size="14">retain과 adoption은 한 클러스터에서 따로 확인 · 두 클러스터 사이의 전체 순서는 시험하지 않음</text>
+  </g>
+</svg>
