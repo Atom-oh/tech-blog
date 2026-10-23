@@ -1,3 +1,8 @@
 __pycache__/
 *.pyc
 .venv/
+
+# 로컬 전용(공개 금지): 에이전트 설정·메모리, 내부 검토 보고서
+.claude/
+.remember/
+results/
