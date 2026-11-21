@@ -67,7 +67,7 @@ AWS SDK와 CLI는 [기본 자격 증명 공급자 체인](https://docs.aws.amazo
 2. **역할과 association.** 역할은 서비스 principal `pods.eks.amazonaws.com` 하나만 신뢰합니다(`sts:AssumeRole`, `sts:TagSession`). 연결은 Kubernetes 주석이 아니라 EKS API의 association(클러스터·namespace·ServiceAccount → 역할)입니다.
 3. **조회.** EKS가 새 Pod에 `AWS_CONTAINER_CREDENTIALS_FULL_URI=http://169.254.170.23/v1/credentials`와 토큰 파일 경로를 넣습니다. SDK가 토큰을 에이전트에 보내면, 에이전트가 노드 역할의 `eks-auth:AssumeRoleForPodIdentity` 권한으로 EKS Auth를 부르고, EKS Auth가 association을 확인해 세션 태그(`eks-cluster-arn`, `kubernetes-namespace`, `kubernetes-service-account` 등)를 붙인 자격 증명을 돌려줍니다.
 
-여기서 헷갈리기 쉬운 점은 노드 역할이 여전히 등장한다는 것입니다. 노드 역할에 남는 것은 에이전트가 EKS Auth를 부를 권한(`AmazonEKSWorkerNodePolicy`에 포함)뿐이고, 앱의 S3 권한은 Pod Identity 역할에 있습니다. 데모의 Pod Identity 토큰은 IRSA 토큰과 같은 issuer, `aud ["pods.eks.amazonaws.com"]`, 수명 약 24시간이었습니다.
+여기서 헷갈리기 쉬운 점은 노드 역할이 여전히 등장한다는 것입니다. 노드 역할에 남는 것은 에이전트가 EKS Auth를 부를 권한(`AmazonEKSWorkerNodePolicy`에 포함)뿐이고, 앱의 S3 권한은 Pod Identity 역할에 있습니다. 데모의 Pod Identity 토큰은 IRSA 토큰과 같은 issuer, `aud ["pods.eks.amazonaws.com"]`, 수명은 약 22~24시간이었습니다(웹훅이 수명에 무작위 편차를 둬서 실측 79,636초와 86,171초).
 
 <h2 id="compare">5. 두 방식 비교</h2>
 

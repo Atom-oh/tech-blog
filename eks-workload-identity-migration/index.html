@@ -87,7 +87,7 @@
 <li><strong>역할과 association.</strong> 역할은 서비스 principal <code>pods.eks.amazonaws.com</code> 하나만 신뢰합니다(<code>sts:AssumeRole</code>, <code>sts:TagSession</code>). 연결은 Kubernetes 주석이 아니라 EKS API의 association(클러스터·namespace·ServiceAccount → 역할)입니다.</li>
 <li><strong>조회.</strong> EKS가 새 Pod에 <code>AWS_CONTAINER_CREDENTIALS_FULL_URI=http://169.254.170.23/v1/credentials</code>와 토큰 파일 경로를 넣습니다. SDK가 토큰을 에이전트에 보내면, 에이전트가 노드 역할의 <code>eks-auth:AssumeRoleForPodIdentity</code> 권한으로 EKS Auth를 부르고, EKS Auth가 association을 확인해 세션 태그(<code>eks-cluster-arn</code>, <code>kubernetes-namespace</code>, <code>kubernetes-service-account</code> 등)를 붙인 자격 증명을 돌려줍니다.</li>
 </ol>
-<p>여기서 헷갈리기 쉬운 점은 노드 역할이 여전히 등장한다는 것입니다. 노드 역할에 남는 것은 에이전트가 EKS Auth를 부를 권한(<code>AmazonEKSWorkerNodePolicy</code>에 포함)뿐이고, 앱의 S3 권한은 Pod Identity 역할에 있습니다. 데모의 Pod Identity 토큰은 IRSA 토큰과 같은 issuer, <code>aud ["pods.eks.amazonaws.com"]</code>, 수명 약 24시간이었습니다.</p>
+<p>여기서 헷갈리기 쉬운 점은 노드 역할이 여전히 등장한다는 것입니다. 노드 역할에 남는 것은 에이전트가 EKS Auth를 부를 권한(<code>AmazonEKSWorkerNodePolicy</code>에 포함)뿐이고, 앱의 S3 권한은 Pod Identity 역할에 있습니다. 데모의 Pod Identity 토큰은 IRSA 토큰과 같은 issuer, <code>aud ["pods.eks.amazonaws.com"]</code>, 수명은 약 22~24시간이었습니다(웹훅이 수명에 무작위 편차를 둬서 실측 79,636초와 86,171초).</p>
 <h2 id="compare">5. 두 방식 비교</h2>
 
 <p>AWS는 가능하면 EKS Pod Identity를 쓰라고 권장합니다(<a href="https://docs.aws.amazon.com/eks/latest/userguide/service-accounts.html">비교 문서</a>). 실제로 써 보니 차이는 "누가 무엇을 믿는가"에서 갈렸습니다.</p>
