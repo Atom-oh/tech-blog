@@ -81,9 +81,9 @@ AWS는 가능하면 EKS Pod Identity를 쓰라고 권장합니다([비교 문서
 | 확장 한도 | 계정당 OIDC provider 기본 100개, 신뢰 정책 기본 2,048자(역할당 연결 4개 안팎) | 클러스터당 association 5,000개 |
 | 호출 경로 | Pod → 리전 STS | Pod → 노드 Agent → EKS Auth |
 | 세션 태그 | 없음 | 클러스터·namespace·ServiceAccount 태그로 ABAC(속성 기반 접근 제어) |
-| 실행 환경 | EC2·Fargate, EKS Anywhere, 자체 관리 Kubernetes | EKS의 Linux EC2 노드만 |
+| 실행 환경 | EC2·Fargate, EKS Anywhere, 자체 관리 Kubernetes | EKS의 Linux EC2 노드, EKS Hybrid Nodes(추가 설정 필요) |
 
-새로 만드는 EKS EC2 워크로드라면 Pod Identity가 단순합니다. 역할 하나를 여러 클러스터에서 재사용할 때 신뢰 정책을 건드리지 않아도 되고, IAM 담당과 클러스터 담당의 책임이 깔끔하게 나뉩니다. Fargate나 Windows 노드, EKS 밖 Kubernetes와 같은 구성을 써야 한다면 IRSA가 답입니다. 두 방식은 한 클러스터에서 같이 쓸 수 있습니다. 한 ServiceAccount에 IRSA 주석과 association을 모두 두면 어떻게 될지 데모 클러스터에서 `kubectl create --dry-run=server`로 확인해 봤습니다. 주석만 있을 때는 IRSA 변수(`AWS_ROLE_ARN`, `AWS_WEB_IDENTITY_TOKEN_FILE`)가, association을 더하자 Pod Identity 변수만 주입됐습니다. SDK 체인에서는 웹 ID가 앞이지만, 그 전에 EKS 웹훅이 association을 우선해 IRSA 변수를 아예 넣지 않습니다. 다만 association을 추가하기 전에 떠 있던 Pod는 다시 만들기 전까지 IRSA를 계속 쓰므로, 방식을 바꿀 때는 rollout하고 쓰지 않는 주석은 지웁니다.
+새로 만드는 EKS EC2 워크로드라면 Pod Identity가 단순합니다. 역할 하나를 여러 클러스터에서 재사용할 때 신뢰 정책을 건드리지 않아도 되고, IAM 담당과 클러스터 담당의 책임이 깔끔하게 나뉩니다. Fargate나 Windows 노드, EKS 밖 Kubernetes와 같은 구성을 써야 한다면 IRSA가 답입니다. EKS Hybrid Nodes에서는 둘 다 됩니다. 다만 Pod Identity Agent는 원래 노드의 IMDS에서 자격 증명을 받는데 온프레미스 노드에는 IMDS가 없으므로, `nodeadm` 설정의 `enableCredentialsFile: true`로 노드에 자격 증명 파일을 만들고 Agent 애드온에서 하이브리드 DaemonSet(`daemonsets.hybrid.create`)을 켜야 합니다([AWS 문서](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html)). 두 방식은 한 클러스터에서 같이 쓸 수 있습니다. 한 ServiceAccount에 IRSA 주석과 association을 모두 두면 어떻게 될지 데모 클러스터에서 `kubectl create --dry-run=server`로 확인해 봤습니다. 주석만 있을 때는 IRSA 변수(`AWS_ROLE_ARN`, `AWS_WEB_IDENTITY_TOKEN_FILE`)가, association을 더하자 Pod Identity 변수만 주입됐습니다. SDK 체인에서는 웹 ID가 앞이지만, 그 전에 EKS 웹훅이 association을 우선해 IRSA 변수를 아예 넣지 않습니다. 다만 association을 추가하기 전에 떠 있던 Pod는 다시 만들기 전까지 IRSA를 계속 쓰므로, 방식을 바꿀 때는 rollout하고 쓰지 않는 주석은 지웁니다.
 
 <h2 id="demo">6. 라이브 데모: 같은 앱 세 벌</h2>
 

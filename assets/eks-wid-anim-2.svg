@@ -27,6 +27,9 @@
   <feDisplacementMap in="SourceGraphic" scale="1.6"/></filter></defs>
 <rect class="paper" width="960" height="500"/>
 <text class="h" x="32" y="40">EKS Pod Identity: Agent와 EKS Auth가 association으로 역할을 넘겨준다</text>
+<g class="motion">
+<g>
+<animateTransform attributeName="transform" type="translate" dur="18.0s" repeatCount="indefinite" calcMode="spline" keyTimes="0.0000;0.0167;0.0722;0.1278;0.1944;0.2444;0.2889;0.3444;0.3889;0.4333;0.4778;0.5278;0.5722;0.6056;0.6444;0.6833;0.7889;0.8444;1.0000" keySplines="0 0 1 1;0.42 0 0.58 1;0 0 1 1;0.42 0 0.58 1;0 0 1 1;0.42 0 0.58 1;0 0 1 1;0.42 0 0.58 1;0 0 1 1;0.42 0 0.58 1;0 0 1 1;0.42 0 0.58 1;0 0 1 1;0.42 0 1 1;0 0 0.58 1;0 0 1 1;0.42 0 0.58 1;0 0 1 1" values="0.00 0.00;0.00 0.00;-767.99 -33.60;-767.99 -33.60;0.00 -68.44;0.00 -68.44;0.01 -249.58;0.01 -249.58;-313.87 -224.32;-313.87 -224.32;-767.99 -57.00;-767.99 -57.00;-857.76 -289.26;-857.76 -289.26;-385.80 -262.20;0.01 -249.58;0.01 -249.58;0.00 0.00;0.00 0.00"/><animateTransform attributeName="transform" type="scale" additive="sum" dur="18.0s" repeatCount="indefinite" calcMode="spline" keyTimes="0.0000;0.0167;0.0722;0.1278;0.1944;0.2444;0.2889;0.3444;0.3889;0.4333;0.4778;0.5278;0.5722;0.6056;0.6444;0.6833;0.7889;0.8444;1.0000" keySplines="0 0 1 1;0.42 0 0.58 1;0 0 1 1;0.42 0 0.58 1;0 0 1 1;0.42 0 0.58 1;0 0 1 1;0.42 0 0.58 1;0 0 1 1;0.42 0 0.58 1;0 0 1 1;0.42 0 0.58 1;0 0 1 1;0.42 0 1 1;0 0 0.58 1;0 0 1 1;0.42 0 0.58 1;0 0 1 1" values="1.0000;1.0000;1.8000;1.8000;1.8533;1.8533;1.8216;1.8216;1.6963;1.6963;1.8000;1.8000;1.8935;1.8935;1.8500;1.8216;1.8216;1.0000;1.0000"/>
 <g filter="url(#pen)">
 <path class="thin" stroke-dasharray="3 6" d="M24 64 q0 -6 6 -6 l458 1 q6 0 6 6 l-1 288 q0 6 -6 6 l-458 -1 q-6 0 -6 -6 z"/>
 <path class="thin" stroke-dasharray="3 6" d="M512 64 q0 -6 6 -6 l414 1 q6 0 6 6 l-1 288 q0 6 -6 6 l-414 -1 q-6 0 -6 -6 z"/>
@@ -68,7 +71,6 @@
 <text class="t" x="842" y="197" text-anchor="middle" font-weight="600" style="font-size:13.5px">Pod Identity 역할</text>
 <text class="s" x="842" y="214" text-anchor="middle">앱 권한 (S3 읽기)</text>
 <text class="t" x="110" y="250" text-anchor="middle" font-weight="600" style="font-size:13.5px">Pod · AWS SDK</text>
-<g class="motion">
 <g opacity="0"><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0056;0.0167;0.1333;0.1444;1.0000" values="0;0;1;1;0;0"/><path class="trunk" style="stroke-width:3px" d="M525 73 q0 -4 4 -4 l392 1 q4 0 4 4 l-1 54 q0 4 -4 4 l-392 -1 q-4 0 -4 -4 z"/></g>
 <g opacity="0"><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.1333;0.1444;0.2444;0.2556;1.0000" values="0;0;1;1;0;0"/><path class="trunk" style="stroke-width:3px" d="M70 170 l80 1 l-1 59 l-79 -1 z"/></g>
 <g opacity="0"><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.3000;0.3111;0.3389;0.3500;1.0000" values="0;0;1;1;0;0"/><path class="trunk" style="stroke-width:3px" d="M245 173 q0 -4 4 -4 l182 1 q4 0 4 4 l-1 54 q0 4 -4 4 l-182 -1 q-4 0 -4 -4 z"/></g>
@@ -84,6 +86,8 @@
 <g opacity="0"><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.4833;0.4944;0.9111;0.9222;1.0000" values="0;0;1;1;0;0"/><text class="tag halo gr" x="636" y="153">찾음 ✓</text></g>
 <g><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.2489;0.2556;0.3333;0.3400;0.3400;0.3444;0.4167;0.4233;1.0000" values="0;0;1;1;0;0;1;1;0;0"/><animateMotion dur="18.0s" repeatCount="indefinite" calcMode="linear" keyPoints="0.0000;0.0000;0.2561;0.2561;0.7652;1.0000;1.0000" keyTimes="0.0000;0.2667;0.3111;0.3333;0.3444;0.4111;1.0000" path="M150 200 C181 192 213 208 245 200 L435 200 C464 208 492 192 522 200"/><path class="rq" d="M-17 -11 l34 0 l0 22 l-34 0 z"/><path class="rql" d="M-17 -11 l17 12 l17 -12"/><g opacity="0"><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.2667;0.2778;0.3278;0.3389;1.0000" values="0;0;1;1;0;0"/><text class="tag halo bl" x="0" y="42" text-anchor="middle">Pod 토큰</text></g><g opacity="0"><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.3333;0.3444;0.4111;0.4222;1.0000" values="0;0;1;1;0;0"/><text class="tag halo bl" x="0" y="42" text-anchor="middle">노드 역할로 호출</text></g></g>
 <g><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.6100;0.6167;0.7000;0.7067;0.7067;0.7111;0.9111;0.9178;1.0000" values="0;0;1;1;0;0;1;1;0;0"/><animateMotion dur="18.0s" repeatCount="indefinite" calcMode="linear" keyPoints="0.0000;0.0000;0.2348;0.2348;0.7439;1.0000;1.0000" keyTimes="0.0000;0.6278;0.6778;0.7000;0.7111;0.7556;1.0000" path="M522 200 C492 192 464 208 435 200 L245 200 C213 208 181 192 150 200"/><circle class="ky" cx="16" cy="0" r="6.5"/><path class="ky" d="M9.5 0 L-4 0 M0 0 l0 5 M-4 0 l0 6"/><g opacity="0"><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.6056;0.6167;0.7000;0.7111;1.0000" values="0;0;1;1;0;0"/><text class="tag halo gr" x="0" y="42" text-anchor="middle">Pod Identity 역할 임시 자격 증명</text></g></g>
+</g><rect class="paper" width="960" height="42"/><rect class="paper" y="366" width="960" height="134"/>
+<text class="h halo" x="32" y="40">EKS Pod Identity: Agent와 EKS Auth가 association으로 역할을 넘겨준다</text>
 <g opacity="0"><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0056;0.0167;0.1333;0.1500;0.9111;0.9333;1.0000" values="0;0;1;1;0.42;0.42;0;0"/><text class="cap" x="40" y="378">① association: EKS API가 클러스터 + 네임스페이스 + ServiceAccount를 IAM 역할에 매핑한다</text></g>
 <g opacity="0"><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.1333;0.1444;0.2444;0.2611;0.9111;0.9333;1.0000" values="0;0;1;1;0.42;0.42;0;0"/><text class="cap" x="40" y="400">② Pod 생성: EKS가 env 두 개와 projected 토큰(aud pods.eks.amazonaws.com)을 주입한다</text></g>
 <g opacity="0"><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.2444;0.2556;0.3333;0.3500;0.9111;0.9333;1.0000" values="0;0;1;1;0.42;0.42;0;0"/><text class="cap" x="40" y="422">③ SDK가 같은 노드의 Pod Identity Agent(169.254.170.23)를 부른다</text></g>
@@ -92,6 +96,47 @@
 <text class="s" x="928" y="486" text-anchor="end">파란 봉투: 요청 · 초록 열쇠: 돌아온 자격 증명</text>
 </g>
 <g class="static">
+<g filter="url(#pen)">
+<path class="thin" stroke-dasharray="3 6" d="M24 64 q0 -6 6 -6 l458 1 q6 0 6 6 l-1 288 q0 6 -6 6 l-458 -1 q-6 0 -6 -6 z"/>
+<path class="thin" stroke-dasharray="3 6" d="M512 64 q0 -6 6 -6 l414 1 q6 0 6 6 l-1 288 q0 6 -6 6 l-414 -1 q-6 0 -6 -6 z"/>
+<path class="cable" d="M150 197.5 C181 189.5 213 205.5 245 197.5"/>
+<path class="cable" d="M150 202.5 C181 194.5 213 210.5 245 202.5"/>
+<path class="cable" d="M435 197.5 C464 205.5 492 189.5 522 197.5"/>
+<path class="cable" d="M435 202.5 C464 210.5 492 194.5 522 202.5"/>
+<path class="cable" d="M337.5 275 C329.5 260 345.5 246 337.5 231"/>
+<path class="cable" d="M342.5 275 C334.5 260 350.5 246 342.5 231"/>
+<path class="cable" d="M619.5 177 C611.5 162 627.5 147 619.5 131"/>
+<path class="cable" d="M624.5 177 C616.5 162 632.5 147 624.5 131"/>
+<path class="cable" d="M722 197.5 C734 192.5 746 202.5 759 197.5"/>
+<path class="cable" d="M722 202.5 C734 197.5 746 207.5 759 202.5"/>
+<path class="cable" d="M839.5 223 C831.5 234 847.5 245 839.5 256"/>
+<path class="cable" d="M844.5 223 C836.5 234 852.5 245 844.5 256"/>
+<path class="ink" d="M245 173 q0 -4 4 -4 l182 1 q4 0 4 4 l-1 54 q0 4 -4 4 l-182 -1 q-4 0 -4 -4 z"/>
+<path class="ink" d="M215 279 q0 -4 4 -4 l242 1 q4 0 4 4 l-1 54 q0 4 -4 4 l-242 -1 q-4 0 -4 -4 z"/>
+<path class="ink" d="M525 73 q0 -4 4 -4 l392 1 q4 0 4 4 l-1 54 q0 4 -4 4 l-392 -1 q-4 0 -4 -4 z"/>
+<path class="ink" d="M522 181 q0 -4 4 -4 l192 1 q4 0 4 4 l-1 38 q0 4 -4 4 l-192 -1 q-4 0 -4 -4 z"/>
+<path class="ink" d="M759 181 q0 -4 4 -4 l158 1 q4 0 4 4 l-1 38 q0 4 -4 4 l-158 -1 q-4 0 -4 -4 z"/>
+<path class="thin" d="M219 269 l14 0 l0 11 l-14 0 z M223 273 l6 0 M223 276 l4 0"/>
+<path class="thin" d="M763 171 l14 0 l0 11 l-14 0 z M767 175 l6 0 M767 178 l4 0"/>
+<path class="ink" d="M70 170 l80 1 l-1 59 l-79 -1 z"/>
+<path class="thin" d="M92 186 l36 0 l0 28 l-36 0 z"/>
+</g>
+<text class="s" x="38" y="348" font-weight="700">워커 노드</text>
+<text class="s" x="926" y="52" text-anchor="end" font-weight="700">AWS</text>
+<text class="t" x="340" y="189" text-anchor="middle" font-weight="600" style="font-size:13.5px">Pod Identity Agent</text>
+<text class="s" x="340" y="206" text-anchor="middle">169.254.170.23</text>
+<text class="s" x="340" y="221" text-anchor="middle">hostNetwork DaemonSet</text>
+<text class="t" x="340" y="295" text-anchor="middle" font-weight="600" style="font-size:13.5px">노드 역할</text>
+<text class="s" x="340" y="312" text-anchor="middle">eks-auth:AssumeRoleForPodIdentity</text>
+<text class="s" x="340" y="327" text-anchor="middle">Agent → EKS Auth 호출만</text>
+<text class="t" x="725" y="89" text-anchor="middle" font-weight="600" style="font-size:13.5px">EKS API · Pod Identity association</text>
+<text class="s" x="725" y="106" text-anchor="middle">클러스터 + 네임스페이스 + ServiceAccount → IAM 역할</text>
+<text class="s" x="725" y="121" text-anchor="middle">주석 없음 · OIDC provider 없음</text>
+<text class="t" x="622" y="197" text-anchor="middle" font-weight="600" style="font-size:13.5px">EKS Auth</text>
+<text class="s" x="622" y="214" text-anchor="middle">AssumeRoleForPodIdentity</text>
+<text class="t" x="842" y="197" text-anchor="middle" font-weight="600" style="font-size:13.5px">Pod Identity 역할</text>
+<text class="s" x="842" y="214" text-anchor="middle">앱 권한 (S3 읽기)</text>
+<text class="t" x="110" y="250" text-anchor="middle" font-weight="600" style="font-size:13.5px">Pod · AWS SDK</text>
 <path class="thin" filter="url(#pen)" d="M30 62 l458 0 l0 96 l-458 0 z"/><text class="s bl" x="40" y="79" font-weight="700">Pod 생성 시 EKS가 주입</text><text class="row" x="40" y="96" xml:space="preserve" style="font-size:12.0px">env AWS_CONTAINER_CREDENTIALS_FULL_URI</text><text class="row" x="40" y="110" xml:space="preserve" style="font-size:12.0px">       = http://169.254.170.23/v1/credentials</text><text class="row" x="40" y="124" xml:space="preserve" style="font-size:12.0px">env AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE</text><text class="row" x="40" y="138" xml:space="preserve" style="font-size:12.0px">vol /var/run/secrets/pods.eks.amazonaws.com/serviceaccount/</text><text class="row" x="40" y="152" xml:space="preserve" style="font-size:12.0px">       eks-pod-identity-token · aud pods.eks.amazonaws.com</text>
 <path class="thin" filter="url(#pen)" d="M522 256 l406 0 l0 88 l-406 0 z"/><text class="s bl" x="532" y="273" font-weight="700">역할 신뢰 정책 · 세션 태그</text><text class="row" x="532" y="290" xml:space="preserve" style="font-size:12.0px">신뢰 주체 pods.eks.amazonaws.com</text><text class="row" x="532" y="304" xml:space="preserve" style="font-size:12.0px">동작 sts:AssumeRole · sts:TagSession</text><text class="row" x="532" y="318" xml:space="preserve" style="font-size:12.0px">태그 eks-cluster-arn · kubernetes-namespace ·</text><text class="row" x="532" y="332" xml:space="preserve" style="font-size:12.0px">       kubernetes-service-account</text>
 <text class="tag halo gr" x="530" y="169">토큰 ✓</text>
