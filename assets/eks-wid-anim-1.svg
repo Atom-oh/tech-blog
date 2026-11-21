@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" role="img" aria-labelledby="t d" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Noto Sans CJK KR', 'Malgun Gothic', 'Segoe UI', sans-serif">
+<title id="t">IRSA: projected 토큰을 STS에서 IRSA 역할 자격 증명으로 바꾸기</title><desc id="d">ServiceAccount에 eks.amazonaws.com/role-arn 주석이 있는 상태에서 Pod가 생성된다. EKS mutating 웹훅(amazon-eks-pod-identity-webhook)이 env AWS_ROLE_ARN과 AWS_WEB_IDENTITY_TOKEN_FILE, 그리고 /var/run/secrets/eks.amazonaws.com/serviceaccount/token 경로의 projected ServiceAccount 토큰 볼륨을 주입한다. kubelet은 이 토큰을 발급하고 갱신하며, 토큰의 audience는 sts.amazonaws.com, issuer는 클러스터 OIDC issuer, sub는 system:serviceaccount:&lt;namespace&gt;:&lt;serviceaccount&gt;이다. SDK는 aud와 sub를 담은 토큰을 리전 AWS STS의 AssumeRoleWithWebIdentity로 보낸다. STS는 계정에 등록된 IAM OIDC provider를 통해 클러스터 OIDC issuer의 키로 토큰 서명을 검증하고, 역할 신뢰 정책의 aud와 sub 조건을 확인한다. 마지막으로 IRSA 역할의 임시 자격 증명이 SDK로 돌아온다.</desc>
+<style>
+  svg{--paper:#f7f1e3;--ink:#2b2724;--soft:#8a8177;--accent:#d9480f;--blue:#1864ab;--green:#2b8a3e;--wash:#efe5cf}
+  @media (prefers-color-scheme:dark){svg{--paper:#1e2240;--ink:#ece6d6;--soft:#9aa0bd;--accent:#ff8b5e;--blue:#8cc8ff;--green:#8ce99a;--wash:#272c52}}
+  .paper{fill:var(--paper)} .wash{fill:var(--wash)}
+  .ink{fill:none;stroke:var(--ink);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  .thin{fill:none;stroke:var(--ink);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+  .cable{fill:none;stroke:var(--ink);stroke-width:1.5;stroke-linecap:round}
+  .trunk{fill:none;stroke:var(--blue);stroke-width:1.5;stroke-linecap:round}
+  .fillink{fill:var(--ink)} .t{fill:var(--ink);font-size:15px} .s{fill:var(--soft);font-size:12.5px}
+  .h{fill:var(--ink);font-size:17px;font-weight:600} .acc{fill:var(--accent)} .bl{fill:var(--blue)} .gr{fill:var(--green)}
+  .pk{fill:var(--paper);stroke:var(--accent);stroke-width:2;stroke-linejoin:round}
+  .pkl{fill:none;stroke:var(--accent);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+  .rq{fill:var(--paper);stroke:var(--blue);stroke-width:2;stroke-linejoin:round}
+  .rql{fill:none;stroke:var(--blue);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+  .ky{fill:var(--paper);stroke:var(--green);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  .okl{fill:none;stroke:var(--green);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+  .tag{font-size:12px;font-weight:700} .cap{font-size:15px;fill:var(--ink)}
+  .row{fill:var(--ink);font-size:13.5px}
+  .halo{paint-order:stroke;stroke:var(--paper);stroke-width:4px;stroke-linejoin:round}
+  .static{display:none}
+  @media (prefers-reduced-motion:reduce){.motion{display:none}.static{display:inline}}
+</style>
+<defs><filter id="pen" filterUnits="userSpaceOnUse" x="0" y="0" width="960" height="500">
+  <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="7"/>
+  <feDisplacementMap in="SourceGraphic" scale="1.6"/></filter></defs>
+<rect class="paper" width="960" height="500"/>
+<text class="h" x="32" y="40">IRSA: projected 토큰을 STS에서 IRSA 역할 자격 증명으로 바꾸기</text>
+<g filter="url(#pen)">
+<path class="thin" stroke-dasharray="3 6" d="M24 64 q0 -6 6 -6 l524 1 q6 0 6 6 l-1 288 q0 6 -6 6 l-524 -1 q-6 0 -6 -6 z"/>
+<path class="thin" stroke-dasharray="3 6" d="M572 64 q0 -6 6 -6 l354 1 q6 0 6 6 l-1 288 q0 6 -6 6 l-354 -1 q-6 0 -6 -6 z"/>
+<path class="cable" d="M131.5 123 C123.5 138 139.5 152 131.5 167"/>
+<path class="cable" d="M136.5 123 C128.5 138 144.5 152 136.5 167"/>
+<path class="cable" d="M239 187.5 C256 181.5 273 193.5 290 187.5"/>
+<path class="cable" d="M239 192.5 C256 186.5 273 198.5 290 192.5"/>
+<path class="cable" d="M327.5 283 C319.5 262 335.5 241 327.5 220"/>
+<path class="cable" d="M332.5 283 C324.5 262 340.5 241 332.5 220"/>
+<path class="cable" d="M370 187.5 C443 177.5 515 197.5 590 187.5"/>
+<path class="cable" d="M370 192.5 C443 182.5 515 202.5 590 192.5"/>
+<path class="cable" d="M687.5 167 C679.5 152 695.5 138 687.5 123"/>
+<path class="cable" d="M692.5 167 C684.5 152 700.5 138 692.5 123"/>
+<path class="cable" d="M790 97.5 C799 91.5 807 103.5 816 97.5"/>
+<path class="cable" d="M790 102.5 C799 96.5 807 108.5 816 102.5"/>
+<path class="cable" d="M687.5 213 C679.5 226 695.5 239 687.5 253"/>
+<path class="cable" d="M692.5 213 C684.5 226 700.5 239 692.5 253"/>
+<path class="ink" d="M29 81 q0 -4 4 -4 l202 1 q4 0 4 4 l-1 38 q0 4 -4 4 l-202 -1 q-4 0 -4 -4 z"/>
+<path class="ink" d="M29 171 q0 -4 4 -4 l202 1 q4 0 4 4 l-1 38 q0 4 -4 4 l-202 -1 q-4 0 -4 -4 z"/>
+<path class="ink" d="M255 287 q0 -4 4 -4 l142 1 q4 0 4 4 l-1 38 q0 4 -4 4 l-142 -1 q-4 0 -4 -4 z"/>
+<path class="ink" d="M590 171 q0 -4 4 -4 l192 1 q4 0 4 4 l-1 38 q0 4 -4 4 l-192 -1 q-4 0 -4 -4 z"/>
+<path class="ink" d="M590 81 q0 -4 4 -4 l192 1 q4 0 4 4 l-1 38 q0 4 -4 4 l-192 -1 q-4 0 -4 -4 z"/>
+<path class="ink" d="M816 81 q0 -4 4 -4 l104 1 q4 0 4 4 l-1 38 q0 4 -4 4 l-104 -1 q-4 0 -4 -4 z"/>
+<path class="ink" d="M580 257 q0 -4 4 -4 l342 1 q4 0 4 4 l-1 66 q0 4 -4 4 l-342 -1 q-4 0 -4 -4 z"/>
+<path class="thin" d="M584 247 l14 0 l0 11 l-14 0 z M588 251 l6 0 M588 254 l4 0"/>
+<path class="ink" d="M290 160 l80 1 l-1 59 l-79 -1 z"/>
+<path class="thin" d="M312 176 l36 0 l0 28 l-36 0 z"/>
+</g>
+<text class="s" x="548" y="348" text-anchor="end" font-weight="700">EKS 클러스터</text>
+<text class="s" x="926" y="348" text-anchor="end" font-weight="700">AWS</text>
+<text class="t" x="134" y="97" text-anchor="middle" font-weight="600" style="font-size:13.5px">ServiceAccount</text>
+<text class="s" x="134" y="114" text-anchor="middle">eks.amazonaws.com/role-arn</text>
+<text class="t" x="134" y="187" text-anchor="middle" font-weight="600" style="font-size:13.5px">EKS mutating 웹훅</text>
+<text class="s" x="134" y="204" text-anchor="middle">IRSA 변수 주입</text>
+<text class="t" x="330" y="303" text-anchor="middle" font-weight="600" style="font-size:13.5px">kubelet</text>
+<text class="s" x="330" y="320" text-anchor="middle">토큰 발급 · 갱신</text>
+<text class="t" x="690" y="187" text-anchor="middle" font-weight="600" style="font-size:13.5px">AWS STS (리전)</text>
+<text class="s" x="690" y="204" text-anchor="middle">AssumeRoleWithWebIdentity</text>
+<text class="t" x="690" y="97" text-anchor="middle" font-weight="600" style="font-size:13.5px">IAM OIDC provider</text>
+<text class="s" x="690" y="114" text-anchor="middle">계정에 등록</text>
+<text class="t" x="872" y="97" text-anchor="middle" font-weight="600" style="font-size:13.5px">OIDC issuer</text>
+<text class="s" x="872" y="114" text-anchor="middle">클러스터 키</text>
+<text class="t" x="340" y="242" font-weight="600" style="font-size:13.5px">Pod · AWS SDK</text>
+<text class="t" x="606" y="277" font-weight="600" style="font-size:13.5px">IRSA 역할 · 신뢰 정책 조건</text>
+<text class="row" x="606" y="298" style="font-size:13px">aud = sts.amazonaws.com</text>
+<text class="row" x="606" y="317" style="font-size:13px">sub = system:serviceaccount:&lt;ns&gt;:&lt;sa&gt;</text>
+<g class="motion">
+<g opacity="0"><animate attributeName="opacity" dur="16.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0125;0.0250;0.0750;0.0875;1.0000" values="0;0;1;1;0;0"/><path class="trunk" style="stroke-width:3px" d="M29 81 q0 -4 4 -4 l202 1 q4 0 4 4 l-1 38 q0 4 -4 4 l-202 -1 q-4 0 -4 -4 z"/></g>
+<g opacity="0"><animate attributeName="opacity" dur="16.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0500;0.0625;0.1375;0.1500;1.0000" values="0;0;1;1;0;0"/><path class="trunk" style="stroke-width:3px" d="M29 171 q0 -4 4 -4 l202 1 q4 0 4 4 l-1 38 q0 4 -4 4 l-202 -1 q-4 0 -4 -4 z"/></g>
+<g opacity="0"><animate attributeName="opacity" dur="16.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.1250;0.1375;0.1750;0.1875;1.0000" values="0;0;1;1;0;0"/><path class="trunk" style="stroke-width:3px" d="M290 160 l80 1 l-1 59 l-79 -1 z"/></g>
+<g opacity="0"><animate attributeName="opacity" dur="16.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.1750;0.1875;0.2875;0.3000;1.0000" values="0;0;1;1;0;0"/><path class="trunk" style="stroke-width:3px" d="M255 287 q0 -4 4 -4 l142 1 q4 0 4 4 l-1 38 q0 4 -4 4 l-142 -1 q-4 0 -4 -4 z"/></g>
+<g opacity="0"><animate attributeName="opacity" dur="16.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.4000;0.4125;0.6375;0.6500;1.0000" values="0;0;1;1;0;0"/><path class="trunk" style="stroke-width:3px" d="M590 171 q0 -4 4 -4 l192 1 q4 0 4 4 l-1 38 q0 4 -4 4 l-192 -1 q-4 0 -4 -4 z"/></g>
+<g opacity="0"><animate attributeName="opacity" dur="16.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.4250;0.4375;0.5375;0.5500;1.0000" values="0;0;1;1;0;0"/><path class="trunk" style="stroke-width:3px" d="M590 81 q0 -4 4 -4 l192 1 q4 0 4 4 l-1 38 q0 4 -4 4 l-192 -1 q-4 0 -4 -4 z"/></g>
+<g opacity="0"><animate attributeName="opacity" dur="16.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.4500;0.4625;0.5375;0.5500;1.0000" values="0;0;1;1;0;0"/><path class="trunk" style="stroke-width:3px" d="M816 81 q0 -4 4 -4 l104 1 q4 0 4 4 l-1 38 q0 4 -4 4 l-104 -1 q-4 0 -4 -4 z"/></g>
+<g opacity="0"><animate attributeName="opacity" dur="16.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.5250;0.5375;0.6375;0.6500;1.0000" values="0;0;1;1;0;0"/><path class="trunk" style="stroke-width:3px" d="M580 257 q0 -4 4 -4 l342 1 q4 0 4 4 l-1 66 q0 4 -4 4 l-342 -1 q-4 0 -4 -4 z"/></g>
+<g opacity="0"><animate attributeName="opacity" dur="16.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.7375;0.7500;0.7938;0.8063;1.0000" values="0;0;1;1;0;0"/><path class="trunk" style="stroke-width:3px" d="M290 160 l80 1 l-1 59 l-79 -1 z"/></g>
+<g opacity="0"><animate attributeName="opacity" dur="16.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.1188;0.1375;0.9125;0.9313;1.0000" values="0;0;1;1;0;0"/><path class="thin" filter="url(#pen)" d="M258 62 l294 0 l0 88 l-294 0 z"/><text class="s bl" x="268" y="79" font-weight="700">webhook이 주입</text><text class="row" x="268" y="96" style="font-size:12.0px">env AWS_ROLE_ARN</text><text class="row" x="268" y="110" style="font-size:12.0px">env AWS_WEB_IDENTITY_TOKEN_FILE</text><text class="row" x="268" y="124" style="font-size:12.0px">vol /var/run/secrets/eks.amazonaws.com/</text><text class="row" x="268" y="138" style="font-size:12.0px">serviceaccount/token</text></g>
+<g opacity="0"><animate attributeName="opacity" dur="16.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.1875;0.2062;0.9125;0.9313;1.0000" values="0;0;1;1;0;0"/><path class="thin" filter="url(#pen)" d="M30 246 l220 0 l0 104 l-220 0 z"/><text class="s bl" x="40" y="263" font-weight="700">projected 토큰 클레임</text><text class="row" x="40" y="280" style="font-size:12.0px">aud  sts.amazonaws.com</text><text class="row" x="40" y="294" style="font-size:12.0px">iss  클러스터 OIDC issuer</text><text class="row" x="40" y="308" style="font-size:12.0px">sub  system:serviceaccount:</text><text class="row" x="40" y="322" style="font-size:12.0px">       &lt;ns&gt;:&lt;sa&gt;</text></g>
+<g opacity="0"><animate attributeName="opacity" dur="16.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.4875;0.5000;0.9125;0.9250;1.0000" values="0;0;1;1;0;0"/><text class="tag halo gr" x="872" y="141" text-anchor="middle">서명 검증 ✓</text></g>
+<g opacity="0"><animate attributeName="opacity" dur="16.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.5500;0.5625;0.9125;0.9250;1.0000" values="0;0;1;1;0;0"/><path class="okl" d="M904 293 l5 5 l9 -11"/></g>
+<g opacity="0"><animate attributeName="opacity" dur="16.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.5750;0.5875;0.9125;0.9250;1.0000" values="0;0;1;1;0;0"/><path class="okl" d="M904 312 l5 5 l9 -11"/></g>
+<g><animate attributeName="opacity" dur="16.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0844;0.0938;0.1375;0.1469;1.0000" values="0;0;1;1;0;0"/><animateMotion dur="16.0s" repeatCount="indefinite" calcMode="linear" keyPoints="0.0000;0.0000;1.0000;1.0000" keyTimes="0.0000;0.1000;0.1375;1.0000" path="M239 190 C256 184 273 196 290 190"/><path class="rq" d="M-12 -8 l24 0 l0 16 l-24 0 z"/><path class="rql" d="M-12 -8 l12 9 l12 -9"/></g>
+<g><animate attributeName="opacity" dur="16.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.1969;0.2062;0.2687;0.2781;1.0000" values="0;0;1;1;0;0"/><animateMotion dur="16.0s" repeatCount="indefinite" calcMode="linear" keyPoints="0.0000;0.0000;1.0000;1.0000" keyTimes="0.0000;0.2125;0.2687;1.0000" path="M330 283 C322 262 338 241 330 220"/><path class="rq" d="M-40 -10 l68 0 l10 10 l-10 10 l-68 0 z"/><circle class="rql" cx="-33" cy="0" r="3"/><text class="tag bl" x="-2" y="4" text-anchor="middle" style="font-size:11px">aud · sub</text></g>
+<g><animate attributeName="opacity" dur="16.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.2906;0.3000;0.4062;0.4156;1.0000" values="0;0;1;1;0;0"/><animateMotion dur="16.0s" repeatCount="indefinite" calcMode="linear" keyPoints="0.0000;0.0000;1.0000;1.0000" keyTimes="0.0000;0.3125;0.4000;1.0000" path="M370 190 C443 180 515 200 590 190"/><path class="rq" d="M-40 -10 l68 0 l10 10 l-10 10 l-68 0 z"/><circle class="rql" cx="-33" cy="0" r="3"/><text class="tag bl" x="-2" y="4" text-anchor="middle" style="font-size:11px">aud · sub</text><g opacity="0"><animate attributeName="opacity" dur="16.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.3125;0.3250;0.3938;0.4063;1.0000" values="0;0;1;1;0;0"/><text class="tag halo bl" x="0" y="-18" text-anchor="middle">토큰 → STS</text></g></g>
+<g><animate attributeName="opacity" dur="16.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.6344;0.6438;0.9125;0.9219;1.0000" values="0;0;1;1;0;0"/><animateMotion dur="16.0s" repeatCount="indefinite" calcMode="linear" keyPoints="0.0000;0.0000;1.0000;1.0000" keyTimes="0.0000;0.6562;0.7500;1.0000" path="M590 190 C515 200 443 180 370 190"/><circle class="ky" cx="16" cy="0" r="6.5"/><path class="ky" d="M9.5 0 L-4 0 M0 0 l0 5 M-4 0 l0 6"/><g opacity="0"><animate attributeName="opacity" dur="16.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.6313;0.6438;0.8125;0.8250;1.0000" values="0;0;1;1;0;0"/><text class="tag halo gr" x="0" y="-18" text-anchor="middle">IRSA 역할 임시 자격 증명</text></g></g>
+<g opacity="0"><animate attributeName="opacity" dur="16.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0125;0.0250;0.1750;0.1937;0.9125;0.9375;1.0000" values="0;0;1;1;0.42;0.42;0;0"/><text class="cap" x="40" y="378">① Pod 생성: webhook이 role-arn 주석을 보고 env 두 개와 projected 토큰 볼륨을 주입한다</text></g>
+<g opacity="0"><animate attributeName="opacity" dur="16.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.1750;0.1875;0.2875;0.3062;0.9125;0.9375;1.0000" values="0;0;1;1;0.42;0.42;0;0"/><text class="cap" x="40" y="400">② kubelet이 토큰을 발급·갱신한다: aud sts.amazonaws.com · iss 클러스터 OIDC issuer · sub ServiceAccount</text></g>
+<g opacity="0"><animate attributeName="opacity" dur="16.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.2875;0.3000;0.4125;0.4312;0.9125;0.9375;1.0000" values="0;0;1;1;0.42;0.42;0;0"/><text class="cap" x="40" y="422">③ SDK가 토큰을 리전 AWS STS의 AssumeRoleWithWebIdentity로 보낸다</text></g>
+<g opacity="0"><animate attributeName="opacity" dur="16.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.4000;0.4125;0.6375;0.6562;0.9125;0.9375;1.0000" values="0;0;1;1;0.42;0.42;0;0"/><text class="cap" x="40" y="444">④ STS: IAM OIDC provider로 issuer 키를 찾아 서명을 검증하고, 신뢰 정책의 aud · sub를 확인한다</text></g>
+<g opacity="0"><animate attributeName="opacity" dur="16.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.6313;0.6438;0.7750;0.7938;0.9125;0.9375;1.0000" values="0;0;1;1;0.42;0.42;0;0"/><text class="cap" x="40" y="466">⑤ IRSA 역할의 임시 자격 증명이 SDK로 돌아온다</text></g>
+<text class="s" x="928" y="486" text-anchor="end">파란 꼬리표: 토큰(aud · sub) · 초록 열쇠: 돌아온 자격 증명</text>
+</g>
+<g class="static">
+<path class="thin" filter="url(#pen)" d="M258 62 l294 0 l0 88 l-294 0 z"/><text class="s bl" x="268" y="79" font-weight="700">webhook이 주입</text><text class="row" x="268" y="96" style="font-size:12.0px">env AWS_ROLE_ARN</text><text class="row" x="268" y="110" style="font-size:12.0px">env AWS_WEB_IDENTITY_TOKEN_FILE</text><text class="row" x="268" y="124" style="font-size:12.0px">vol /var/run/secrets/eks.amazonaws.com/</text><text class="row" x="268" y="138" style="font-size:12.0px">serviceaccount/token</text>
+<path class="thin" filter="url(#pen)" d="M30 246 l220 0 l0 104 l-220 0 z"/><text class="s bl" x="40" y="263" font-weight="700">projected 토큰 클레임</text><text class="row" x="40" y="280" style="font-size:12.0px">aud  sts.amazonaws.com</text><text class="row" x="40" y="294" style="font-size:12.0px">iss  클러스터 OIDC issuer</text><text class="row" x="40" y="308" style="font-size:12.0px">sub  system:serviceaccount:</text><text class="row" x="40" y="322" style="font-size:12.0px">       &lt;ns&gt;:&lt;sa&gt;</text>
+<text class="tag halo gr" x="872" y="141" text-anchor="middle">서명 검증 ✓</text>
+<path class="okl" d="M904 293 l5 5 l9 -11"/>
+<path class="okl" d="M904 312 l5 5 l9 -11"/>
+<g transform="translate(480 190)"><path class="rq" d="M-40 -10 l68 0 l10 10 l-10 10 l-68 0 z"/><circle class="rql" cx="-33" cy="0" r="3"/><text class="tag bl" x="-2" y="4" text-anchor="middle" style="font-size:11px">aud · sub</text></g>
+<g transform="translate(370 190)"><circle class="ky" cx="16" cy="0" r="6.5"/><path class="ky" d="M9.5 0 L-4 0 M0 0 l0 5 M-4 0 l0 6"/></g>
+<text class="tag halo bl" x="249" y="174" style="font-size:16px">①</text>
+<text class="tag halo bl" x="251" y="276" style="font-size:16px">②</text>
+<text class="tag halo bl" x="472" y="168" style="font-size:16px">③</text>
+<text class="tag halo bl" x="796" y="164" style="font-size:16px">④</text>
+<text class="tag halo bl" x="400" y="214" style="font-size:16px">⑤</text>
+<text class="cap" x="40" y="378">① Pod 생성: webhook이 role-arn 주석을 보고 env 두 개와 projected 토큰 볼륨을 주입한다</text>
+<text class="cap" x="40" y="400">② kubelet이 토큰을 발급·갱신한다: aud sts.amazonaws.com · iss 클러스터 OIDC issuer · sub ServiceAccount</text>
+<text class="cap" x="40" y="422">③ SDK가 토큰을 리전 AWS STS의 AssumeRoleWithWebIdentity로 보낸다</text>
+<text class="cap" x="40" y="444">④ STS: IAM OIDC provider로 issuer 키를 찾아 서명을 검증하고, 신뢰 정책의 aud · sub를 확인한다</text>
+<text class="cap" x="40" y="466">⑤ IRSA 역할의 임시 자격 증명이 SDK로 돌아온다</text>
+<text class="s" x="928" y="486" text-anchor="end">파란 꼬리표: 토큰(aud · sub) · 초록 열쇠: 돌아온 자격 증명</text>
+</g>
+</svg>
