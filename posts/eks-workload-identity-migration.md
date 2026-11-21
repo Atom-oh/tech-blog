@@ -122,7 +122,7 @@ orders-podid    Pod Identity   wid-d1124-podid                allowed   04:12:58
 
 권한을 옮긴 뒤에도 일반 Pod가 IMDS에 닿을 수 있으면, 노드 역할에 남은 권한(노드 등록, ECR pull, CNI, EKS Auth 호출)은 여전히 Pod에서 쓸 수 있습니다. 데모의 `harden`은 launch template 새 버전에 `HttpPutResponseHopLimit=1`을 넣고 노드 그룹을 교체합니다. 교체 후 레거시 복사본은 `no-credentials`가 되어 아무 역할도 받지 못했고, IRSA와 Pod Identity 복사본은 영향이 없었습니다. Pod는 IMDS 대신 같은 노드의 Agent(169.254.170.23)에 묻고, Agent는 hostNetwork에서 돌기 때문에 hop limit 1에서도 IMDS로 노드 역할 자격 증명을 받아 EKS Auth를 부릅니다. 그래서 IMDS 자체를 끄면(`HttpEndpoint=disabled`) Agent도 멈춥니다. 닫아야 하는 것은 일반 Pod의 경로이지 IMDS 전체가 아닙니다.
 
-관리형 노드 그룹 교체(새 노드 생성, drain, 종료)에 878초가 걸렸습니다. 발표에서는 미리 실행해 둔 결과를 보여 주는 편이 낫습니다. Karpenter는 `EC2NodeClass.spec.metadataOptions`, Auto Mode는 기본값이 hop limit 1입니다. hostNetwork Pod는 hop limit과 관계없이 IMDS에 닿으므로 별도로 통제해야 합니다.
+관리형 노드 그룹 교체(새 노드 생성, drain, 종료)에 878초가 걸렸습니다. 그래서 발표에서는 `revoke` 직후에 시작만 해 두고, 결과는 리허설 화면으로 설명합니다. 미리 실행해 두면 첫 장면부터 레거시가 자격 증명을 못 받는 상태가 되어 버립니다. Karpenter는 `EC2NodeClass.spec.metadataOptions`, Auto Mode는 기본값이 hop limit 1입니다. hostNetwork Pod는 hop limit과 관계없이 IMDS에 닿으므로 별도로 통제해야 합니다.
 
 <h2 id="order">10. 운영 클러스터 이전 순서</h2>
 
