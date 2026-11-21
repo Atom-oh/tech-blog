@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" role="img" aria-labelledby="t d" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Noto Sans CJK KR', 'Malgun Gothic', 'Segoe UI', sans-serif">
+<title id="t">Pod의 AWS 자격 증명은 어디서 오는가: 세 갈래 경로</title><desc id="d">같은 앱 Pod 세 개가 AWS SDK로 자격 증명을 요청한다. 첫째, 노드 인스턴스 프로파일 경로에서는 SDK가 EC2 IMDSv2(169.254.169.254)에 요청하고 노드 역할 자격 증명을 받는다. 둘째, IRSA 경로에서는 SDK가 AWS STS AssumeRoleWithWebIdentity를 호출해 IRSA 역할의 임시 자격 증명을 받는다. 셋째, EKS Pod Identity 경로에서는 SDK가 같은 노드의 Pod Identity Agent(169.254.170.23)를 부르고, Agent가 EKS Auth AssumeRoleForPodIdentity를 호출해 Pod Identity 역할의 임시 자격 증명을 받는다. 요청은 파란 봉투, 돌아오는 자격 증명은 초록 열쇠로 표시한다. 마지막으로 각 Pod는 받은 자격 증명으로 S3 요청에 서명한다.</desc>
+<style>
+  svg{--paper:#f7f1e3;--ink:#2b2724;--soft:#8a8177;--accent:#d9480f;--blue:#1864ab;--green:#2b8a3e;--wash:#efe5cf}
+  @media (prefers-color-scheme:dark){svg{--paper:#1e2240;--ink:#ece6d6;--soft:#9aa0bd;--accent:#ff8b5e;--blue:#8cc8ff;--green:#8ce99a;--wash:#272c52}}
+  .paper{fill:var(--paper)} .wash{fill:var(--wash)}
+  .ink{fill:none;stroke:var(--ink);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  .thin{fill:none;stroke:var(--ink);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+  .cable{fill:none;stroke:var(--ink);stroke-width:1.5;stroke-linecap:round}
+  .trunk{fill:none;stroke:var(--blue);stroke-width:1.5;stroke-linecap:round}
+  .fillink{fill:var(--ink)} .t{fill:var(--ink);font-size:15px} .s{fill:var(--soft);font-size:12.5px}
+  .h{fill:var(--ink);font-size:17px;font-weight:600} .acc{fill:var(--accent)} .bl{fill:var(--blue)} .gr{fill:var(--green)}
+  .pk{fill:var(--paper);stroke:var(--accent);stroke-width:2;stroke-linejoin:round}
+  .pkl{fill:none;stroke:var(--accent);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+  .rq{fill:var(--paper);stroke:var(--blue);stroke-width:2;stroke-linejoin:round}
+  .rql{fill:none;stroke:var(--blue);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+  .ky{fill:var(--paper);stroke:var(--green);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  .okl{fill:none;stroke:var(--green);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+  .tag{font-size:12px;font-weight:700} .cap{font-size:15px;fill:var(--ink)}
+  .row{fill:var(--ink);font-size:13.5px}
+  .halo{paint-order:stroke;stroke:var(--paper);stroke-width:4px;stroke-linejoin:round}
+  .static{display:none}
+  @media (prefers-reduced-motion:reduce){.motion{display:none}.static{display:inline}}
+</style>
+<defs><filter id="pen" filterUnits="userSpaceOnUse" x="0" y="0" width="960" height="500">
+  <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="7"/>
+  <feDisplacementMap in="SourceGraphic" scale="1.6"/></filter></defs>
+<rect class="paper" width="960" height="500"/>
+<text class="h" x="32" y="40">Pod의 AWS 자격 증명은 어디서 오는가: 세 갈래 경로</text>
+<g filter="url(#pen)">
+<path class="thin" stroke-dasharray="3 6" d="M30 68 q0 -6 6 -6 l368 1 q6 0 6 6 l-1 280 q0 6 -6 6 l-368 -1 q-6 0 -6 -6 z"/>
+<path class="thin" stroke-dasharray="3 6" d="M440 68 q0 -6 6 -6 l488 1 q6 0 6 6 l-1 280 q0 6 -6 6 l-488 -1 q-6 0 -6 -6 z"/>
+<path class="cable" d="M104 123.5 C141 113.5 179 133.5 217 123.5"/>
+<path class="cable" d="M104 128.5 C141 118.5 179 138.5 217 128.5"/>
+<path class="cable" d="M383 123.5 C507 133.5 632 113.5 760 123.5"/>
+<path class="cable" d="M383 128.5 C507 138.5 632 118.5 760 128.5"/>
+<path class="cable" d="M104 213.5 C228 203.5 352 223.5 480 213.5"/>
+<path class="cable" d="M104 218.5 C228 208.5 352 228.5 480 218.5"/>
+<path class="cable" d="M700 213.5 C720 223.5 740 203.5 760 213.5"/>
+<path class="cable" d="M700 218.5 C720 228.5 740 208.5 760 218.5"/>
+<path class="cable" d="M104 303.5 C141 293.5 179 313.5 217 303.5"/>
+<path class="cable" d="M104 308.5 C141 298.5 179 318.5 217 308.5"/>
+<path class="cable" d="M383 303.5 C415 313.5 447 293.5 480 303.5"/>
+<path class="cable" d="M383 308.5 C415 318.5 447 298.5 480 308.5"/>
+<path class="cable" d="M700 303.5 C720 293.5 740 313.5 760 303.5"/>
+<path class="cable" d="M700 308.5 C720 298.5 740 318.5 760 308.5"/>
+<path class="ink" d="M58 109 l44 1 l-1 33 l-43 -1 z"/>
+<path class="thin" d="M69 118 l22 0 l0 16 l-22 0 z"/>
+<path class="ink" d="M58 199 l44 1 l-1 33 l-43 -1 z"/>
+<path class="thin" d="M69 208 l22 0 l0 16 l-22 0 z"/>
+<path class="ink" d="M58 289 l44 1 l-1 33 l-43 -1 z"/>
+<path class="thin" d="M69 298 l22 0 l0 16 l-22 0 z"/>
+<path class="ink" d="M217 107 q0 -4 4 -4 l158 1 q4 0 4 4 l-1 38 q0 4 -4 4 l-158 -1 q-4 0 -4 -4 z"/>
+<path class="ink" d="M480 197 q0 -4 4 -4 l212 1 q4 0 4 4 l-1 38 q0 4 -4 4 l-212 -1 q-4 0 -4 -4 z"/>
+<path class="ink" d="M217 287 q0 -4 4 -4 l158 1 q4 0 4 4 l-1 38 q0 4 -4 4 l-158 -1 q-4 0 -4 -4 z"/>
+<path class="ink" d="M480 287 q0 -4 4 -4 l212 1 q4 0 4 4 l-1 38 q0 4 -4 4 l-212 -1 q-4 0 -4 -4 z"/>
+<path class="ink" d="M760 107 q0 -4 4 -4 l152 1 q4 0 4 4 l-1 38 q0 4 -4 4 l-152 -1 q-4 0 -4 -4 z"/>
+<path class="ink" d="M760 197 q0 -4 4 -4 l152 1 q4 0 4 4 l-1 38 q0 4 -4 4 l-152 -1 q-4 0 -4 -4 z"/>
+<path class="ink" d="M760 287 q0 -4 4 -4 l152 1 q4 0 4 4 l-1 38 q0 4 -4 4 l-152 -1 q-4 0 -4 -4 z"/>
+<path class="thin" d="M764 97 l14 0 l0 11 l-14 0 z M768 101 l6 0 M768 104 l4 0"/>
+<path class="thin" d="M764 187 l14 0 l0 11 l-14 0 z M768 191 l6 0 M768 194 l4 0"/>
+<path class="thin" d="M764 277 l14 0 l0 11 l-14 0 z M768 281 l6 0 M768 284 l4 0"/>
+</g>
+<text class="s" x="398" y="82" text-anchor="end" font-weight="700">워커 노드 (EC2)</text>
+<text class="s" x="928" y="82" text-anchor="end" font-weight="700">AWS</text>
+<text class="t" x="44" y="90" font-weight="600" style="font-size:14px">① 노드 인스턴스 프로파일</text>
+<text class="s" x="80" y="158" text-anchor="middle">Pod</text>
+<text class="t" x="44" y="180" font-weight="600" style="font-size:14px">② IRSA</text>
+<text class="s" x="80" y="248" text-anchor="middle">Pod</text>
+<text class="t" x="44" y="270" font-weight="600" style="font-size:14px">③ EKS Pod Identity</text>
+<text class="s" x="80" y="338" text-anchor="middle">Pod</text>
+<text class="t" x="300" y="123" text-anchor="middle" font-weight="600" style="font-size:13.5px">EC2 IMDSv2</text>
+<text class="s" x="300" y="140" text-anchor="middle">169.254.169.254</text>
+<text class="t" x="590" y="213" text-anchor="middle" font-weight="600" style="font-size:13.5px">AWS STS</text>
+<text class="s" x="590" y="230" text-anchor="middle">AssumeRoleWithWebIdentity</text>
+<text class="t" x="300" y="303" text-anchor="middle" font-weight="600" style="font-size:13.5px">Pod Identity Agent</text>
+<text class="s" x="300" y="320" text-anchor="middle">169.254.170.23</text>
+<text class="t" x="590" y="303" text-anchor="middle" font-weight="600" style="font-size:13.5px">EKS Auth</text>
+<text class="s" x="590" y="320" text-anchor="middle">AssumeRoleForPodIdentity</text>
+<text class="t" x="840" y="123" text-anchor="middle" font-weight="600" style="font-size:13.5px">노드 역할</text>
+<text class="s" x="840" y="140" text-anchor="middle">IAM 역할</text>
+<text class="t" x="840" y="213" text-anchor="middle" font-weight="600" style="font-size:13.5px">IRSA 역할</text>
+<text class="s" x="840" y="230" text-anchor="middle">IAM 역할</text>
+<text class="t" x="840" y="303" text-anchor="middle" font-weight="600" style="font-size:13.5px">Pod Identity 역할</text>
+<text class="s" x="840" y="320" text-anchor="middle">IAM 역할</text>
+<g class="motion">
+<g opacity="0"><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0611;0.0722;0.1000;0.1111;1.0000" values="0;0;1;1;0;0"/><path class="trunk" style="stroke-width:3px" d="M217 107 q0 -4 4 -4 l158 1 q4 0 4 4 l-1 38 q0 4 -4 4 l-158 -1 q-4 0 -4 -4 z"/></g>
+<g opacity="0"><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.1556;0.1667;0.1833;0.1944;1.0000" values="0;0;1;1;0;0"/><path class="trunk" style="stroke-width:3px" d="M760 107 q0 -4 4 -4 l152 1 q4 0 4 4 l-1 38 q0 4 -4 4 l-152 -1 q-4 0 -4 -4 z"/></g>
+<g opacity="0"><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.3556;0.3667;0.3944;0.4056;1.0000" values="0;0;1;1;0;0"/><path class="trunk" style="stroke-width:3px" d="M480 197 q0 -4 4 -4 l212 1 q4 0 4 4 l-1 38 q0 4 -4 4 l-212 -1 q-4 0 -4 -4 z"/></g>
+<g opacity="0"><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.4111;0.4222;0.4389;0.4500;1.0000" values="0;0;1;1;0;0"/><path class="trunk" style="stroke-width:3px" d="M760 197 q0 -4 4 -4 l152 1 q4 0 4 4 l-1 38 q0 4 -4 4 l-152 -1 q-4 0 -4 -4 z"/></g>
+<g opacity="0"><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.5667;0.5778;0.6000;0.6111;1.0000" values="0;0;1;1;0;0"/><path class="trunk" style="stroke-width:3px" d="M217 287 q0 -4 4 -4 l158 1 q4 0 4 4 l-1 38 q0 4 -4 4 l-158 -1 q-4 0 -4 -4 z"/></g>
+<g opacity="0"><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.6167;0.6278;0.6500;0.6611;1.0000" values="0;0;1;1;0;0"/><path class="trunk" style="stroke-width:3px" d="M480 287 q0 -4 4 -4 l212 1 q4 0 4 4 l-1 38 q0 4 -4 4 l-212 -1 q-4 0 -4 -4 z"/></g>
+<g opacity="0"><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.6667;0.6778;0.6944;0.7056;1.0000" values="0;0;1;1;0;0"/><path class="trunk" style="stroke-width:3px" d="M760 287 q0 -4 4 -4 l152 1 q4 0 4 4 l-1 38 q0 4 -4 4 l-152 -1 q-4 0 -4 -4 z"/></g>
+<g><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0156;0.0222;0.1000;0.1067;0.1067;0.1111;0.1722;0.1789;1.0000" values="0;0;1;1;0;0;1;1;0;0"/><animateMotion dur="18.0s" repeatCount="indefinite" calcMode="linear" keyPoints="0.0000;0.0000;0.1732;0.1732;0.4258;1.0000;1.0000" keyTimes="0.0000;0.0333;0.0722;0.1000;0.1111;0.1667;1.0000" path="M104 126 C141 116 179 136 217 126 L383 126 C507 136 632 116 760 126"/><path class="rq" d="M-17 -11 l34 0 l0 22 l-34 0 z"/><path class="rql" d="M-17 -11 l17 12 l17 -12"/><g opacity="0"><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0389;0.0500;0.1667;0.1778;1.0000" values="0;0;1;1;0;0"/><text class="tag halo bl" x="0" y="36" text-anchor="middle">자격 증명 요청</text></g></g>
+<g><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.1711;0.1778;0.2556;0.2622;0.2622;0.2667;0.9111;0.9178;1.0000" values="0;0;1;1;0;0;1;1;0;0"/><animateMotion dur="18.0s" repeatCount="indefinite" calcMode="linear" keyPoints="0.0000;0.0000;0.5742;0.5742;0.8268;1.0000;1.0000" keyTimes="0.0000;0.1833;0.2389;0.2556;0.2667;0.2889;1.0000" path="M760 126 C632 116 507 136 383 126 L217 126 C179 136 141 116 104 126"/><circle class="ky" cx="16" cy="0" r="6.5"/><path class="ky" d="M9.5 0 L-4 0 M0 0 l0 5 M-4 0 l0 6"/><g opacity="0"><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.1722;0.1833;0.2556;0.2667;1.0000" values="0;0;1;1;0;0"/><text class="tag halo gr" x="0" y="36" text-anchor="middle">노드 역할 자격 증명</text></g></g>
+<g><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.2933;0.3000;0.3944;0.4011;0.4011;0.4056;0.4278;0.4344;1.0000" values="0;0;1;1;0;0;1;1;0;0"/><animateMotion dur="18.0s" repeatCount="indefinite" calcMode="linear" keyPoints="0.0000;0.0000;0.5721;0.5721;0.9065;1.0000;1.0000" keyTimes="0.0000;0.3111;0.3667;0.3944;0.4056;0.4222;1.0000" path="M104 216 C228 206 352 226 480 216 L700 216 C720 226 740 206 760 216"/><path class="rq" d="M-17 -11 l34 0 l0 22 l-34 0 z"/><path class="rql" d="M-17 -11 l17 12 l17 -12"/><g opacity="0"><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.3167;0.3278;0.4222;0.4333;1.0000" values="0;0;1;1;0;0"/><text class="tag halo bl" x="0" y="36" text-anchor="middle">웹 ID 토큰</text></g></g>
+<g><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.4267;0.4333;0.4778;0.4844;0.4844;0.4889;0.9111;0.9178;1.0000" values="0;0;1;1;0;0;1;1;0;0"/><animateMotion dur="18.0s" repeatCount="indefinite" calcMode="linear" keyPoints="0.0000;0.0000;0.0935;0.0935;0.4279;1.0000;1.0000" keyTimes="0.0000;0.4389;0.4556;0.4778;0.4889;0.5333;1.0000" path="M760 216 C740 206 720 226 700 216 L480 216 C352 226 228 206 104 216"/><circle class="ky" cx="16" cy="0" r="6.5"/><path class="ky" d="M9.5 0 L-4 0 M0 0 l0 5 M-4 0 l0 6"/><g opacity="0"><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.4778;0.4889;0.5167;0.5278;1.0000" values="0;0;1;1;0;0"/><text class="tag halo gr" x="0" y="36" text-anchor="middle">IRSA 역할 임시 자격 증명</text></g></g>
+<g><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.5378;0.5444;0.6000;0.6067;0.6067;0.6111;0.6500;0.6567;0.6567;0.6611;0.6833;0.6900;1.0000" values="0;0;1;1;0;0;1;1;0;0;1;1;0;0"/><animateMotion dur="18.0s" repeatCount="indefinite" calcMode="linear" keyPoints="0.0000;0.0000;0.1726;0.1726;0.4245;0.5730;0.5730;0.9068;1.0000;1.0000" keyTimes="0.0000;0.5556;0.5778;0.6000;0.6111;0.6278;0.6500;0.6611;0.6778;1.0000" path="M104 306 C141 296 179 316 217 306 L383 306 C415 316 447 296 480 306 L700 306 C720 296 740 316 760 306"/><path class="rq" d="M-17 -11 l34 0 l0 22 l-34 0 z"/><path class="rql" d="M-17 -11 l17 12 l17 -12"/><g opacity="0"><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.5528;0.5639;0.5944;0.6056;1.0000" values="0;0;1;1;0;0"/><text class="tag halo bl" x="0" y="36" text-anchor="middle">Pod 토큰</text></g><g opacity="0"><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.6000;0.6111;0.6778;0.6889;1.0000" values="0;0;1;1;0;0"/><text class="tag halo bl" x="0" y="36" text-anchor="middle">Agent → EKS Auth</text></g></g>
+<g><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.6822;0.6889;0.7278;0.7344;0.7344;0.7389;0.7722;0.7789;0.7789;0.7833;0.9111;0.9178;1.0000" values="0;0;1;1;0;0;1;1;0;0;1;1;0;0"/><animateMotion dur="18.0s" repeatCount="indefinite" calcMode="linear" keyPoints="0.0000;0.0000;0.0932;0.0932;0.4270;0.5755;0.5755;0.8274;1.0000;1.0000" keyTimes="0.0000;0.6944;0.7111;0.7278;0.7389;0.7556;0.7722;0.7833;0.8056;1.0000" path="M760 306 C740 316 720 296 700 306 L480 306 C447 296 415 316 383 306 L217 306 C179 316 141 296 104 306"/><circle class="ky" cx="16" cy="0" r="6.5"/><path class="ky" d="M9.5 0 L-4 0 M0 0 l0 5 M-4 0 l0 6"/><g opacity="0"><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.6833;0.6944;0.7722;0.7833;1.0000" values="0;0;1;1;0;0"/><text class="tag halo gr" x="0" y="36" text-anchor="middle">Pod Identity 역할 임시 자격 증명</text></g></g>
+<g opacity="0"><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.8111;0.8222;0.9056;0.9167;1.0000" values="0;0;1;1;0;0"/><ellipse class="okl" cx="113" cy="126" rx="21" ry="13"/><text class="tag halo gr" x="106" y="157">S3 요청에 서명</text></g>
+<g opacity="0"><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.8111;0.8222;0.9056;0.9167;1.0000" values="0;0;1;1;0;0"/><ellipse class="okl" cx="113" cy="216" rx="21" ry="13"/><text class="tag halo gr" x="106" y="247">S3 요청에 서명</text></g>
+<g opacity="0"><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.8111;0.8222;0.9056;0.9167;1.0000" values="0;0;1;1;0;0"/><ellipse class="okl" cx="113" cy="306" rx="21" ry="13"/><text class="tag halo gr" x="106" y="337">S3 요청에 서명</text></g>
+<g opacity="0"><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0111;0.0222;0.2889;0.3056;0.9111;0.9333;1.0000" values="0;0;1;1;0.42;0.42;0;0"/><text class="cap" x="40" y="384">① 노드 인스턴스 프로파일: SDK가 IMDSv2(169.254.169.254)에서 노드 역할 자격 증명을 받는다</text></g>
+<g opacity="0"><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.2889;0.3000;0.5333;0.5500;0.9111;0.9333;1.0000" values="0;0;1;1;0.42;0.42;0;0"/><text class="cap" x="40" y="406">② IRSA: SDK가 AWS STS AssumeRoleWithWebIdentity를 호출해 IRSA 역할 자격 증명을 받는다</text></g>
+<g opacity="0"><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.5333;0.5444;0.8056;0.8222;0.9111;0.9333;1.0000" values="0;0;1;1;0.42;0.42;0;0"/><text class="cap" x="40" y="428">③ Pod Identity: SDK → 같은 노드의 Agent(169.254.170.23) → EKS Auth AssumeRoleForPodIdentity</text></g>
+<g opacity="0"><animate attributeName="opacity" dur="18.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.8111;0.8222;0.8889;0.9056;0.9111;0.9333;1.0000" values="0;0;1;1;0.42;0.42;0;0"/><text class="cap" x="40" y="450">④ 세 Pod는 각자 받은 자격 증명으로 S3 요청에 서명한다</text></g>
+<text class="s" x="928" y="486" text-anchor="end">파란 봉투: 요청 · 초록 열쇠: 돌아온 자격 증명</text>
+</g>
+<g class="static">
+<g transform="translate(104 126)"><circle class="ky" cx="16" cy="0" r="6.5"/><path class="ky" d="M9.5 0 L-4 0 M0 0 l0 5 M-4 0 l0 6"/></g>
+<text class="tag halo gr" x="106" y="157">S3 요청에 서명</text>
+<g transform="translate(104 216)"><circle class="ky" cx="16" cy="0" r="6.5"/><path class="ky" d="M9.5 0 L-4 0 M0 0 l0 5 M-4 0 l0 6"/></g>
+<text class="tag halo gr" x="106" y="247">S3 요청에 서명</text>
+<g transform="translate(104 306)"><circle class="ky" cx="16" cy="0" r="6.5"/><path class="ky" d="M9.5 0 L-4 0 M0 0 l0 5 M-4 0 l0 6"/></g>
+<text class="tag halo gr" x="106" y="337">S3 요청에 서명</text>
+<text class="cap" x="40" y="384">① 노드 인스턴스 프로파일: SDK가 IMDSv2(169.254.169.254)에서 노드 역할 자격 증명을 받는다</text>
+<text class="cap" x="40" y="406">② IRSA: SDK가 AWS STS AssumeRoleWithWebIdentity를 호출해 IRSA 역할 자격 증명을 받는다</text>
+<text class="cap" x="40" y="428">③ Pod Identity: SDK → 같은 노드의 Agent(169.254.170.23) → EKS Auth AssumeRoleForPodIdentity</text>
+<text class="cap" x="40" y="450">④ 세 Pod는 각자 받은 자격 증명으로 S3 요청에 서명한다</text>
+<text class="s" x="928" y="486" text-anchor="end">파란 봉투: 요청 · 초록 열쇠: 돌아온 자격 증명</text>
+</g>
+</svg>
