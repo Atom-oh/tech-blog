@@ -133,11 +133,11 @@
 <tr>
 <td>실행 환경</td>
 <td>EC2·Fargate, EKS Anywhere, 자체 관리 Kubernetes</td>
-<td>EKS의 Linux EC2 노드만</td>
+<td>EKS의 Linux EC2 노드, EKS Hybrid Nodes(추가 설정 필요)</td>
 </tr>
 </tbody>
 </table>
-<p>새로 만드는 EKS EC2 워크로드라면 Pod Identity가 단순합니다. 역할 하나를 여러 클러스터에서 재사용할 때 신뢰 정책을 건드리지 않아도 되고, IAM 담당과 클러스터 담당의 책임이 깔끔하게 나뉩니다. Fargate나 Windows 노드, EKS 밖 Kubernetes와 같은 구성을 써야 한다면 IRSA가 답입니다. 두 방식은 한 클러스터에서 같이 쓸 수 있습니다. 한 ServiceAccount에 IRSA 주석과 association을 모두 두면 어떻게 될지 데모 클러스터에서 <code>kubectl create --dry-run=server</code>로 확인해 봤습니다. 주석만 있을 때는 IRSA 변수(<code>AWS_ROLE_ARN</code>, <code>AWS_WEB_IDENTITY_TOKEN_FILE</code>)가, association을 더하자 Pod Identity 변수만 주입됐습니다. SDK 체인에서는 웹 ID가 앞이지만, 그 전에 EKS 웹훅이 association을 우선해 IRSA 변수를 아예 넣지 않습니다. 다만 association을 추가하기 전에 떠 있던 Pod는 다시 만들기 전까지 IRSA를 계속 쓰므로, 방식을 바꿀 때는 rollout하고 쓰지 않는 주석은 지웁니다.</p>
+<p>새로 만드는 EKS EC2 워크로드라면 Pod Identity가 단순합니다. 역할 하나를 여러 클러스터에서 재사용할 때 신뢰 정책을 건드리지 않아도 되고, IAM 담당과 클러스터 담당의 책임이 깔끔하게 나뉩니다. Fargate나 Windows 노드, EKS 밖 Kubernetes와 같은 구성을 써야 한다면 IRSA가 답입니다. EKS Hybrid Nodes에서는 둘 다 됩니다. 다만 Pod Identity Agent는 원래 노드의 IMDS에서 자격 증명을 받는데 온프레미스 노드에는 IMDS가 없으므로, <code>nodeadm</code> 설정의 <code>enableCredentialsFile: true</code>로 노드에 자격 증명 파일을 만들고 Agent 애드온에서 하이브리드 DaemonSet(<code>daemonsets.hybrid.create</code>)을 켜야 합니다(<a href="https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html">AWS 문서</a>). 두 방식은 한 클러스터에서 같이 쓸 수 있습니다. 한 ServiceAccount에 IRSA 주석과 association을 모두 두면 어떻게 될지 데모 클러스터에서 <code>kubectl create --dry-run=server</code>로 확인해 봤습니다. 주석만 있을 때는 IRSA 변수(<code>AWS_ROLE_ARN</code>, <code>AWS_WEB_IDENTITY_TOKEN_FILE</code>)가, association을 더하자 Pod Identity 변수만 주입됐습니다. SDK 체인에서는 웹 ID가 앞이지만, 그 전에 EKS 웹훅이 association을 우선해 IRSA 변수를 아예 넣지 않습니다. 다만 association을 추가하기 전에 떠 있던 Pod는 다시 만들기 전까지 IRSA를 계속 쓰므로, 방식을 바꿀 때는 rollout하고 쓰지 않는 주석은 지웁니다.</p>
 <h2 id="demo">6. 라이브 데모: 같은 앱 세 벌</h2>
 
 <figure class="diagram"><a href="../assets/eks-wid-anim-3.svg"><img src="../assets/eks-wid-anim-3.svg" alt="데모 흐름. 처음에는 orders 앱 세 벌이 모두 IMDS에서 노드 역할을 받아 S3를 읽는다. migrate-irsa 뒤 한 벌은 IRSA 역할을, migrate-podid 뒤 다른 한 벌은 Pod Identity 역할을 받는다. revoke로 노드 역할의 S3 권한을 지우면 레거시 한 벌만 AccessDenied가 된다." loading="lazy"></a><figcaption>데모 순서. 네 단계 모두 같은 클러스터, 같은 노드, 같은 S3 객체입니다.</figcaption></figure>
