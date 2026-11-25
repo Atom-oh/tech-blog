@@ -42,8 +42,11 @@ PAGE = """<!DOCTYPE html>
   <meta property="og:site_name" content="{site_title}">
   <link rel="alternate" type="application/rss+xml" title="{site_title}" href="/feed.xml">
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <meta name="color-scheme" content="light dark">
+  {theme_head}
   <link rel="stylesheet" href="/assets/style.css">
-  <meta name="theme-color" content="#faf9f6">
+  <meta name="theme-color" content="#faf9f6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#161714" media="(prefers-color-scheme: dark)">
   <script async src="https://www.googletagmanager.com/gtag/js?id={ga}"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){{dataLayer.push(arguments)}}gtag('js',new Date());gtag('config','{ga}');</script>
 </head>
@@ -54,7 +57,7 @@ PAGE = """<!DOCTYPE html>
     <svg class="brand-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true"><circle cx="20" cy="20" r="3" fill="currentColor"/><ellipse cx="20" cy="20" rx="17" ry="7" stroke="currentColor" stroke-width="1.8" transform="rotate(-45 20 20)"/><ellipse cx="20" cy="20" rx="17" ry="7" stroke="currentColor" stroke-width="1.8" transform="rotate(45 20 20)"/></svg>
     <span>atom<span class="brand-dot">.</span></span><span class="brand-caption">기술 블로그</span>
   </a>
-  <nav class="site-nav" aria-label="주 메뉴"><a href="/"{home_current}>글 목록</a><a href="/tags/"{tags_current}>태그</a><a class="rss-link" href="/feed.xml"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="5" cy="15" r="1.5" fill="currentColor"/><path d="M4 9a7 7 0 0 1 7 7M4 4a12 12 0 0 1 12 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>RSS</a></nav>
+  <nav class="site-nav" aria-label="주 메뉴"><a href="/"{home_current}>글 목록</a><a href="/tags/"{tags_current}>태그</a><a class="rss-link" href="/feed.xml"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="5" cy="15" r="1.5" fill="currentColor"/><path d="M4 9a7 7 0 0 1 7 7M4 4a12 12 0 0 1 12 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>RSS</a>{theme_button}</nav>
 </div></header>
 <main id="main" class="wrap">
 {main}
@@ -63,10 +66,44 @@ PAGE = """<!DOCTYPE html>
   <div><a class="footer-brand" href="/">atom.</a><p>직접 구성하고, 측정하고, 기록합니다.</p></div>
   <div class="footer-links"><a href="https://presentation.atomai.click/">발표 자료 <span aria-hidden="true">↗</span></a><a href="/feed.xml">RSS 구독 <span aria-hidden="true">↗</span></a><span>© {year} Atom</span></div>
 </div></footer>
+{theme_js}
 {scripts}
 </body>
 </html>
 """
+
+# Applies a stored theme before the first paint: it must stay inline, synchronous and right after the
+# color-scheme <meta>. Without JS or storage the page simply follows the system scheme.
+THEME_HEAD = """<script>try{var s=localStorage.getItem("color-scheme");if(s==="light"||s==="dark")document.querySelector('meta[name="color-scheme"]').content=s}catch(e){}</script>"""
+
+# Two-state toggle: the icon shows the scheme it switches to. Choosing the system's own scheme clears the
+# stored value so the page follows the system again; a stored value is never dropped retroactively.
+THEME_BUTTON = (
+    '<button class="theme-toggle" type="button" hidden>'
+    '<span class="to-dark"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M16.5 12.3A6.8 6.8 0 0 1 7.7 3.5a6.8 6.8 0 1 0 8.8 8.8Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>'
+    '<span class="visually-hidden">어두운 테마로 전환</span></span>'
+    '<span class="to-light"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="3.4" stroke="currentColor" stroke-width="1.6"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.3 4.3l1.4 1.4M14.3 14.3l1.4 1.4M4.3 15.7l1.4-1.4M14.3 5.7l1.4-1.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>'
+    '<span class="visually-hidden">밝은 테마로 전환</span></span></button>')
+
+THEME_JS = """<script>
+(function () {
+  var meta = document.querySelector('meta[name="color-scheme"]');
+  var button = document.querySelector('.theme-toggle');
+  var system = matchMedia('(prefers-color-scheme: dark)');
+  if (!meta || !button) return;
+  function apply(value) { meta.content = value === 'light' || value === 'dark' ? value : 'light dark'; }
+  function systemScheme() { return system.matches ? 'dark' : 'light'; }
+  button.hidden = false;
+  button.addEventListener('click', function () {
+    var shown = meta.content === 'light dark' ? systemScheme() : meta.content;
+    var target = shown === 'dark' ? 'light' : 'dark';
+    var stored = target === systemScheme() ? null : target;
+    try { stored ? localStorage.setItem('color-scheme', stored) : localStorage.removeItem('color-scheme'); } catch (e) {}
+    apply(stored);
+  });
+  addEventListener('storage', function (e) { if (e.key === 'color-scheme') apply(e.newValue); });
+})();
+</script>"""
 
 # Only one video plays at a time (posts that embed demo recordings).
 VIDEO_JS = """<script>
@@ -121,6 +158,7 @@ def page(*, src, title, description, url, main, og_type="website", scripts="", p
     return PAGE.format(marker=MARKER, src=src, title=esc(title), description=esc(description), url=url,
                        og_type=og_type, site_title=esc(SITE_TITLE), ga=GA_ID, main=main, scripts=scripts,
                        page_class=page_class, year=datetime.now(timezone.utc).year,
+                       theme_head=THEME_HEAD, theme_button=THEME_BUTTON, theme_js=THEME_JS,
                        home_current=' aria-current="page"' if page_class == "home-page" else "",
                        tags_current=' aria-current="page"' if page_class == "tags-page" else "")
 
