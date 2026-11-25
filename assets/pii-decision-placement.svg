@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="600" viewBox="0 0 1120 600" role="img" aria-labelledby="title desc">
+  <title id="title">개인정보 마스킹 파이프라인에서 추출 모델과 판정 모델이 들어가는 자리</title>
+  <desc id="desc">OCR 텍스트가 Stage 3 추출 모델로 들어가면 개인정보 값과 유형의 목록이 나오고, 그 값을 토큰으로 바꾼 마스킹 텍스트가 Stage 4 Guardrails 검증, Stage 5 매핑 저장, Stage 6 분석 LLM, Stage 7 복원으로 이어진다. 판정 모델은 질문 하나에 확률 하나를 돌려주므로 Stage 3를 대신할 수 없다. 이번 측정에서는 판정 모델을 두 자리에 놓았다. 과제 A는 탐지 후보 구간 하나마다 가려야 하는지 묻고, 과제 B는 마스킹이 끝난 텍스트 조각에 개인정보가 남았는지 묻는다.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#405267" stroke-width="1.6"/></marker>
+  </defs>
+  <rect width="1120" height="600" rx="20" fill="#fbfaf7"/>
+  <g font-family="Noto Sans CJK KR, sans-serif">
+    <text x="42" y="49" fill="#5f6670" font-size="18" font-weight="600" letter-spacing="2">PII MASKING · WHERE A DECISION MODEL FITS</text>
+    <text x="42" y="93" fill="#222e3b" font-size="29" font-weight="700">추출은 생성 모델이, 그 뒤의 예/아니오 검사는 판정 모델이 맡습니다</text>
+
+    <!-- main pipeline -->
+    <rect x="40" y="150" width="170" height="120" rx="12" fill="#ffffff" stroke="#405267" stroke-width="1.6"/>
+    <text x="125" y="196" text-anchor="middle" fill="#26394b" font-size="20" font-weight="700">OCR 텍스트</text>
+    <text x="125" y="226" text-anchor="middle" fill="#5f6670" font-size="15">합성 금융 문서</text>
+    <text x="125" y="250" text-anchor="middle" fill="#5f6670" font-size="15">평균 5,364자</text>
+
+    <rect x="250" y="135" width="300" height="150" rx="14" fill="#e3ecf8" stroke="#4a6fa5" stroke-width="2"/>
+    <text x="400" y="173" text-anchor="middle" fill="#1f3b63" font-size="21" font-weight="700">Stage 3 추출 (생성)</text>
+    <text x="400" y="204" text-anchor="middle" fill="#33557f" font-size="15">Gemma 4 26B-A4B QLoRA · FP8</text>
+    <text x="400" y="228" text-anchor="middle" fill="#33557f" font-size="15">문서 → 개인정보 값·유형 목록</text>
+    <text x="400" y="252" text-anchor="middle" fill="#33557f" font-size="15">L40S 1장 · 문서당 p50 약 2.5초</text>
+
+    <rect x="590" y="150" width="200" height="120" rx="12" fill="#ffffff" stroke="#405267" stroke-width="1.6"/>
+    <text x="690" y="196" text-anchor="middle" fill="#26394b" font-size="20" font-weight="700">마스킹 텍스트</text>
+    <text x="690" y="228" text-anchor="middle" fill="#5f6670" font-size="15">[PERSON_1] 같은 토큰</text>
+    <text x="690" y="252" text-anchor="middle" fill="#5f6670" font-size="15">토큰 ↔ 원문 매핑</text>
+
+    <rect x="830" y="135" width="250" height="150" rx="14" fill="#edf2ef" stroke="#62847b" stroke-width="2"/>
+    <text x="955" y="173" text-anchor="middle" fill="#245c4b" font-size="20" font-weight="700">Stage 4–7</text>
+    <text x="955" y="204" text-anchor="middle" fill="#245c4b" font-size="15">Guardrails 검증</text>
+    <text x="955" y="228" text-anchor="middle" fill="#245c4b" font-size="15">매핑 저장 → 분석 LLM</text>
+    <text x="955" y="252" text-anchor="middle" fill="#245c4b" font-size="15">→ 원문 복원</text>
+
+    <path d="M210 210 H244" stroke="#405267" stroke-width="2" marker-end="url(#arrow)"/>
+    <path d="M550 210 H584" stroke="#405267" stroke-width="2" marker-end="url(#arrow)"/>
+    <path d="M790 210 H824" stroke="#405267" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <!-- task A -->
+    <rect x="250" y="360" width="340" height="170" rx="14" fill="#fff4df" stroke="#b58938" stroke-width="1.8" stroke-dasharray="7 5"/>
+    <text x="270" y="396" fill="#654814" font-size="19" font-weight="700">과제 A · 후보 구간 판정</text>
+    <text x="270" y="428" fill="#765c2e" font-size="15">탐지기·regex가 표시한 구간 하나마다</text>
+    <text x="270" y="452" fill="#765c2e" font-size="15">"이 [[구간]]을 가려야 하나?" → P(예)</text>
+    <text x="270" y="484" fill="#765c2e" font-size="15">개인정보 3,382 · 비개인 3,514 후보</text>
+    <text x="270" y="508" fill="#765c2e" font-size="15">오탐 걸러내기용 (지우기만 함)</text>
+    <path d="M400 285 V352" stroke="#b58938" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+
+    <!-- task B -->
+    <rect x="630" y="360" width="340" height="170" rx="14" fill="#fff4df" stroke="#b58938" stroke-width="1.8" stroke-dasharray="7 5"/>
+    <text x="650" y="396" fill="#654814" font-size="19" font-weight="700">과제 B · 마스킹 후 유출 검사</text>
+    <text x="650" y="428" fill="#765c2e" font-size="15">마스킹이 끝난 1,500자 조각마다</text>
+    <text x="650" y="452" fill="#765c2e" font-size="15">"개인정보가 아직 남았나?" → P(예)</text>
+    <text x="650" y="484" fill="#765c2e" font-size="15">깨끗한 조각 328 · 값 남긴 조각 231</text>
+    <text x="650" y="508" fill="#765c2e" font-size="15">Guardrails 앞의 추가 검사 자리</text>
+    <path d="M690 270 V352" stroke="#b58938" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+
+    <text x="42" y="572" fill="#8a2c20" font-size="15">판정 모델은 질문 하나에 확률 하나를 돌려줍니다. 어느 글자를 가릴지는 알려 주지 않으므로 Stage 3 추출을 대신하지 못합니다.</text>
+  </g>
+</svg>
