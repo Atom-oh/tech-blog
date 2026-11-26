@@ -1,17 +1,60 @@
 ---
 title: "ELB for Envoy가 Istio Ingress Gateway를 대체할 수 있을까?"
 date: 2026-11-26
-description: "도쿄의 EC2·ECS·EKS에서 경로·헤더·분산·요청 제한을 검증했습니다. EKS Pod 두 개의 사이드카에 100 TPS를 적용하고, 고정 백엔드와 탄력적으로 늘어나는 Pod 사이의 트래픽을 가중치 컨트롤러 없이 조절했습니다."
-tags: envoy, istio, elb, eks
+description: "온프레미스 Pod 50개와 EKS 10~300개의 분배를 예로 들어, Gateway API로 Istio 인입 정책을 옮기고 Blue/Green 클러스터 사이에 요청을 단계적으로 이전하는 방법을 도쿄 실측과 함께 살펴봅니다."
+tags: envoy, istio, elb, eks, gateway-api
 ---
 
 **ELB for Envoy**를 쓰면 AWS가 Envoy 프록시의 패치와 확장을 맡고, 사용자는 리스너와 라우팅 규칙을 정의합니다. Istio Ingress Gateway의 역할을 어디까지 맡길 수 있을까요? 도쿄에서 관리형 Envoy에 직접 설정을 적용해 보니 경로 재작성, 가중치 라우팅, 로컬 요청 제한이 모두 별도 xDS 서버 없이 동작했습니다. [AWS 출시 공지](https://aws.amazon.com/ko/about-aws/whats-new/2026/11/elastic-load-balancing-for-envoy-generally-available/)
 
-**Istio YAML을 그대로 쓸 수 있는지는 누가 읽느냐에 달려 있습니다.** ELB for Envoy 자체는 `VirtualService`·`DestinationRule`·`EnvoyFilter`를 읽지 않습니다. Kubernetes에 CRD만 설치하면 이 객체들을 생성·저장할 수 있지만 요청 경로는 바뀌지 않습니다. istiod는 자신에게 연결된 프록시를 위해 이 선언을 xDS로 변환합니다. **기존 Istio 게이트웨이가 istiod에 연결돼 있다면 운영자는 Istio YAML을 계속 쓰고 xDS를 직접 작성할 필요가 없습니다.** 인입 프록시를 ELB for Envoy로 바꿀 때는 그 프록시가 호환되는 설정과 신원으로 같은 컨트롤 플레인에 연결돼야 합니다. 도쿄에서 istiod에 연결한 것은 EKS 사이드카였고, 인입 ELB에는 bootstrap과 파일 기반 xDS를 직접 전달했습니다. [AWS의 Envoy 설정 방식](https://docs.aws.amazon.com/elasticloadbalancing/latest/elbproxy/envoy-configuration.html) · [Istio 아키텍처](https://istio.io/latest/docs/ops/deployment/architecture/)
+**Istio YAML을 계속 쓸 수 있는 조건은 그 정책을 해석하는 컨트롤 플레인이 대상 프록시에 연결돼 있다는 것입니다.** ELB for Envoy는 `VirtualService`나 `DestinationRule`을 직접 읽지 않습니다. AWS의 EKS 통합을 선택하면 Envoy Gateway가 `Gateway`·`HTTPRoute`와 정책을 xDS로 변환합니다. 이번 글에서는 주문 API의 리스너, 경로, subset을 이 모델로 옮깁니다. 도쿄에서 실제 요청을 보낸 인입 프록시는 파일 기반 xDS로 구성했고, EKS Pod의 사이드카는 istiod에 연결했습니다. [AWS의 Kubernetes 통합](https://docs.aws.amazon.com/elasticloadbalancing/latest/elbproxy/kubernetes.html)
 
-AWS가 문서화한 Kubernetes 연동을 선택하면 **Envoy Gateway**가 `Gateway`·`HTTPRoute` 같은 **Gateway API**를 읽어 xDS를 만듭니다. 이 방식도 xDS를 손으로 쓸 필요는 없지만, 기존 Istio CRD를 그대로 소비하지는 않습니다. Istio 없이 `VirtualService` YAML 자체를 유지하려면 그 의미를 구현하고 대상 프록시까지 설정을 배포하는 별도 컨트롤러가 필요합니다. [AWS의 Envoy Gateway 통합](https://docs.aws.amazon.com/elasticloadbalancing/latest/elbproxy/kubernetes-overview.html)
+<h2 id="migration">온프레미스 Pod 50개, EKS Pod 10~300개라면</h2>
 
-주문 API를 기준으로 보면 경계가 선명해집니다. “주문 요청의 10%를 새 버전으로 보낸다”는 정책에서 Envoy는 목적지를 선택합니다. 새 버전의 Pod가 교체될 때마다 레이블과 준비 상태를 보고 목적지 목록을 갱신하는 쪽은 컨트롤 플레인입니다. “Pod 하나가 초당 100건을 받는다”는 정책은 요청이 **어느 Pod에 도착했는지** 아는 지점에서 집행해야 합니다.
+**EKS에 준비된 용량과 지금 EKS에 맡길 트래픽은 별개의 결정입니다.** 같은 용량의 Ready Pod를 하나의 풀에 넣으면 EKS의 첫 10개가 받는 기대 비중은 10/60, 약 **16.7%**입니다. 그러나 클러스터 이전 첫날 새 환경에 **5%만** 보내고 싶다면 두 사이트를 별도 backend로 두고 가중치를 **95:5**로 설정합니다. Pod 10개를 그대로 두고도 두 결과가 나오는 이유입니다.
+
+<link rel="stylesheet" href="/assets/data/elb-envoy-tokyo/migration-share.css">
+<figure id="hybrid-migration-share" class="migration-share" data-fixed-pods="50" aria-labelledby="migration-share-title">
+<header><strong id="migration-share-title">Pod 수로 나눌 때와 이전 비율을 직접 정할 때</strong></header>
+<div class="chart-panels">
+<section aria-label="Ready Pod 비례 분배 계산">
+<strong class="chart-heading">Ready Pod당 같은 몫</strong>
+<span class="chart-note">온프레미스 50개 고정 · EKS 10~300개</span>
+<div class="share-labels"><span>온프레미스<b data-fixed-share>83.3%</b></span><span>EKS<b data-eks-share>16.7%</b></span></div>
+<svg class="share-bar" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true"><rect class="old-site" data-fixed-bar x="0" y="0" width="83.3333" height="12"></rect><rect class="new-site" data-eks-bar x="83.3333" y="0" width="16.6667" height="12"></rect></svg>
+<label class="pod-selector" hidden><span>EKS Ready Pod <strong data-eks-count>10</strong>개</span><input type="range" min="10" max="300" step="1" value="10" aria-label="EKS Ready Pod 수"></label>
+<span class="chart-note">EKS 50개면 50%, 300개면 85.7%입니다.</span>
+</section>
+<section aria-label="Blue에서 Green으로 신규 트래픽을 이전하는 가중치 예시">
+<strong class="chart-heading">Blue/Green 클러스터 이전</strong>
+<div class="cutover-bars"><div><b class="stage">단계</b><span></span><b>Blue</b><b>Green</b></div>
+<div><span class="stage">대기</span><svg class="share-bar" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><rect class="old-site" x="0" y="0" width="100" height="10"></rect><rect class="new-site" x="100" y="0" width="0" height="10"></rect></svg><span>100%</span><span>0%</span></div>
+<div><span class="stage">카나리</span><svg class="share-bar" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><rect class="old-site" x="0" y="0" width="95" height="10"></rect><rect class="new-site" x="95" y="0" width="5" height="10"></rect></svg><span>95%</span><span>5%</span></div>
+<div><span class="stage">확대</span><svg class="share-bar" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><rect class="old-site" x="0" y="0" width="75" height="10"></rect><rect class="new-site" x="75" y="0" width="25" height="10"></rect></svg><span>75%</span><span>25%</span></div>
+<div><span class="stage">절반</span><svg class="share-bar" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><rect class="old-site" x="0" y="0" width="50" height="10"></rect><rect class="new-site" x="50" y="0" width="50" height="10"></rect></svg><span>50%</span><span>50%</span></div>
+<div><span class="stage">전환</span><svg class="share-bar" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><rect class="old-site" x="0" y="0" width="0" height="10"></rect><rect class="new-site" x="0" y="0" width="100" height="10"></rect></svg><span>0%</span><span>100%</span></div>
+</div><span class="chart-note">새 요청에 적용하는 정책 예시 · 각 행의 합계 100%</span>
+</section></div>
+<figcaption><b>도쿄 축소 실측.</b> 고정 ECS 대상 1개와 EKS Pod 1개는 120건을 60:60으로 나눴습니다. EKS만 3개로 늘리자 고정 대상 30건, EKS 90건이었고 세 Pod가 각각 30건을 받았습니다. 왼쪽의 50개·300개 시나리오는 계산값입니다. <a href="#hybrid">실측 구성과 요청별 결과</a></figcaption>
+</figure>
+<script defer src="/assets/data/elb-envoy-tokyo/migration-share.js"></script>
+
+<h3 id="blue-green">Blue에서 천천히 빼고 Green으로 천천히 올리는 방법</h3>
+
+1. **두 클러스터를 동시에 연결합니다.** 이전 중에도 계속 살아 있을 인입 Gateway에서 Blue(기존)와 Green(신규)을 서로 다른 backend로 식별합니다. `HTTPRoute.backendRefs`에서 `api-blue`와 `api-green`을 참조하려면 라우트를 관리하는 클러스터에서 두 이름이 실제 대상으로 해석되고, 프록시에서 양쪽으로 연결돼야 합니다. 같은 이름의 Service를 두 클러스터에 만드는 것만으로 원격 엔드포인트가 발견되지는 않습니다. `ReferenceGrant`는 네임스페이스 간 참조를 승인할 때 쓰며 클러스터 간 발견을 제공하지 않습니다.
+2. **100:0에서 시작해 Green을 5%로 엽니다.** 0%인 동안에도 별도 시험 호스트나 헤더 매칭 라우트로 Green의 인증, 데이터 읽기·쓰기와 응답을 확인할 수 있습니다.
+3. **동일한 요청을 비교하며 75:25, 50:50, 0:100으로 진행합니다.** 각 단계에서 라우트의 `Accepted`·`ResolvedRefs`와 실제 Blue/Green 응답 수를 확인합니다. Green의 오류율, p95 지연, 포화도와 429 비율을 Blue와 비교해 다음 단계로 갈지 결정합니다. 가중치는 개별 요청의 선택 비율이라 짧은 표본에서 정확히 5%가 나올 필요는 없습니다.
+4. **0% 뒤에 Blue를 드레인합니다.** 새 요청이 Green으로 가도 이미 열린 WebSocket이나 장기 gRPC 스트림, 처리 중인 주문은 Blue에 남을 수 있습니다. 활성 연결과 미완료 요청을 확인한 뒤 Blue를 줄입니다. 예를 들어 50:50에서 Green의 오류율이 올라가면 승격을 멈추고 75:25, 95:5로 되돌릴 수 있습니다. 이를 위해 Blue의 용량과 데이터 호환성을 유지합니다. EKS가 300개까지 확장된 시점에 온프레미스 50개가 현재 부하를 전부 감당할 수 있는지는 별도 판단입니다.
+
+첫 카나리 승격 때 변경하는 `HTTPRoute` 규칙은 두 backend의 가중치뿐입니다.
+
+```yaml
+backendRefs:
+  - {name: api-blue, port: 8080, weight: 95}
+  - {name: api-green, port: 8080, weight: 5}
+```
+
+위의 백분율은 이전 계획의 예시입니다. 다섯 비율은 Envoy Gateway 1.10의 오프라인 xDS 번역 결과로 확인했습니다. 도쿄에서는 EC2·ECS·EKS 세 목적지의 가중치 변경과 DNS 풀에서 EKS를 1→3개로 늘리는 실험을 수행했습니다. [가중치 번역 결과](/assets/data/elb-envoy-tokyo/order-gateway-xds.json) · [세 백엔드의 실측 결과](/assets/data/elb-envoy-tokyo/backend-matrix.json)
 
 ## 요청 경로와 설정 경로
 
@@ -42,48 +85,51 @@ AWS가 문서화한 Kubernetes 연동을 선택하면 **Envoy Gateway**가 `Gate
 
 [Istio의 VM 설치 절차](https://istio.io/latest/docs/setup/install/virtual-machine/) · [ECS Service Connect 프록시 배치](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/service-connect-concepts-deploy.html) · [Fargate Linux 기능 제한](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-tasks-services.html)
 
-## `order/api`로 보낸다는 뜻
+<h2 id="gateway-api">주문 API를 Istio에서 Gateway API로 옮기면</h2>
 
-`order` 네임스페이스에 Deployment `api`가 있고 그 Pod에 `app: api`, `version: v1` 레이블이 있다고 가정합니다. Service `api`는 `app: api`를 선택하고 HTTP 포트 8080을 Pod의 8080으로 전달합니다. 같은 네임스페이스에 `app: api, version: v2`인 카나리 Pod를 추가하면 **하나의 Service가 두 버전을 모두 발견**합니다. `DestinationRule`의 두 subset이 버전을 구분합니다. 기본 클러스터 도메인에서 목적지 FQDN은 `api.order.svc.cluster.local`입니다. Deployment 이름만으로 이 연결이 생기지는 않습니다. [Kubernetes Docs의 DestinationRule과 subset 사례](https://docs.atomai.click/kubernetes-docs/ko/service-mesh/istio/traffic-management/03-destination-rule)
+Istio의 `Gateway`는 외부에서 받을 포트와 호스트를, `VirtualService`는 주문 요청의 경로를 정했습니다. 전환 후에는 **플랫폼 팀의 `Gateway`가 리스너를 열고 앱 팀의 `HTTPRoute`가 그 리스너에 붙습니다.** `DestinationRule`의 `stable`·`canary` subset은 `order` 네임스페이스의 Service 두 개로 풀어냅니다. `api-stable`은 `app: api, version: v1`을, `api-canary`는 `app: api, version: v2`를 선택합니다. 두 Service의 포트와 targetPort는 모두 8080입니다. [기존 Istio subset 사례](https://docs.atomai.click/kubernetes-docs/ko/service-mesh/istio/traffic-management/03-destination-rule) · [Gateway API HTTPRoute](https://gateway-api.sigs.k8s.io/reference/api-types/httproute/)
 
-다음은 문서의 헤더 조작과 카나리 사례를 주문 API로 옮긴 **Istio 설정 예시**입니다. `istio-system/public-gateway`가 `orders.example.com`을 받는다고 가정합니다. 점검 경로를 먼저 매칭해 프록시가 503을 직접 반환하고, 일반 주문 요청만 백엔드로 보냅니다. [헤더 추가·수정 사례](https://docs.atomai.click/kubernetes-docs/ko/service-mesh/istio/traffic-management/01-gateway-virtualservice) · [직접 응답 사례](https://docs.atomai.click/kubernetes-docs/ko/service-mesh/istio/traffic-management/02-routing) · [가중치 변경 사례](https://docs.atomai.click/kubernetes-docs/ko/service-mesh/istio/traffic-management/04-traffic-splitting)
+AWS remote provider v1.0.0 호환표는 Envoy Gateway 1.10, Gateway API 1.6.1, Envoy 1.40을 명시합니다. 아래 예제는 AWS 가이드대로 Remote 모드로 구성한 Envoy Gateway와 `elb-proxy-aws` GatewayClass, `order` 네임스페이스를 전제로 합니다. **내부 ELB를 만들려면** 같은 네임스페이스의 `ELBProxyConfiguration`이 `targetRefs`로 이 Gateway를 가리키고 프록시 IAM 역할과 `ipv4Addressability: internal`을 지정해야 합니다. AWS 측 설정과 Service까지 포함한 파일에서 예시 역할 ARN을 교체할 수 있습니다. [주문 API 전체 YAML](/assets/data/elb-envoy-tokyo/order-gateway-api.yaml) · [AWS 설치·연결 단계](https://docs.aws.amazon.com/elasticloadbalancing/latest/elbproxy/kubernetes-get-started.html) · [릴리스 호환표](https://github.com/aws/elb-envoy-remote-infra-provider/blob/v1.0.0/docs/compatibility.md)
 
 ```yaml
-apiVersion: networking.istio.io/v1
-kind: DestinationRule
-metadata: {name: api, namespace: order}
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata: {name: orders-ingress, namespace: order}
 spec:
-  host: api.order.svc.cluster.local
-  subsets:
-    - {name: stable, labels: {version: v1}}
-    - {name: canary, labels: {version: v2}}
+  gatewayClassName: elb-proxy-aws
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      hostname: orders.example.com
+      allowedRoutes: {namespaces: {from: Same}}
 ---
-apiVersion: networking.istio.io/v1
-kind: VirtualService
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
 metadata: {name: orders, namespace: order}
 spec:
-  hosts: [orders.example.com]
-  gateways: [istio-system/public-gateway]
-  http:
-    - match: [{uri: {exact: /orders/maintenance}}]
-      directResponse:
-        status: 503
-        body: {string: "orders under maintenance"}
-    - match: [{uri: {prefix: /orders/}}]
-      headers:
-        request:
-          add: {x-order-hop: ingress}
-          set: {x-order-source: public-api}
-      route:
-        - destination: {host: api.order.svc.cluster.local, subset: stable, port: {number: 8080}}
-          weight: 90
-        - destination: {host: api.order.svc.cluster.local, subset: canary, port: {number: 8080}}
-          weight: 10
+  parentRefs: [{name: orders-ingress, sectionName: http}]
+  hostnames: [orders.example.com]
+  rules:
+    - matches: [{path: {type: PathPrefix, value: /orders}}]
+      filters:
+        - type: RequestHeaderModifier
+          requestHeaderModifier:
+            add: [{name: x-order-hop, value: ingress}]
+            set: [{name: x-order-source, value: public-api}]
+        - type: URLRewrite
+          urlRewrite: {path: {type: ReplacePrefixMatch, replacePrefixMatch: /}}
+      timeouts: {request: 3s}
+      backendRefs:
+        - {name: api-stable, port: 8080, weight: 90}
+        - {name: api-canary, port: 8080, weight: 10}
 ```
 
-백엔드로 전달할 때 `add`는 기존 `x-order-hop` 값에 `ingress`를 추가하고, `set`은 클라이언트가 보낸 `x-order-source` 값을 `public-api`로 덮어씁니다. 헤더가 없으면 둘 다 생성합니다. 90:10을 70:30으로 바꿀 때는 `VirtualService`의 두 `weight`만 수정합니다. istiod가 같은 두 subset을 가리키는 새 라우트를 배포하므로 이 변경을 위해 Pod 수를 조정할 필요가 없습니다. 단계별 승격을 자동화할 때는 Argo Rollouts가 `VirtualService`의 가중치를 바꾸고, 갱신된 라우트를 Envoy에 전달하는 역할은 계속 istiod가 맡습니다. [Argo Rollouts와 Istio의 역할 분담](https://docs.atomai.click/kubernetes-docs/ko/service-mesh/istio/advanced/08-argo-rollouts)
+예를 들어 `orders.example.com/orders/123`에 들어온 요청은 선택된 앱에 `/123`으로 도착합니다. `add`는 기존 `x-order-hop`에 값을 더하고 `set`은 `x-order-source`를 덮어씁니다. 비중을 90:10에서 70:30으로 옮길 때는 두 `backendRefs.weight`를 수정합니다. 예제는 `HTTPRoute`와 Gateway가 같은 네임스페이스에 있어 `allowedRoutes.namespaces.from: Same`을 사용합니다.
 
-ELB for Envoy에 직접 설정할 때는 RouteConfiguration의 `request_headers_to_add`에 `APPEND_IF_EXISTS_OR_ADD`와 `OVERWRITE_IF_EXISTS_OR_ADD`를 각각 사용합니다. 가중치는 `weighted_clusters`, 점검 응답은 `direct_response`로 표현합니다. 이 방식에서는 stable·canary 클러스터의 엔드포인트 목록을 직접 공급합니다. 도쿄 인입 실측에는 위 두 Istio 리소스의 동작을 Envoy 라우트로 직접 표현해 적용했습니다. 뒤의 Pod별 100 TPS 실험에는 Kubernetes의 실제 `EnvoyFilter`를 적용했습니다.
+점검 URI `/orders/maintenance`는 별도 `HTTPRoute`의 `Exact` 매치가 일반 `PathPrefix`보다 구체적입니다. 이 규칙은 `ExtensionRef`로 Envoy Gateway의 `HTTPRouteFilter`를 참조해 백엔드 호출 없이 503을 반환합니다. `BackendTrafficPolicy`는 일반 주문 라우트 `orders`만 대상으로 인입 로컬 한도 100요청/초를 설정합니다. 따라서 점검 응답, 게이트웨이 한도, 뒤에서 실측한 **목적지 Pod당 100 TPS**가 각각 어느 경로에 적용되는지 구분할 수 있습니다. [직접 응답 확장](https://gateway.envoyproxy.io/docs/tasks/traffic/direct-response/) · [로컬 요청 제한](https://gateway.envoyproxy.io/docs/tasks/traffic/local-rate-limit/)
+
+**검증 범위.** 위 Gateway·라우트·정책을 릴리스 CRD 스키마로 검사하고, 예시 Service 주소를 넣어 `egctl v1.10.0 x translate`로 xDS를 생성했습니다. 결과에는 두 backend의 90:10 가중치, 요청 헤더와 rewrite, 3초 타임아웃, 503 본문과 100토큰/초 버킷이 들어 있습니다. 이 버전의 번역 결과에서 일반 라우트는 Envoy 클러스터 하나를 가리켰고, 90과 10은 EDS 엔드포인트 그룹의 가중치로 나타났습니다. 운영자가 편집한 값은 두 `backendRefs.weight`뿐입니다. 이 검증은 로컬 번역입니다. 아래 도쿄 수치는 직접 구성한 관리형 Envoy에 실제 요청을 보낸 결과입니다. [검증한 xDS 발췌](/assets/data/elb-envoy-tokyo/order-gateway-xds.json)
 
 ## EC2·ECS·EKS에서 같은 요청을 비교했습니다
 
@@ -124,32 +170,24 @@ Istio에서는 `EnvoyFilter`로 게이트웨이에 `envoy.filters.http.ratelimit
 
 AWS가 **글로벌 rate limiting 미지원**이라고 명시한 대상은 EKS의 **Envoy Gateway + remote infrastructure provider 통합**입니다. 위 결과는 CloudFormation으로 직접 구성한 관리형 프록시에서 측정했습니다. AWS가 해당 통합의 정책 API까지 지원한다는 근거로 확대할 수는 없습니다. [AWS의 EKS 통합 제약](https://docs.aws.amazon.com/elasticloadbalancing/latest/elbproxy/kubernetes-overview.html#kubernetes-overview-differences)
 
-## VirtualService와 DestinationRule을 Envoy 설정으로 풀면
+## Istio 기능별로 무엇을 옮기고 무엇을 별도로 운영하나
 
-Istio의 `Gateway`는 게이트웨이가 열 포트·호스트·TLS를 기술합니다. `VirtualService`는 어떤 요청을 어디로 보낼지 정하고, `DestinationRule`은 목적지의 subset과 연결 정책을 정의합니다. istiod는 이 선언과 서비스 레지스트리를 함께 읽어 프록시별 xDS 리소스를 만듭니다. 아래 대응 관계는 기존 정책을 옮길 때 확인할 단위입니다. [Istio Gateway](https://istio.io/latest/docs/reference/config/networking/gateway/) · [VirtualService](https://istio.io/latest/docs/reference/config/networking/virtual-service/) · [DestinationRule](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
+| 기존 Istio에서 하던 일 | Gateway API 또는 Envoy Gateway에서 설정할 곳 | 적용 범위와 차이 |
+| --- | --- | --- |
+| Istio `Gateway`의 호스트·포트·TLS 종료 | 표준 `Gateway.spec.listeners`의 `hostname`·`port`·`tls.certificateRefs` | 게이트웨이 인증서를 Secret으로 참조합니다. HTTP 예제에는 TLS 리스너를 추가해야 합니다. |
+| `VirtualService`의 경로·헤더 매칭, add/set/remove, 재작성 | `HTTPRoute.rules.matches`·`RequestHeaderModifier`·`ResponseHeaderModifier`·`URLRewrite` | `PathPrefix`는 경로 요소 단위로 매칭합니다. 정규식, 경계 경로, 필터 조합은 기존 요청 예제로 대조합니다. |
+| subset별 가중치·카나리 | 레이블 selector가 다른 Service + `HTTPRoute.backendRefs.weight` | `DestinationRule`의 subset 이름과 Pod 레이블 선택을 두 Service에 옮깁니다. 목적지 가중치와 Pod 수는 독립입니다. |
+| `directResponse`로 점검 응답 | `HTTPRoute`의 `ExtensionRef` → Envoy Gateway `HTTPRouteFilter.spec.directResponse` | 표준 Gateway API 1.6.1의 기본 필터 목록에는 direct response가 없습니다. 예제는 확장으로 503을 생성합니다. |
+| 요청 타임아웃·재시도·미러링 | `HTTPRoute.rules.timeouts`·`RequestMirror`, Envoy Gateway `BackendTrafficPolicy.spec.retry` | 전체 요청 시간과 backend 요청 시간을 구분합니다. 주문 쓰기 API에 재시도를 옮길 때는 중복 처리 가능성을 확인합니다. |
+| 연결 풀·회로 차단·이상 호스트 제외·부하 분산 방식 | `BackendTrafficPolicy`의 `circuitBreaker`·`healthCheck.passive`·`loadBalancer` | Istio의 `DestinationRule.trafficPolicy`를 동작별로 나눠 Gateway 또는 HTTPRoute에 붙입니다. 카운터의 기준과 제외·복귀 조건도 대조합니다. |
+| 오류·지연 주입 | Envoy Gateway `BackendTrafficPolicy.spec.faultInjection.abort`·`delay` | 대상 Route를 좁혀 적용할 수 있습니다. 미러링은 별도 `RequestMirror` 필터이며 복제 요청을 받는 앱이 실제 쓰기를 수행하는지도 확인합니다. |
+| EnvoyFilter 기반 요청 제한 | 인입 로컬은 `BackendTrafficPolicy.spec.rateLimit.local` | 인입 프록시 인스턴스별 한도입니다. AWS remote provider의 글로벌 RLS 정책은 미지원입니다. 직접 구성한 외부 RLS 실측은 앞 절의 별도 경로입니다. |
+| 백엔드 TLS·JWT·접근 정책 | 표준 `BackendTLSPolicy`로 Service에 대한 서버 인증서 검증, Envoy Gateway `SecurityPolicy`로 인입 JWT·인가 | 메시 내부의 `PeerAuthentication`, 워크로드 신원 발급과 동서 트래픽 인가는 별도로 운영합니다. |
+| Pod별 인바운드 한도 | 사이드카 모드에서는 기존 Istio `EnvoyFilter`를 `SIDECAR_INBOUND`에 적용 | 인입 `HTTPRoute`로 이전해도 각 Pod에 버킷이 생기지 않습니다. 뒤의 두 Pod에서 이 차이를 측정했습니다. |
+
+`HTTPRoute`는 인입 정책의 선언이고 Envoy Gateway가 이를 xDS로 변환합니다. Istio의 확장을 옮길 때는 어떤 프록시에서 실행했는지부터 확인하는 편이 좋습니다. 같은 100 TPS라도 게이트웨이와 주문 Pod에 적용할 때 보호하는 대상이 달라집니다. [Envoy Gateway 정책 API](https://gateway.envoyproxy.io/docs/api/extension_types/) · [BackendTLSPolicy](https://gateway-api.sigs.k8s.io/reference/api-types/policy/backendtlspolicy/) · [AWS remote provider의 기능별 지원](https://github.com/aws/elb-envoy-remote-infra-provider/blob/v1.0.0/docs/compatibility.md)
 
 <figure class="diagram"><a href="/assets/elb-envoy-crd-to-xds.svg"><img src="/assets/elb-envoy-crd-to-xds.svg" alt="Istio 리소스가 Envoy xDS 설정이 되는 과정. istiod가 Gateway, VirtualService, DestinationRule, EnvoyFilter와 Service, EndpointSlice를 함께 읽어 프록시마다 Listener(LDS), RouteConfiguration(RDS), Cluster(CDS), 엔드포인트(EDS)를 계산하고 gRPC xDS로 푸시한다. ELB for Envoy에는 istiod가 들어 있지 않으며, 도쿄 실습에서는 같은 리소스를 bootstrap의 고정 리스너와 HTTP 필터, /xds/routes.yaml, /xds/clusters.yaml로 직접 만들고 EDS 대신 STATIC 주소나 STRICT_DNS를 썼다. 사이드카는 istiod에서 istio-agent를 거쳐 설정을 받고, 인입 프록시는 CloudFormation이 전달한 ZIP을 파일로 읽는다." loading="lazy"></a><figcaption>Envoy가 받는 것은 CRD가 아니라 LDS·RDS·CDS·EDS 리소스입니다. istiod는 EKS에 따로 설치한 컨트롤 플레인이며 ELB for Envoy에 포함되어 있지 않습니다. 오른쪽 점선 칸이 인입 프록시에서 istiod 대신 쓴 방법입니다.</figcaption></figure>
-
-| Istio에서 적던 의도 | Envoy에서 준비할 설정 | 이번 실습에서 확인한 범위 |
-| --- | --- | --- |
-| 게이트웨이의 HTTP 포트와 라우트 바인딩 | Listener와 HTTP connection manager에서 RouteConfiguration 참조 | 8080 리스너와 파일 기반 RDS |
-| URI prefix 매칭과 rewrite | Route의 `match.prefix`, `route.prefix_rewrite` | 세 백엔드가 돌려준 URI 확인 |
-| 가중치 라우팅 | `weighted_clusters`와 각 목적지의 Cluster | EC2·ECS·EKS의 비중을 60:30:10에서 10:30:60으로 변경 |
-| subset에 속한 Pod 선택 | subset별 Cluster를 만들고 레이블과 readiness를 반영해 엔드포인트 갱신 | 실험에서는 준비된 백엔드의 IPv4를 직접 입력 |
-| 타임아웃·재시도, 커넥션 풀·이상 호스트 제외 | Route의 `timeout`·`retry_policy`, Cluster의 연결 설정·`circuit_breakers`·`outlier_detection` | 설정 위치를 대조한 항목 |
-| TLS origination과 워크로드 신원 | upstream TLS context, 신뢰할 CA와 인증서 공급·갱신 경로. 동적 시크릿은 SDS | 실험의 업스트림은 HTTP |
-
-가령 `/eks/probe` 요청에는 아래 규칙 하나가 적용됩니다. 매칭된 `/eks/`를 `/`로 바꾸고 `eks` 클러스터에 전달합니다. 그 클러스터의 실제 주소는 다른 파일에서 결정합니다. 따라서 라우트의 이름을 그대로 두고 Pod 주소만 갱신할 수 있습니다. [실습의 라우트와 클러스터 생성 코드](/assets/data/elb-envoy-tokyo/render_proxy.py)
-
-```yaml
-match:
-  prefix: /eks/
-route:
-  cluster: eks
-  prefix_rewrite: /
-```
-
-직접 만든 xDS 설정으로 많은 전달 동작을 표현할 수 있어도, Istio 전체의 의미를 일대일로 복사할 수는 없습니다. 네임스페이스별 가시성, 서비스 레이블 해석, 워크로드 인증서 발급·회전, 메시 내부 사이드카로의 정책 배포는 각각 상태를 관찰하고 결정을 내리는 주체가 필요합니다. 관리형 Envoy 자체에도 제약이 있습니다. 예를 들어 동적 모듈과 파일 액세스 로거는 지원하지 않고, 액세스 로그는 OpenTelemetry 또는 ALS 같은 네트워크 싱크로 보냅니다. AWS가 허용하는 스키마와 실제 Envoy 빌드에 포함된 확장도 구별해야 합니다. [관리형 Envoy 기능 제한](https://docs.aws.amazon.com/elasticloadbalancing/latest/elbproxy/envoy-limits.html)
 
 ## 별도 xDS 서버는 언제 필요한가
 
@@ -239,7 +277,7 @@ spec:
 
 첫 Pod가 제한에 걸린 직후에도 두 번째 Pod는 102건을 허용했습니다. 짧은 버스트에서 성공 건수가 100을 넘은 결과 역시 토큰 버킷의 초기 용량과 측정 중 보충을 함께 봐야 설명할 수 있습니다. 이 수치는 각 Pod의 **평문 HTTP 인바운드**에서 측정했습니다. [버스트별 응답과 실제 Envoy 설정](/assets/data/elb-envoy-tokyo/backend-matrix.json) · [부하를 보낸 Job의 코드](/assets/data/elb-envoy-tokyo/check-pods/main.go)
 
-예제의 세 Istio 리소스를 `istioctl 1.30.2 validate`로 검사했습니다. EnvoyFilter가 버전에 따라 바뀔 수 있는 프록시 내부 구조를 사용한다는 경고가 있으므로, 업그레이드할 때는 실제 인바운드 체인에 필터가 들어갔는지 다시 확인합니다. 적용 후에는 `kubectl -n order get pods -l app=api -L version`으로 대상 Pod를 확인하고 `istioctl proxy-config listeners POD이름 -n order -o json`에서 `order_api_inbound`를 찾습니다. 같은 메시의 클라이언트에서 각 Pod의 8080 인바운드로 부하를 보내면 초과 요청의 429와 `x-order-pod-limit: true`로 실제 집행 위치를 확인할 수 있습니다.
+Pod 인바운드용 Istio `EnvoyFilter`는 `istioctl 1.30.2 validate`로도 검사했습니다. EnvoyFilter가 버전에 따라 바뀔 수 있는 프록시 내부 구조를 사용한다는 경고가 있으므로, 업그레이드할 때는 실제 인바운드 체인에 필터가 들어갔는지 다시 확인합니다. 적용 후에는 `kubectl -n order get pods -l app=api -L version`으로 대상 Pod를 확인하고 `istioctl proxy-config listeners POD이름 -n order -o json`에서 `order_api_inbound`를 찾습니다. 같은 메시의 클라이언트에서 각 Pod의 8080 인바운드로 부하를 보내면 초과 요청의 429와 `x-order-pod-limit: true`로 실제 집행 위치를 확인할 수 있습니다.
 
 ## Pod와 태스크의 주소가 바뀌면
 
@@ -253,15 +291,17 @@ python3 render_proxy.py \
 
 배포 때마다 엔드포인트가 바뀐다면 xDS의 Endpoint Discovery Service(EDS)로 이 갱신을 자동화할 수 있습니다. 이 경우 컨트롤 플레인이 Kubernetes의 EndpointSlice나 ECS의 서비스 발견 정보를 읽고, 요청을 받을 준비가 된 엔드포인트 목록을 Envoy에 전달합니다.
 
-<h2 id="hybrid">온프레미스 Pod 50개, EKS Pod 10~300개라면</h2>
+<h2 id="hybrid">실측으로 확인한 Pod 수 비례 분산</h2>
 
-**Pod 한 개당 같은 비율을 원할 때는 환경별 `weight`를 갱신할 컨트롤러가 필요 없습니다.** 한 Route가 하나의 Envoy 업스트림 클러스터로 보내고, 그 클러스터에 두 환경의 Ready Pod가 같은 우선순위·가중치의 개별 엔드포인트로 들어가면 됩니다. `ROUND_ROBIN`에서 EKS의 기대 비중은 `EKS Ready Pod 수 / 전체 Ready Pod 수`입니다.
+**마이그레이션의 카나리 단계가 끝나고 Pod당 같은 몫을 주기로 했다면 환경별 `weight`를 갱신할 컨트롤러가 필요 없습니다.** 한 Route가 하나의 Envoy 업스트림 클러스터로 보내고, 그 클러스터에 두 환경의 Ready Pod가 같은 우선순위·가중치의 개별 엔드포인트로 들어가면 됩니다. `ROUND_ROBIN`에서 EKS의 기대 비중은 `EKS Ready Pod 수 / 전체 Ready Pod 수`입니다.
 
 | 온프레미스 Ready Pod | EKS Ready Pod | 온프레미스 기대 비중 | EKS 기대 비중 |
 | ---: | ---: | ---: | ---: |
 | 50 | 10 | 83.3% | 16.7% |
 | 50 | 50 | 50.0% | 50.0% |
 | 50 | 300 | 14.3% | 85.7% |
+
+<figure class="diagram"><a href="/assets/elb-envoy-hybrid-distribution.svg"><img src="/assets/elb-envoy-hybrid-distribution.svg" alt="온프레미스 Ready Pod 50개와 EKS Ready Pod 10~300개에 요청을 나누는 두 방식. A는 Envoy 클러스터 하나에 두 사이트의 Ready Pod를 모두 개별 엔드포인트로 넣어, ROUND_ROBIN이면 EKS 비중이 EKS Ready Pod 수를 전체 Ready Pod 수로 나눈 값이 된다. EKS 10개일 때 16.7%, 50개일 때 50%, 300개일 때 85.7%이며 비율을 갱신할 컨트롤러가 필요 없다. B는 weighted_clusters로 사이트 비율을 정하며, EKS 상한을 60%로 두면 300개에서도 60%이고 가변 정책이면 Ready EndpointSlice를 감시해 RDS를 갱신하는 컨트롤러가 필요하다. 도쿄에서는 ECS 태스크 하나를 고정 대상으로 두고 STRICT_DNS 클러스터 하나에 fixed-site와 elastic-site를 넣어 replicas만 바꿔 측정했고, EKS Pod 1개일 때 120건이 60 대 60, 3개일 때 30 대 30·30·30으로 나뉘었다." loading="lazy"></a><figcaption>위쪽 비중은 계산값이고, B 방식과 60% 상한은 예시이며 측정하지 않았습니다. 아래 막대만 도쿄 실측 결과입니다.</figcaption></figure>
 
 **도쿄에서는 DNS 발견 방식으로 이 원리를 축소 실측했습니다.** 실제 온프레미스 대신 ECS 태스크 한 개를 고정 대상으로 두었습니다. 고정 대상과 EKS 주문 Pod를 각각 headless Service 이름으로 노출하고, 관리형 Envoy의 `STRICT_DNS` 클러스터 하나에 두 이름을 넣었습니다. 새 Pod가 Ready가 되면 Kubernetes가 EndpointSlice를 갱신하고 DNS가 그 IP를 반환합니다. Envoy는 2초 간격으로 이름을 다시 조회하도록 설정했습니다. 두 측정 사이에 바꾼 것은 EKS Deployment의 replicas뿐입니다. [Envoy STRICT_DNS](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/service_discovery) · [Kubernetes headless Service](https://kubernetes.io/docs/concepts/services-networking/service/#headless-services)
 
@@ -295,6 +335,6 @@ load_assignment:
 
 이 방식을 실제 두 사이트에 쓰려면 Envoy가 양쪽 Pod IP에 접속할 수 있고, 두 DNS 이름을 구분해서 해석하며 각 사이트의 전체 Ready 주소를 받아야 합니다. 일반 Service의 ClusterIP 한 개나 사이트별 게이트웨이 주소 한 개씩만 보이면 이 공식으로 분배되지 않습니다. 기존 멀티클러스터 컨트롤 플레인이 EDS로 개별 엔드포인트를 전달하는 환경에서도 같은 원리를 적용할 수 있습니다. Pod 처리 용량이 서로 다르거나 locality 우선·장애 조치 정책을 쓰면 요청 비중도 달라집니다.
 
-반대로 **사이트별 트래픽 비율 자체를 운영자가 통제**하려면 두 업스트림을 유지하고 `weighted_clusters`를 사용합니다. 예를 들어 EKS 비용 때문에 트래픽을 최대 60%로 제한한다면 300개까지 확장해도 85.7%를 보내면 안 됩니다. 고정 비율이면 선언한 값만으로 충분합니다. 가변 정책이면 두 클러스터의 Ready EndpointSlice를 감시해 `min(Ready 비율, 60%)`로 RDS를 갱신하는 컨트롤러를 둘 수 있습니다. 관측이 끊겼을 때 마지막 유효 값을 유지할지, 실제 장애일 때 어느 사이트로 넘길지도 그 정책의 일부입니다.
+반대로 **사이트별 트래픽 비율 자체를 운영자가 통제**하려면 두 업스트림을 유지하고 `weighted_clusters`를 사용합니다. 예를 들어 EKS 비용 때문에 트래픽을 최대 60%로 제한한다면 300개까지 확장해도 85.7%를 보내면 안 됩니다. 고정 비율이면 선언한 값만으로 충분합니다. 가변 정책이면 두 클러스터의 Ready EndpointSlice를 감시해 `min(Ready 비율, 60%)`를 계산하는 컨트롤러를 둘 수 있습니다. Gateway API를 쓰면 이 컨트롤러는 `HTTPRoute.backendRefs.weight`를 갱신하고 xDS 생성은 Envoy Gateway에 맡깁니다. 직접 구성한 `weighted_clusters`에서는 RDS 가중치를 갱신합니다. 관측이 끊겼을 때 마지막 유효 값을 유지할지, 실제 장애일 때 어느 사이트로 넘길지도 그 정책의 일부입니다.
 
 기존 게이트웨이에서 **어떤 정책을 유지할지**가 전환 기준입니다. 외부 요청의 경로 재작성·가중치 라우팅·로컬 버스트 제한이 주된 용도라면, 이번 실험처럼 Envoy 데이터 플레인을 클러스터 밖으로 옮길 수 있습니다. 릴리스마다 Pod 레이블로 카나리를 고르거나 메시 mTLS 신원과 네임스페이스 정책까지 사용한다면, 그 의미를 관리할 컨트롤 플레인과의 통합이 마이그레이션의 중심입니다. 도쿄에서는 인입 데이터 경로와 istiod에 연결된 두 사이드카의 인바운드 제한을 검증했습니다. 워크로드 간 STRICT mTLS와 인증서 교체는 별도 검증 항목입니다.
