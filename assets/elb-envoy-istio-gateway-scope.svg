@@ -1,0 +1,161 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="820" viewBox="0 0 1120 820" role="img" aria-labelledby="title desc">
+  <title id="title">ELB for Envoy가 Istio 인입 게이트웨이에서 맡을 수 있는 범위</title>
+  <desc id="desc">2026년 11월 26일 도쿄에서 CloudFront, 내부 NLB, ELB for Envoy 1.40을 거쳐 EKS Pod, EC2, ECS 태스크로 요청을 보냈다. 관리형 Envoy에 직접 넣은 설정으로 경로 재작성은 세 백엔드 모두 /probe를 받았고, 80 대 20 가중치는 50건 중 EC2 43건, ECS 7건이었다. 버킷 2의 로컬 제한은 16건 중 4건 통과, 12건 429였고, 외부 RLS 글로벌 제한은 프록시 두 대 합계 24건 중 2건 통과, 22건 429였다. xDS ZIP만 교체하자 /revision 응답이 12:31:56 UTC의 v1에서 12:32:29 UTC의 v2로 바뀌었다. subset 레이블에 따른 엔드포인트 갱신, 워크로드 인증서와 mTLS, 사이드카 정책 배포, Pod별 100 TPS 제한은 컨트롤 플레인과 사이드카가 계속 맡는다. 설정을 바꾸는 주체는 배포 파이프라인, 자체 xDS 서버, EKS의 Envoy Gateway 통합 중 하나이며 이번 실습은 배포 파이프라인 방식이다.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#405267" stroke-width="1.6"/></marker>
+  </defs>
+  <rect width="1120" height="820" rx="20" fill="#fbfaf7"/>
+  <g font-family="Noto Sans CJK KR, sans-serif">
+    <text x="42" y="49" fill="#5f6670" font-size="18" font-weight="600" letter-spacing="2">ELB FOR ENVOY vs ISTIO INGRESS GATEWAY · TOKYO 2026-11-26 · 초기 실측</text>
+    <text x="42" y="93" fill="#222e3b" font-size="28" font-weight="700">인입 Envoy는 AWS로, Pod를 고르는 판단은 컨트롤 플레인에 남습니다</text>
+    <rect x="24" y="122" width="1072" height="150" rx="16" fill="#f4f5f2" stroke="#d6d6cf" stroke-width="1"/>
+    <text x="44" y="146" fill="#5f6670" font-size="14" font-weight="700">실측 경로</text>
+    <rect x="44" y="168" width="150" height="70" rx="12" fill="#ffffff" stroke="#405267" stroke-width="1.6"/>
+    <text x="119" y="200" fill="#222e3b" font-size="18" font-weight="700" text-anchor="middle">CloudFront</text>
+    <text x="119" y="224" fill="#5f6670" font-size="13" text-anchor="middle">서명 URL</text>
+    <path d="M196 203 L232 203" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <rect x="236" y="168" width="150" height="70" rx="12" fill="#ffffff" stroke="#405267" stroke-width="1.6"/>
+    <text x="311" y="200" fill="#222e3b" font-size="18" font-weight="700" text-anchor="middle">내부 NLB</text>
+    <text x="311" y="224" fill="#5f6670" font-size="13" text-anchor="middle">VPC origin</text>
+    <path d="M388 203 L424 203" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <rect x="428" y="156" width="300" height="94" rx="14" fill="#e3ecf8" stroke="#4a6fa5" stroke-width="2"/>
+    <text x="578" y="190" fill="#1f3b63" font-size="20" font-weight="700" text-anchor="middle">ELB for Envoy 1.40</text>
+    <text x="578" y="215" fill="#33557f" font-size="14" text-anchor="middle">AWS: Envoy 패치 · AZ별 용량과 확장</text>
+    <text x="578" y="237" fill="#33557f" font-size="14" text-anchor="middle">사용자: bootstrap + xDS ZIP</text>
+    <path d="M730 203 L806 157" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <rect x="810" y="140" width="266" height="34" rx="8" fill="#ffffff" stroke="#405267" stroke-width="1.6"/>
+    <text x="826" y="163" fill="#222e3b" font-size="15" font-weight="700">EKS 1.37 Pod</text>
+    <text x="1062" y="163" fill="#5f6670" font-size="13" text-anchor="end">Fargate</text>
+    <path d="M730 203 L806 199" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <rect x="810" y="182" width="266" height="34" rx="8" fill="#ffffff" stroke="#405267" stroke-width="1.6"/>
+    <text x="826" y="205" fill="#222e3b" font-size="15" font-weight="700">EC2 인스턴스</text>
+    <text x="1062" y="205" fill="#5f6670" font-size="13" text-anchor="end">HTTP 서버</text>
+    <path d="M730 203 L806 241" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <rect x="810" y="224" width="266" height="34" rx="8" fill="#ffffff" stroke="#405267" stroke-width="1.6"/>
+    <text x="826" y="247" fill="#222e3b" font-size="15" font-weight="700">ECS 태스크</text>
+    <text x="1062" y="247" fill="#5f6670" font-size="13" text-anchor="end">Fargate</text>
+    <rect x="24" y="292" width="660" height="368" rx="16" fill="#f1f5fb" stroke="#6f8fb8" stroke-width="1.6"/>
+    <text x="44" y="324" fill="#1f3b63" font-size="19" font-weight="700">관리형 Envoy에 직접 설정해 동작 확인</text>
+    <rect x="422" y="312" width="10" height="14" rx="2" fill="#4f8a68"/>
+    <text x="437" y="324" fill="#5f6670" font-size="13">200</text>
+    <rect x="472" y="312" width="10" height="14" rx="2" fill="#b35a42"/>
+    <text x="487" y="324" fill="#5f6670" font-size="13">429</text>
+    <text x="664" y="324" fill="#5f6670" font-size="13" text-anchor="end">칸 하나 = 요청 1건</text>
+    <rect x="40" y="344" width="628" height="53" rx="10" fill="#ffffff" stroke="#c9d6e8" stroke-width="1"/>
+    <text x="56" y="366" fill="#222e3b" font-size="16" font-weight="700">경로 재작성</text>
+    <text x="56" y="386" fill="#5f6670" font-size="13" font-family="Menlo, Consolas, monospace">prefix_rewrite /eks/ → /</text>
+    <rect x="286" y="356" width="100" height="28" rx="6" fill="#eaf3ec" stroke="#4f8a68" stroke-width="1.2"/>
+    <text x="336" y="375" fill="#2f5e43" font-size="13" font-weight="600" text-anchor="middle">eks → /probe</text>
+    <rect x="394" y="356" width="100" height="28" rx="6" fill="#eaf3ec" stroke="#4f8a68" stroke-width="1.2"/>
+    <text x="444" y="375" fill="#2f5e43" font-size="13" font-weight="600" text-anchor="middle">ec2 → /probe</text>
+    <rect x="502" y="356" width="100" height="28" rx="6" fill="#eaf3ec" stroke="#4f8a68" stroke-width="1.2"/>
+    <text x="552" y="375" fill="#2f5e43" font-size="13" font-weight="600" text-anchor="middle">ecs → /probe</text>
+    <rect x="40" y="405" width="628" height="53" rx="10" fill="#ffffff" stroke="#c9d6e8" stroke-width="1"/>
+    <text x="56" y="427" fill="#222e3b" font-size="16" font-weight="700">가중치 80 : 20</text>
+    <text x="56" y="447" fill="#5f6670" font-size="13" font-family="Menlo, Consolas, monospace">weighted_clusters · 50건</text>
+    <rect x="286" y="420" width="198" height="22" rx="3" fill="#4a6fa5"/>
+    <rect x="486" y="420" width="30" height="22" rx="3" fill="#9db4d3"/>
+    <text x="296" y="436" fill="#ffffff" font-size="13" font-weight="700">EC2 43</text>
+    <text x="528" y="436" fill="#222e3b" font-size="13" font-weight="600">ECS 7 · 86:14</text>
+    <rect x="40" y="466" width="628" height="53" rx="10" fill="#ffffff" stroke="#c9d6e8" stroke-width="1"/>
+    <text x="56" y="488" fill="#222e3b" font-size="16" font-weight="700">로컬 제한 · 버킷 2</text>
+    <text x="56" y="508" fill="#5f6670" font-size="13">local_ratelimit · 16건</text>
+    <rect x="286" y="480" width="10" height="16" rx="2" fill="#4f8a68"/>
+    <rect x="298" y="480" width="10" height="16" rx="2" fill="#4f8a68"/>
+    <rect x="310" y="480" width="10" height="16" rx="2" fill="#4f8a68"/>
+    <rect x="322" y="480" width="10" height="16" rx="2" fill="#4f8a68"/>
+    <rect x="334" y="480" width="10" height="16" rx="2" fill="#b35a42"/>
+    <rect x="346" y="480" width="10" height="16" rx="2" fill="#b35a42"/>
+    <rect x="358" y="480" width="10" height="16" rx="2" fill="#b35a42"/>
+    <rect x="370" y="480" width="10" height="16" rx="2" fill="#b35a42"/>
+    <rect x="382" y="480" width="10" height="16" rx="2" fill="#b35a42"/>
+    <rect x="394" y="480" width="10" height="16" rx="2" fill="#b35a42"/>
+    <rect x="406" y="480" width="10" height="16" rx="2" fill="#b35a42"/>
+    <rect x="418" y="480" width="10" height="16" rx="2" fill="#b35a42"/>
+    <rect x="430" y="480" width="10" height="16" rx="2" fill="#b35a42"/>
+    <rect x="442" y="480" width="10" height="16" rx="2" fill="#b35a42"/>
+    <rect x="454" y="480" width="10" height="16" rx="2" fill="#b35a42"/>
+    <rect x="466" y="480" width="10" height="16" rx="2" fill="#b35a42"/>
+    <text x="488" y="494" fill="#222e3b" font-size="14" font-weight="700">4 통과 · 12 거부</text>
+    <text x="488" y="512" fill="#5f6670" font-size="12">Envoy 프로세스마다 버킷</text>
+    <rect x="40" y="527" width="628" height="53" rx="10" fill="#ffffff" stroke="#c9d6e8" stroke-width="1"/>
+    <text x="56" y="549" fill="#222e3b" font-size="16" font-weight="700">글로벌 RLS · 합계 2</text>
+    <text x="56" y="569" fill="#5f6670" font-size="13">외부 ShouldRateLimit · 24건</text>
+    <rect x="286" y="541" width="8" height="14" rx="2" fill="#4f8a68"/>
+    <rect x="296" y="541" width="8" height="14" rx="2" fill="#4f8a68"/>
+    <rect x="306" y="541" width="8" height="14" rx="2" fill="#b35a42"/>
+    <rect x="316" y="541" width="8" height="14" rx="2" fill="#b35a42"/>
+    <rect x="326" y="541" width="8" height="14" rx="2" fill="#b35a42"/>
+    <rect x="336" y="541" width="8" height="14" rx="2" fill="#b35a42"/>
+    <rect x="346" y="541" width="8" height="14" rx="2" fill="#b35a42"/>
+    <rect x="356" y="541" width="8" height="14" rx="2" fill="#b35a42"/>
+    <rect x="366" y="541" width="8" height="14" rx="2" fill="#b35a42"/>
+    <rect x="376" y="541" width="8" height="14" rx="2" fill="#b35a42"/>
+    <rect x="386" y="541" width="8" height="14" rx="2" fill="#b35a42"/>
+    <rect x="396" y="541" width="8" height="14" rx="2" fill="#b35a42"/>
+    <rect x="406" y="541" width="8" height="14" rx="2" fill="#b35a42"/>
+    <rect x="416" y="541" width="8" height="14" rx="2" fill="#b35a42"/>
+    <rect x="426" y="541" width="8" height="14" rx="2" fill="#b35a42"/>
+    <rect x="436" y="541" width="8" height="14" rx="2" fill="#b35a42"/>
+    <rect x="446" y="541" width="8" height="14" rx="2" fill="#b35a42"/>
+    <rect x="456" y="541" width="8" height="14" rx="2" fill="#b35a42"/>
+    <rect x="466" y="541" width="8" height="14" rx="2" fill="#b35a42"/>
+    <rect x="476" y="541" width="8" height="14" rx="2" fill="#b35a42"/>
+    <rect x="486" y="541" width="8" height="14" rx="2" fill="#b35a42"/>
+    <rect x="496" y="541" width="8" height="14" rx="2" fill="#b35a42"/>
+    <rect x="506" y="541" width="8" height="14" rx="2" fill="#b35a42"/>
+    <rect x="516" y="541" width="8" height="14" rx="2" fill="#b35a42"/>
+    <text x="536" y="555" fill="#222e3b" font-size="14" font-weight="700">2 통과 · 22 거부</text>
+    <text x="536" y="573" fill="#5f6670" font-size="12">프록시 A·B 합산 한도</text>
+    <rect x="40" y="588" width="628" height="53" rx="10" fill="#ffffff" stroke="#c9d6e8" stroke-width="1"/>
+    <text x="56" y="610" fill="#222e3b" font-size="16" font-weight="700">xDS ZIP 교체</text>
+    <text x="56" y="630" fill="#5f6670" font-size="13">Proxy.ConfigurationArchive만 변경</text>
+    <rect x="286" y="600" width="70" height="28" rx="6" fill="#ffffff" stroke="#4a6fa5" stroke-width="1.2"/>
+    <text x="321" y="619" fill="#1f3b63" font-size="14" font-weight="700" text-anchor="middle">v1</text>
+    <path d="M360 614 L392 614" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <rect x="398" y="600" width="70" height="28" rx="6" fill="#e3ecf8" stroke="#4a6fa5" stroke-width="1.2"/>
+    <text x="433" y="619" fill="#1f3b63" font-size="14" font-weight="700" text-anchor="middle">v2</text>
+    <text x="484" y="611" fill="#5f6670" font-size="12" font-family="Menlo, Consolas, monospace">12:31:56 → 12:32:29</text>
+    <text x="484" y="629" fill="#5f6670" font-size="12">UTC · /revision 응답 관찰</text>
+    <rect x="704" y="292" width="392" height="368" rx="16" fill="#f6f0e1" stroke="#b58938" stroke-width="1.6" stroke-dasharray="7 5"/>
+    <text x="724" y="324" fill="#6b4f17" font-size="19" font-weight="700">컨트롤 플레인이 계속 맡는 일</text>
+    <text x="1076" y="324" fill="#5f6670" font-size="13" text-anchor="end">초기 실험 범위 밖</text>
+    <rect x="720" y="344" width="360" height="68" rx="10" fill="#ffffff" stroke="#e0cfa6" stroke-width="1"/>
+    <circle cx="742" cy="366" r="11" fill="#b58938"/>
+    <text x="742" y="371" fill="#ffffff" font-size="13" font-weight="700" text-anchor="middle">1</text>
+    <text x="762" y="371" fill="#222e3b" font-size="16" font-weight="700">Pod 레이블로 목적지 갱신</text>
+    <text x="762" y="391" fill="#5f6670" font-size="13">version: v2 · readiness → EDS</text>
+    <text x="762" y="407" fill="#5f6670" font-size="13">실험은 Pod IP를 STATIC으로 입력</text>
+    <rect x="720" y="420" width="360" height="68" rx="10" fill="#ffffff" stroke="#e0cfa6" stroke-width="1"/>
+    <circle cx="742" cy="442" r="11" fill="#b58938"/>
+    <text x="742" y="447" fill="#ffffff" font-size="13" font-weight="700" text-anchor="middle">2</text>
+    <text x="762" y="447" fill="#222e3b" font-size="16" font-weight="700">워크로드 신원 · mTLS</text>
+    <text x="762" y="467" fill="#5f6670" font-size="13">인증서 발급·회전, SDS</text>
+    <text x="762" y="483" fill="#5f6670" font-size="13">STRICT면 인입도 클라이언트 인증서</text>
+    <rect x="720" y="496" width="360" height="68" rx="10" fill="#ffffff" stroke="#e0cfa6" stroke-width="1"/>
+    <circle cx="742" cy="518" r="11" fill="#b58938"/>
+    <text x="742" y="523" fill="#ffffff" font-size="13" font-weight="700" text-anchor="middle">3</text>
+    <text x="762" y="523" fill="#222e3b" font-size="16" font-weight="700">사이드카 정책 배포</text>
+    <text x="762" y="543" fill="#5f6670" font-size="13">istiod가 VirtualService·</text>
+    <text x="762" y="559" fill="#5f6670" font-size="13">EnvoyFilter를 xDS로 전달</text>
+    <rect x="720" y="572" width="360" height="68" rx="10" fill="#ffffff" stroke="#e0cfa6" stroke-width="1"/>
+    <circle cx="742" cy="594" r="11" fill="#b58938"/>
+    <text x="742" y="599" fill="#ffffff" font-size="13" font-weight="700" text-anchor="middle">4</text>
+    <text x="762" y="599" fill="#222e3b" font-size="16" font-weight="700">Pod별 100 TPS</text>
+    <text x="762" y="619" fill="#5f6670" font-size="13">사이드카 inbound local_ratelimit</text>
+    <text x="762" y="635" fill="#5f6670" font-size="13">인입에 두면 게이트웨이 프로세스 버킷</text>
+    <text x="44" y="684" fill="#5f6670" font-size="15" font-weight="700">설정을 바꾸는 주체</text>
+    <rect x="24" y="698" width="344" height="100" rx="12" fill="#e3ecf8" stroke="#4a6fa5" stroke-width="2"/>
+    <text x="44" y="730" fill="#1f3b63" font-size="17" font-weight="700">배포 파이프라인</text>
+    <text x="44" y="756" fill="#33557f" font-size="14">bootstrap · ZIP 아카이브 교체</text>
+    <text x="44" y="780" fill="#4a6fa5" font-size="13" font-weight="600">이번 실습 · 상시 xDS 서버 없음</text>
+    <rect x="388" y="698" width="344" height="100" rx="12" fill="#ffffff" stroke="#c4cbd1" stroke-width="1.2"/>
+    <text x="408" y="730" fill="#222e3b" font-size="17" font-weight="700">자체 xDS 서버</text>
+    <text x="408" y="756" fill="#5f6670" font-size="14">gRPC/ADS로 지속 갱신</text>
+    <text x="408" y="780" fill="#5f6670" font-size="13">서버 가용성 · ACK/NACK 관찰</text>
+    <rect x="752" y="698" width="344" height="100" rx="12" fill="#ffffff" stroke="#c4cbd1" stroke-width="1.2"/>
+    <text x="772" y="730" fill="#222e3b" font-size="17" font-weight="700">EKS Envoy Gateway</text>
+    <text x="772" y="756" fill="#5f6670" font-size="14">+ remote infra provider (v1alpha1)</text>
+    <text x="772" y="780" fill="#5f6670" font-size="13">AWS 문서: 글로벌 rate limiting 미지원</text>
+  </g>
+</svg>

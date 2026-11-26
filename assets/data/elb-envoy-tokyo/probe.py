@@ -14,6 +14,52 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 
 
+def measure_three_backends(probe, phase):
+    backends = ("ec2", "ecs", "eks")
+    stamp = str(time.time_ns())
+    result = {"phase": phase, "time_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              "revision": probe("/revision")}
+    if result["revision"]["body"] != phase:
+        return result, False
+    with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
+        def batch(paths):
+            return list(pool.map(probe, paths))
+
+        ok = True
+        if phase == "matrix-a":
+            result["headers"] = {}
+            result["local"] = {}
+            for backend in backends:
+                pairs = [probe(f"/matrix/{mode}/{backend}/{stamp}") for mode in ("control", "rewrite")]
+                result["headers"][backend] = pairs
+                for item, hop, source in zip(pairs, (["seed"], ["seed", "ingress"]), ("original", "public-api")):
+                    body = item["body"]
+                    ok &= (item["status"] == 200 and isinstance(body, dict) and body.get("backend") == backend
+                           and body.get("path") == "/capture/" + stamp
+                           and [v.strip() for v in body.get("hop", "").split(",")] == hop
+                           and body.get("source") == source)
+                hits = batch([f"/matrix/local/{backend}/{stamp}-{i}" for i in range(16)])
+                result["local"][backend] = hits
+                ok &= {item["status"] for item in hits} == {200, 429}
+                ok &= all((i["status"] == 429 and i["limit"] == "local") or
+                          (i["status"] == 200 and i["body"].get("backend") == backend) for i in hits)
+
+            # Send one allowed request to each backend, then revisit all three with the same RLS key.
+            allowed = [probe(f"/matrix/global/{name}/{stamp}-allow") for name in backends]
+            denied = batch([f"/matrix/global/{name}/{stamp}-{i}" for i in range(4) for name in backends])
+            result["global"] = {"first_three": allowed, "after_quota": denied}
+            ok &= all(i["status"] == 200 and i["decision"] == "OK" and i["body"].get("backend") == b
+                      for b, i in zip(backends, allowed))
+            ok &= all(i["status"] == 429 and i["decision"] == "OVER_LIMIT" for i in denied)
+            result["maintenance"] = probe("/matrix/maintenance")
+            ok &= result["maintenance"]["status"] == 503 and result["maintenance"]["body"] == "orders under maintenance"
+        hits = batch([f"/matrix/split/{stamp}-{i}" for i in range(120)])
+        counts = collections.Counter(i["body"]["backend"] for i in hits if i["status"] == 200)
+        result.update(split=hits, counts=dict(counts))
+        ok &= set(counts) == set(backends) and sum(counts.values()) == len(hits)
+        return result, ok
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for key in ("hostname", "key-id", "private-key"):
@@ -21,6 +67,10 @@ def main():
     parser.add_argument("--revision-only", action="store_true",
                         help="Read /revision once without consuming rate-limit tokens.")
     parser.add_argument("--expect-revision", help="Check the value returned by /revision.")
+    parser.add_argument("--matrix-phase", choices=("matrix-a", "matrix-b"),
+                        help="Measure the three-backend experiment while its matching revision is active.")
+    parser.add_argument("--hybrid-pool", type=int, choices=(1, 3), metavar="EKS_PODS",
+                        help="Measure the DNS-discovered pool and verify the number of distinct EKS pods.")
     args = parser.parse_args()
     key = serialization.load_pem_private_key(Path(args.private_key).read_bytes(), password=None)
     expires = int(time.time()) + 600
@@ -44,7 +94,28 @@ def main():
             except ValueError:
                 body = body[:120]
             return {"path": path, "status": response.status, "body": body,
+                    **({"decision": response.headers.get("x-lab-rls")} if args.matrix_phase else {}),
                     "limit": response.headers.get("x-lab-limit"), "cache": response.headers.get("x-cache")}
+
+    if args.hybrid_pool:
+        revision = probe("/revision")
+        if revision["body"] != "hybrid-dns":
+            print(json.dumps(revision))
+            return 1
+        stamp = str(time.time_ns())
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
+            hits = list(pool.map(probe, [f"/hybrid/{stamp}-{i}" for i in range(120)]))
+        counts = collections.Counter(i["body"]["backend"] for i in hits if i["status"] == 200)
+        pods = {i["body"]["instance"] for i in hits if i["status"] == 200 and i["body"]["backend"] == "eks"}
+        print(json.dumps({"time_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                          "revision": revision["body"], "eks_pods": sorted(pods), "counts": dict(counts),
+                          "requests": hits}, indent=2))
+        return 0 if set(counts) == {"ecs", "eks"} and sum(counts.values()) == 120 and len(pods) == args.hybrid_pool else 1
+
+    if args.matrix_phase:
+        result, ok = measure_three_backends(probe, args.matrix_phase)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0 if ok else 1
 
     def revision_matches(item):
         return item["status"] == 200 and (args.expect_revision is None or item["body"] == args.expect_revision)

@@ -1,0 +1,2743 @@
+{
+  "region": "ap-northeast-1",
+  "note": "ECS represented one fixed site endpoint. Only the Kubernetes replica count changed between samples. DNS resolver private addresses and the ECS hostname are replaced by documentation addresses and an alias.",
+  "cluster": {
+    "type": "STRICT_DNS",
+    "name": "hybrid-demo",
+    "connect_timeout": "2s",
+    "lb_policy": "ROUND_ROBIN",
+    "dns_lookup_family": "V4_ONLY",
+    "dns_refresh_rate": "2s",
+    "typed_dns_resolver_config": {
+      "name": "envoy.network.dns_resolver.cares",
+      "typed_config": {
+        "@type": "type.googleapis.com/envoy.extensions.network.dns_resolver.cares.v3.CaresDnsResolverConfig",
+        "resolvers": [
+          {
+            "socket_address": {
+              "address": "192.0.2.53",
+              "port_value": 53
+            }
+          },
+          {
+            "socket_address": {
+              "address": "192.0.2.54",
+              "port_value": 53
+            }
+          }
+        ],
+        "use_resolvers_as_fallback": false,
+        "dns_resolver_options": {
+          "use_tcp_for_dns_lookups": true
+        }
+      }
+    },
+    "load_assignment": {
+      "cluster_name": "hybrid-demo",
+      "endpoints": [
+        {
+          "lb_endpoints": [
+            {
+              "endpoint": {
+                "address": {
+                  "socket_address": {
+                    "address": "fixed-site.order.svc.cluster.local",
+                    "port_value": 8080
+                  }
+                }
+              }
+            },
+            {
+              "endpoint": {
+                "address": {
+                  "socket_address": {
+                    "address": "elastic-site.order.svc.cluster.local",
+                    "port_value": 8080
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "samples": {
+    "one": {
+      "time_utc": "2026-11-26T13:06:23.804589+00:00",
+      "revision": "hybrid-dns",
+      "eks_pods": [
+        "api-5cc587ffc9-zbx47"
+      ],
+      "counts": {
+        "eks": 60,
+        "ecs": 60
+      },
+      "requests": [
+        {
+          "path": "/hybrid/1795698382067211851-0",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-0",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-1",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-1",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-2",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-2",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-3",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-3",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-4",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-4",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-5",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-5",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-6",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-6",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-7",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-7",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-8",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-8",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-9",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-9",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-10",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-10",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-11",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-11",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-12",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-12",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-13",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-13",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-14",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-14",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-15",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-15",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-16",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-16",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-17",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-17",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-18",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-18",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-19",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-19",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-20",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-20",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-21",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-21",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-22",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-22",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-23",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-23",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-24",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-24",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-25",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-25",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-26",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-26",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-27",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-27",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-28",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-28",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-29",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-29",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-30",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-30",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-31",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-31",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-32",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-32",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-33",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-33",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-34",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-34",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-35",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-35",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-36",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-36",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-37",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-37",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-38",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-38",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-39",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-39",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-40",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-40",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-41",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-41",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-42",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-42",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-43",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-43",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-44",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-44",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-45",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-45",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-46",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-46",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-47",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-47",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-48",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-48",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-49",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-49",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-50",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-50",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-51",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-51",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-52",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-52",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-53",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-53",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-54",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-54",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-55",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-55",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-56",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-56",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-57",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-57",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-58",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-58",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-59",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-59",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-60",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-60",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-61",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-61",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-62",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-62",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-63",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-63",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-64",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-64",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-65",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-65",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-66",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-66",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-67",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-67",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-68",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-68",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-69",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-69",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-70",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-70",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-71",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-71",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-72",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-72",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-73",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-73",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-74",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-74",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-75",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-75",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-76",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-76",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-77",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-77",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-78",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-78",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-79",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-79",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-80",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-80",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-81",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-81",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-82",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-82",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-83",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-83",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-84",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-84",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-85",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-85",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-86",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-86",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-87",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-87",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-88",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-88",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-89",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-89",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-90",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-90",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-91",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-91",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-92",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-92",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-93",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-93",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-94",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-94",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-95",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-95",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-96",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-96",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-97",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-97",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-98",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-98",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-99",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-99",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-100",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-100",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-101",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-101",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-102",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-102",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-103",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-103",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-104",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-104",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-105",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-105",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-106",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-106",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-107",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-107",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-108",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-108",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-109",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-109",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-110",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-110",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-111",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-111",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-112",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-112",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-113",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-113",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-114",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-114",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-115",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-115",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-116",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-116",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-117",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-117",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-118",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698382067211851-118",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698382067211851-119",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698382067211851-119",
+            "source": ""
+          }
+        }
+      ],
+      "ready_endpoint_names": [
+        "api-5cc587ffc9-zbx47"
+      ]
+    },
+    "three": {
+      "time_utc": "2026-11-26T13:07:38.894402+00:00",
+      "revision": "hybrid-dns",
+      "eks_pods": [
+        "api-5cc587ffc9-l8q8r",
+        "api-5cc587ffc9-sl8qd",
+        "api-5cc587ffc9-zbx47"
+      ],
+      "counts": {
+        "ecs": 30,
+        "eks": 90
+      },
+      "requests": [
+        {
+          "path": "/hybrid/1795698457090846167-0",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698457090846167-0",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-1",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-sl8qd",
+            "path": "/capture/1795698457090846167-1",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-2",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698457090846167-2",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-3",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-sl8qd",
+            "path": "/capture/1795698457090846167-3",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-4",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698457090846167-4",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-5",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-l8q8r",
+            "path": "/capture/1795698457090846167-5",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-6",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698457090846167-6",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-7",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-l8q8r",
+            "path": "/capture/1795698457090846167-7",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-8",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698457090846167-8",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-9",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698457090846167-9",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-10",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-sl8qd",
+            "path": "/capture/1795698457090846167-10",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-11",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-sl8qd",
+            "path": "/capture/1795698457090846167-11",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-12",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698457090846167-12",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-13",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-l8q8r",
+            "path": "/capture/1795698457090846167-13",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-14",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698457090846167-14",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-15",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-l8q8r",
+            "path": "/capture/1795698457090846167-15",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-16",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698457090846167-16",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-17",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-sl8qd",
+            "path": "/capture/1795698457090846167-17",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-18",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698457090846167-18",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-19",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-sl8qd",
+            "path": "/capture/1795698457090846167-19",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-20",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698457090846167-20",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-21",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-l8q8r",
+            "path": "/capture/1795698457090846167-21",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-22",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698457090846167-22",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-23",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-l8q8r",
+            "path": "/capture/1795698457090846167-23",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-24",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698457090846167-24",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-25",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698457090846167-25",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-26",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698457090846167-26",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-27",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-sl8qd",
+            "path": "/capture/1795698457090846167-27",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-28",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-sl8qd",
+            "path": "/capture/1795698457090846167-28",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-29",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-l8q8r",
+            "path": "/capture/1795698457090846167-29",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-30",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698457090846167-30",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-31",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-l8q8r",
+            "path": "/capture/1795698457090846167-31",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-32",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698457090846167-32",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-33",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-sl8qd",
+            "path": "/capture/1795698457090846167-33",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-34",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698457090846167-34",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-35",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-sl8qd",
+            "path": "/capture/1795698457090846167-35",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-36",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698457090846167-36",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-37",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-l8q8r",
+            "path": "/capture/1795698457090846167-37",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-38",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698457090846167-38",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-39",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-l8q8r",
+            "path": "/capture/1795698457090846167-39",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-40",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698457090846167-40",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-41",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-sl8qd",
+            "path": "/capture/1795698457090846167-41",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-42",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-sl8qd",
+            "path": "/capture/1795698457090846167-42",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-43",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698457090846167-43",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-44",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698457090846167-44",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-45",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698457090846167-45",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-46",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-l8q8r",
+            "path": "/capture/1795698457090846167-46",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-47",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-l8q8r",
+            "path": "/capture/1795698457090846167-47",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-48",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698457090846167-48",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-49",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-sl8qd",
+            "path": "/capture/1795698457090846167-49",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-50",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698457090846167-50",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-51",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-sl8qd",
+            "path": "/capture/1795698457090846167-51",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-52",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698457090846167-52",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-53",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-l8q8r",
+            "path": "/capture/1795698457090846167-53",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-54",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-l8q8r",
+            "path": "/capture/1795698457090846167-54",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-55",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698457090846167-55",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-56",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698457090846167-56",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-57",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698457090846167-57",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-58",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-sl8qd",
+            "path": "/capture/1795698457090846167-58",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-59",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698457090846167-59",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-60",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-sl8qd",
+            "path": "/capture/1795698457090846167-60",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-61",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-l8q8r",
+            "path": "/capture/1795698457090846167-61",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-62",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698457090846167-62",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-63",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-l8q8r",
+            "path": "/capture/1795698457090846167-63",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-64",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698457090846167-64",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-65",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698457090846167-65",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-66",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698457090846167-66",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-67",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-sl8qd",
+            "path": "/capture/1795698457090846167-67",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-68",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-sl8qd",
+            "path": "/capture/1795698457090846167-68",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-69",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-l8q8r",
+            "path": "/capture/1795698457090846167-69",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-70",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-l8q8r",
+            "path": "/capture/1795698457090846167-70",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-71",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698457090846167-71",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-72",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698457090846167-72",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-73",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698457090846167-73",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-74",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-sl8qd",
+            "path": "/capture/1795698457090846167-74",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-75",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-sl8qd",
+            "path": "/capture/1795698457090846167-75",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-76",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698457090846167-76",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-77",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-l8q8r",
+            "path": "/capture/1795698457090846167-77",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-78",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698457090846167-78",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-79",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-l8q8r",
+            "path": "/capture/1795698457090846167-79",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-80",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698457090846167-80",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-81",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-sl8qd",
+            "path": "/capture/1795698457090846167-81",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-82",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698457090846167-82",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-83",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-sl8qd",
+            "path": "/capture/1795698457090846167-83",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-84",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698457090846167-84",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-85",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-l8q8r",
+            "path": "/capture/1795698457090846167-85",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-86",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-l8q8r",
+            "path": "/capture/1795698457090846167-86",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-87",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698457090846167-87",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-88",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698457090846167-88",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-89",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-sl8qd",
+            "path": "/capture/1795698457090846167-89",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-90",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698457090846167-90",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-91",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-sl8qd",
+            "path": "/capture/1795698457090846167-91",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-92",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698457090846167-92",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-93",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698457090846167-93",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-94",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-l8q8r",
+            "path": "/capture/1795698457090846167-94",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-95",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-l8q8r",
+            "path": "/capture/1795698457090846167-95",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-96",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698457090846167-96",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-97",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698457090846167-97",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-98",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-sl8qd",
+            "path": "/capture/1795698457090846167-98",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-99",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-sl8qd",
+            "path": "/capture/1795698457090846167-99",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-100",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698457090846167-100",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-101",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-l8q8r",
+            "path": "/capture/1795698457090846167-101",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-102",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698457090846167-102",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-103",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-l8q8r",
+            "path": "/capture/1795698457090846167-103",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-104",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698457090846167-104",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-105",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698457090846167-105",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-106",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698457090846167-106",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-107",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-sl8qd",
+            "path": "/capture/1795698457090846167-107",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-108",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-sl8qd",
+            "path": "/capture/1795698457090846167-108",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-109",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698457090846167-109",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-110",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-l8q8r",
+            "path": "/capture/1795698457090846167-110",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-111",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-l8q8r",
+            "path": "/capture/1795698457090846167-111",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-112",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698457090846167-112",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-113",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698457090846167-113",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-114",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-sl8qd",
+            "path": "/capture/1795698457090846167-114",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-115",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-sl8qd",
+            "path": "/capture/1795698457090846167-115",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-116",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-zbx47",
+            "path": "/capture/1795698457090846167-116",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-117",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-l8q8r",
+            "path": "/capture/1795698457090846167-117",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-118",
+          "status": 200,
+          "body": {
+            "backend": "eks",
+            "hop": "",
+            "instance": "api-5cc587ffc9-l8q8r",
+            "path": "/capture/1795698457090846167-118",
+            "source": ""
+          }
+        },
+        {
+          "path": "/hybrid/1795698457090846167-119",
+          "status": 200,
+          "body": {
+            "backend": "ecs",
+            "hop": "",
+            "instance": "ecs-task-A",
+            "path": "/capture/1795698457090846167-119",
+            "source": ""
+          }
+        }
+      ],
+      "ready_endpoint_names": [
+        "api-5cc587ffc9-l8q8r",
+        "api-5cc587ffc9-sl8qd",
+        "api-5cc587ffc9-zbx47"
+      ]
+    }
+  }
+}
