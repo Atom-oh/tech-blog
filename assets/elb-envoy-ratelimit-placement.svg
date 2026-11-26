@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1120" height="706" viewBox="0 0 1120 706" role="img" aria-labelledby="title desc">
   <title id="title">요청 제한 세 가지가 토큰을 쓰는 위치</title>
-  <desc id="desc">도쿄 실측에서 요청 제한 세 가지가 토큰을 쓰는 위치를 비교한다. 인입 로컬 제한은 ELB for Envoy의 라우트별 버킷 2개로 설정했고 EC2, ECS, EKS 목적지마다 16건 중 4건이 통과하고 12건이 429였다. 버킷보다 많이 통과한 것은 Envoy 프로세스마다 버킷을 따로 갖기 때문이다. 글로벌 제한은 세 목적지가 외부 RLS의 카운터 하나를 공유해 EC2, ECS, EKS로 한 건씩 보낸 3건이 OK, 후속 12건이 모두 429였다. 사이드카 제한은 EKS Pod마다 istio-proxy가 버킷 100개를 갖고, 각 Pod IP로 140건을 보내자 Pod A는 107건, Pod B는 102건을 허용했다. 보충 뒤에는 두 Pod 모두 101건을 허용했다.</desc>
+  <desc id="desc">요청 제한 세 가지가 토큰을 쓰는 위치를 비교한다. 인입 로컬 제한은 ELB for Envoy의 라우트별 버킷 2개로 설정했고 EC2, ECS, EKS 목적지마다 16건 중 4건이 통과하고 12건이 429였다. 버킷보다 많이 통과한 것은 Envoy 프로세스마다 버킷을 따로 갖기 때문이다. 글로벌 제한은 세 목적지가 외부 RLS의 카운터 하나를 공유해 EC2, ECS, EKS로 한 건씩 보낸 3건이 OK, 후속 12건이 모두 429였다. 사이드카 제한은 EKS Pod마다 istio-proxy가 버킷 100개를 갖고, 각 Pod IP로 140건을 보내자 Pod A는 107건, Pod B는 102건을 허용했다. 보충 뒤에는 두 Pod 모두 101건을 허용했다.</desc>
   <defs>
     <marker id="arrow" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#405267" stroke-width="1.6"/></marker>
     <marker id="arrow-ok" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#4f8a68" stroke-width="1.6"/></marker>

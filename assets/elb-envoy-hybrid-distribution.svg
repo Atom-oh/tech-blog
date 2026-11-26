@@ -1,164 +1,65 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="812" viewBox="0 0 1120 812" role="img" aria-labelledby="title desc">
-  <title id="title">온프레미스와 EKS Pod 사이의 요청 분배</title>
-  <desc id="desc">온프레미스 Ready Pod 50개와 EKS Ready Pod 10~300개에 요청을 나누는 두 방식. A는 Envoy 클러스터 하나에 두 사이트의 Ready Pod를 모두 개별 엔드포인트로 넣는다. ROUND_ROBIN이면 EKS 비중은 EKS Ready Pod 수를 전체 Ready Pod 수로 나눈 값이 되어 EKS 10개일 때 16.7%, 50개일 때 50%, 300개일 때 85.7%이며 비율을 갱신할 컨트롤러가 필요 없다. B는 weighted_clusters로 사이트 비율을 운영자가 정한다. 예를 들어 EKS 상한을 60%로 두면 300개에서도 60%이고, 가변 정책이면 Ready EndpointSlice를 감시해 RDS를 갱신하는 컨트롤러가 필요하다. 도쿄에서는 ECS 태스크 하나를 고정 대상으로 두고 STRICT_DNS 클러스터 하나에 fixed-site와 elastic-site를 넣어, replicas만 바꿔 측정했다. EKS Pod 1개일 때 120건이 60 대 60, 3개일 때 30 대 30·30·30으로 나뉘었다.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="560" viewBox="0 0 1120 560" role="img" aria-labelledby="title desc">
+  <title id="title">DNS 발견으로 확인한 Pod 수 비례 분배</title>
+  <desc id="desc">축소 측정. 온프레미스 대신 ECS 태스크 하나를 고정 대상으로 두고, 고정 대상과 EKS 주문 Pod를 각각 headless Service 이름 fixed-site와 elastic-site로 노출했다. 관리형 Envoy의 STRICT_DNS 클러스터 하나에 두 이름을 넣고 ROUND_ROBIN과 2초 DNS 재조회를 설정했다. 개별 사이트 가중치는 선언하지 않았다. EKS replicas만 1에서 3으로 바꾸자 120건이 60 대 60에서 30 대 30·30·30으로 바뀌었고, 응답한 Pod 이름은 Ready EndpointSlice 명단과 일치했다.</desc>
   <defs>
     <marker id="arrow" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#405267" stroke-width="1.6"/></marker>
     <marker id="arrow-ok" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#4f8a68" stroke-width="1.6"/></marker>
     <marker id="arrow-bad" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#b35a42" stroke-width="1.6"/></marker>
   </defs>
-  <rect width="1120" height="812" rx="20" fill="#fbfaf7"/>
+  <rect width="1120" height="560" rx="20" fill="#fbfaf7"/>
   <g font-family="Noto Sans CJK KR, sans-serif">
-    <text x="42" y="49" fill="#5f6670" font-size="18" font-weight="600" letter-spacing="2">HYBRID · ON-PREM 50 PODS + EKS 10–300 PODS</text>
-    <text x="42" y="93" fill="#222e3b" font-size="27" font-weight="700">Pod를 한 클러스터에 모으면 비율은 Ready Pod 수를 따라갑니다</text>
-    <rect x="24" y="122" width="528" height="258" rx="16" fill="#f1f5fb" stroke="#6f8fb8" stroke-width="1.6"/>
-    <text x="44" y="152" fill="#1f3b63" font-size="18" font-weight="700">A. 클러스터 하나에 모든 Ready Pod</text>
-    <text x="44" y="174" fill="#33557f" font-size="13">Pod 하나당 같은 몫 · weight를 갱신할 컨트롤러 없음</text>
-    <rect x="44" y="196" width="116" height="52" rx="10" fill="#e3ecf8" stroke="#4a6fa5" stroke-width="1.6"/>
-    <text x="102" y="218" fill="#1f3b63" font-size="13" font-weight="700" text-anchor="middle">ELB for</text>
-    <text x="102" y="237" fill="#1f3b63" font-size="13" font-weight="700" text-anchor="middle">Envoy</text>
-    <path d="M162 222 L182 222" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
-    <rect x="186" y="196" width="172" height="52" rx="10" fill="#ffffff" stroke="#4a6fa5" stroke-width="1.4"/>
-    <text x="272" y="217" fill="#222e3b" font-size="13" font-weight="700" text-anchor="middle" font-family="Menlo, Consolas, monospace">cluster hybrid-demo</text>
-    <text x="272" y="237" fill="#5f6670" font-size="11" text-anchor="middle">STRICT_DNS · ROUND_ROBIN</text>
-    <path d="M360 222 L380 205" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
-    <rect x="384" y="192" width="150" height="26" rx="6" fill="#ffffff" stroke="#9db4d3" stroke-width="1.2"/>
-    <text x="459" y="210" fill="#222e3b" font-size="12" font-weight="700" text-anchor="middle" font-family="Menlo, Consolas, monospace">fixed-site</text>
-    <path d="M360 222 L380 237" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
-    <rect x="384" y="224" width="150" height="26" rx="6" fill="#ffffff" stroke="#9db4d3" stroke-width="1.2"/>
-    <text x="459" y="242" fill="#222e3b" font-size="12" font-weight="700" text-anchor="middle" font-family="Menlo, Consolas, monospace">elastic-site</text>
-    <text x="44" y="280" fill="#5f6670" font-size="12" font-weight="700">온프레미스 50</text>
-    <circle cx="148.0" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="155.6" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="163.2" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="170.8" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="178.4" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="186.0" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="193.6" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="201.2" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="208.8" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="216.4" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="224.0" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="231.6" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="239.2" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="246.8" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="254.4" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="262.0" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="269.6" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="277.2" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="284.8" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="292.4" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="300.0" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="307.6" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="315.2" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="322.8" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="330.4" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="338.0" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="345.6" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="353.2" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="360.8" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="368.4" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="376.0" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="383.6" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="391.2" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="398.8" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="406.4" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="414.0" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="421.6" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="429.2" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="436.8" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="444.4" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="452.0" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="459.6" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="467.2" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="474.8" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="482.4" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="490.0" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="497.6" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="505.2" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="512.8" cy="276" r="3" fill="#a7aea6"/>
-    <circle cx="520.4" cy="276" r="3" fill="#a7aea6"/>
-    <text x="44" y="306" fill="#5f6670" font-size="12" font-weight="700">EKS 예: 10</text>
-    <circle cx="148.0" cy="302" r="3" fill="#4a6fa5"/>
-    <circle cx="155.6" cy="302" r="3" fill="#4a6fa5"/>
-    <circle cx="163.2" cy="302" r="3" fill="#4a6fa5"/>
-    <circle cx="170.8" cy="302" r="3" fill="#4a6fa5"/>
-    <circle cx="178.4" cy="302" r="3" fill="#4a6fa5"/>
-    <circle cx="186.0" cy="302" r="3" fill="#4a6fa5"/>
-    <circle cx="193.6" cy="302" r="3" fill="#4a6fa5"/>
-    <circle cx="201.2" cy="302" r="3" fill="#4a6fa5"/>
-    <circle cx="208.8" cy="302" r="3" fill="#4a6fa5"/>
-    <circle cx="216.4" cy="302" r="3" fill="#4a6fa5"/>
-    <text x="234" y="306" fill="#5f6670" font-size="12">→ 300까지 늘어나도 각 Pod가 같은 몫</text>
-    <rect x="44" y="322" width="488" height="42" rx="8" fill="#ffffff" stroke="#4a6fa5" stroke-width="1.2"/>
-    <text x="288.0" y="349" fill="#1f3b63" font-size="14" font-weight="700" text-anchor="middle">EKS 비중 = EKS Ready ÷ (온프레미스 Ready + EKS Ready)</text>
-    <rect x="568" y="122" width="528" height="258" rx="16" fill="#f6f0e1" stroke="#b58938" stroke-width="1.6" stroke-dasharray="7 5"/>
-    <text x="588" y="152" fill="#6b4f17" font-size="18" font-weight="700">B. 사이트 비율을 운영자가 정함</text>
-    <text x="588" y="174" fill="#6b4f17" font-size="13">weighted_clusters · 예: EKS 상한 60% · 미실측</text>
-    <rect x="588" y="196" width="116" height="52" rx="10" fill="#e3ecf8" stroke="#4a6fa5" stroke-width="1.6"/>
-    <text x="646" y="218" fill="#1f3b63" font-size="13" font-weight="700" text-anchor="middle">ELB for</text>
-    <text x="646" y="237" fill="#1f3b63" font-size="13" font-weight="700" text-anchor="middle">Envoy</text>
-    <path d="M706 222 L726 222" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
-    <rect x="730" y="196" width="172" height="52" rx="10" fill="#ffffff" stroke="#b58938" stroke-width="1.4"/>
-    <text x="816" y="217" fill="#222e3b" font-size="13" font-weight="700" text-anchor="middle" font-family="Menlo, Consolas, monospace">weighted_clusters</text>
-    <text x="816" y="237" fill="#5f6670" font-size="11" text-anchor="middle">RDS에 비율을 선언</text>
-    <path d="M904 222 L924 205" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
-    <rect x="928" y="192" width="150" height="26" rx="6" fill="#ffffff" stroke="#e0cfa6" stroke-width="1.2"/>
-    <text x="940" y="210" fill="#222e3b" font-size="12" font-weight="700" font-family="Menlo, Consolas, monospace">onprem</text>
-    <text x="1068" y="210" fill="#6b4f17" font-size="11" font-weight="700" text-anchor="end">weight 40</text>
-    <path d="M904 222 L924 237" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
-    <rect x="928" y="224" width="150" height="26" rx="6" fill="#ffffff" stroke="#e0cfa6" stroke-width="1.2"/>
-    <text x="940" y="242" fill="#222e3b" font-size="12" font-weight="700" font-family="Menlo, Consolas, monospace">eks</text>
-    <text x="1068" y="242" fill="#6b4f17" font-size="11" font-weight="700" text-anchor="end">weight 60</text>
-    <rect x="588" y="270" width="488" height="50" rx="10" fill="#ffffff" stroke="#b58938" stroke-width="1.3" stroke-dasharray="5 4"/>
-    <text x="604" y="291" fill="#6b4f17" font-size="14" font-weight="700">가변 정책이면 컨트롤러</text>
-    <text x="604" y="311" fill="#6b4f17" font-size="12">Ready EndpointSlice 감시 → min(Ready 비율, 60%)로 RDS 갱신</text>
-    <path d="M816 268 L816 252" stroke="#b58938" stroke-width="1.6" fill="none" marker-end="url(#arrow)" stroke-dasharray="4 3"/>
-    <text x="588" y="342" fill="#6b4f17" font-size="12">관측이 끊기면 마지막 값을 유지할지,</text>
-    <text x="588" y="361" fill="#6b4f17" font-size="12">실제 장애일 때 어느 사이트로 넘길지도 정책에 포함</text>
-    <text x="44" y="420" fill="#5f6670" font-size="15" font-weight="700">EKS 기대 비중 · 계산값 (온프레미스 Ready 50개, 같은 가중치)</text>
-    <text x="44" y="457" fill="#222e3b" font-size="14" font-weight="700">EKS 10개</text>
-    <rect x="150" y="438" width="117" height="26" rx="4" fill="#4a6fa5"/>
-    <rect x="269" y="438" width="581" height="26" rx="4" fill="#a7aea6"/>
-    <text x="160" y="456" fill="#ffffff" font-size="13" font-weight="700">EKS 16.7%</text>
-    <text x="840" y="456" fill="#ffffff" font-size="13" font-weight="700" text-anchor="end">온프레미스 83.3%</text>
-    <text x="874" y="457" fill="#6b4f17" font-size="14" font-weight="700">B: 16.7%</text>
-    <text x="44" y="495" fill="#222e3b" font-size="14" font-weight="700">EKS 50개</text>
-    <rect x="150" y="476" width="350" height="26" rx="4" fill="#4a6fa5"/>
-    <rect x="502" y="476" width="348" height="26" rx="4" fill="#a7aea6"/>
-    <text x="160" y="494" fill="#ffffff" font-size="13" font-weight="700">EKS 50.0%</text>
-    <text x="840" y="494" fill="#ffffff" font-size="13" font-weight="700" text-anchor="end">온프레미스 50.0%</text>
-    <text x="874" y="495" fill="#6b4f17" font-size="14" font-weight="700">B: 50.0%</text>
-    <text x="44" y="533" fill="#222e3b" font-size="14" font-weight="700">EKS 300개</text>
-    <rect x="150" y="514" width="600" height="26" rx="4" fill="#4a6fa5"/>
-    <rect x="752" y="514" width="98" height="26" rx="4" fill="#a7aea6"/>
-    <text x="160" y="532" fill="#ffffff" font-size="13" font-weight="700">EKS 85.7%</text>
-    <text x="840" y="532" fill="#ffffff" font-size="13" font-weight="700" text-anchor="end">14.3%</text>
-    <text x="874" y="533" fill="#6b4f17" font-size="14" font-weight="700">B: 60.0%</text>
-    <path d="M570.0 430 L570.0 550" stroke="#b58938" stroke-width="2" stroke-dasharray="5 4"/>
-    <text x="576.0" y="564" fill="#6b4f17" font-size="12" font-weight="700">B의 EKS 상한 60%</text>
-    <text x="874" y="420" fill="#5f6670" font-size="12" font-weight="700">B로 바꾸면</text>
-    <rect x="24" y="590" width="1072" height="146" rx="14" fill="#f4f5f2" stroke="#d6d6cf" stroke-width="1.2"/>
-    <text x="44" y="618" fill="#222e3b" font-size="16" font-weight="700">도쿄 축소 실측 · A 방식</text>
-    <text x="250" y="618" fill="#5f6670" font-size="12">고정 대상은 ECS 태스크 1개로 대신함 · 두 측정 사이에 바꾼 것은 EKS replicas뿐</text>
-    <text x="44" y="656" fill="#222e3b" font-size="14" font-weight="700">고정 1 + EKS 1</text>
-    <rect x="200" y="638" width="298" height="26" rx="4" fill="#a7aea6"/>
-    <text x="210" y="656" fill="#ffffff" font-size="12" font-weight="700">고정 60</text>
-    <rect x="500" y="638" width="298" height="26" rx="4" fill="#4a6fa5"/>
-    <text x="510.0" y="656" fill="#ffffff" font-size="12" font-weight="700">Pod 60</text>
-    <text x="820" y="656" fill="#222e3b" font-size="13" font-weight="700">120건 · EKS 60</text>
-    <text x="44" y="694" fill="#222e3b" font-size="14" font-weight="700">고정 1 + EKS 3</text>
-    <rect x="200" y="676" width="148" height="26" rx="4" fill="#a7aea6"/>
-    <text x="210" y="694" fill="#ffffff" font-size="12" font-weight="700">고정 30</text>
-    <rect x="350" y="676" width="148" height="26" rx="4" fill="#4a6fa5"/>
-    <text x="360.0" y="694" fill="#ffffff" font-size="12" font-weight="700">Pod 30</text>
-    <rect x="500" y="676" width="148" height="26" rx="4" fill="#6d8fbf"/>
-    <text x="510.0" y="694" fill="#ffffff" font-size="12" font-weight="700">Pod 30</text>
-    <rect x="650" y="676" width="148" height="26" rx="4" fill="#93acd2"/>
-    <text x="660.0" y="694" fill="#ffffff" font-size="12" font-weight="700">Pod 30</text>
-    <text x="820" y="694" fill="#222e3b" font-size="13" font-weight="700">120건 · EKS 90</text>
-    <text x="820" y="722" fill="#5f6670" font-size="12">Pod 이름 = Ready EndpointSlice 명단</text>
-    <text x="200" y="722" fill="#5f6670" font-size="12">STRICT_DNS가 2초마다 다시 조회 · 새 Ready Pod IP가 DNS 응답에 추가됨</text>
-    <rect x="24" y="750" width="1072" height="46" rx="12" fill="#f6f0e1" stroke="#e0cfa6" stroke-width="1"/>
-    <text x="44" y="779" fill="#6b4f17" font-size="12">실제 두 사이트 전제: Envoy가 양쪽 Pod IP에 직접 연결 · 사이트별 DNS가 Ready 주소 전체를 반환 · ClusterIP나 게이트웨이 주소 하나만 보이면 이 비율이 나오지 않음</text>
+    <text x="42" y="49" fill="#5f6670" font-size="18" font-weight="600" letter-spacing="2">TOKYO · STRICT_DNS POOL · REPLICAS 1 → 3</text>
+    <text x="42" y="93" fill="#222e3b" font-size="27" font-weight="700">replicas만 바꿨더니 분배가 Ready Pod 수를 따라갔습니다</text>
+    <rect x="24" y="124" width="1072" height="196" rx="16" fill="#f1f5fb" stroke="#6f8fb8" stroke-width="1.4"/>
+    <text x="44" y="154" fill="#1f3b63" font-size="15" font-weight="700">구성</text>
+    <text x="1076" y="154" fill="#33557f" font-size="13" font-weight="600" text-anchor="end">사이트 weight 선언 없음 · 컨트롤러 없음</text>
+    <rect x="44" y="178" width="150" height="62" rx="10" fill="#e3ecf8" stroke="#4a6fa5" stroke-width="1.6"/>
+    <text x="119.0" y="204" fill="#1f3b63" font-size="14" font-weight="700" text-anchor="middle">ELB for Envoy</text>
+    <text x="119.0" y="226" fill="#5f6670" font-size="11" text-anchor="middle">Route 하나</text>
+    <rect x="226" y="178" width="210" height="62" rx="10" fill="#ffffff" stroke="#4a6fa5" stroke-width="1.6"/>
+    <text x="331.0" y="204" fill="#222e3b" font-size="14" font-weight="700" text-anchor="middle" font-family="Menlo, Consolas, monospace">cluster hybrid-demo</text>
+    <text x="331.0" y="226" fill="#5f6670" font-size="11" text-anchor="middle">STRICT_DNS · ROUND_ROBIN · 2s</text>
+    <path d="M196 209 L222 209" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <path d="M438 209 L470 202" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <rect x="474" y="174" width="190" height="56" rx="8" fill="#ffffff" stroke="#9db4d3" stroke-width="1.2"/>
+    <text x="569" y="198" fill="#222e3b" font-size="14" font-weight="700" text-anchor="middle" font-family="Menlo, Consolas, monospace">fixed-site</text>
+    <text x="569" y="218" fill="#5f6670" font-size="11" text-anchor="middle">DNS 이름 · headless Service</text>
+    <path d="M666 202 L700 202" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <rect x="704" y="174" width="372" height="56" rx="8" fill="#ffffff" stroke="#a7aea6" stroke-width="1.6"/>
+    <text x="722" y="198" fill="#222e3b" font-size="14" font-weight="700">ECS 태스크 1개</text>
+    <text x="722" y="218" fill="#5f6670" font-size="12">온프레미스 대신</text>
+    <path d="M438 209 L470 276" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <rect x="474" y="248" width="190" height="56" rx="8" fill="#ffffff" stroke="#9db4d3" stroke-width="1.2"/>
+    <text x="569" y="272" fill="#222e3b" font-size="14" font-weight="700" text-anchor="middle" font-family="Menlo, Consolas, monospace">elastic-site</text>
+    <text x="569" y="292" fill="#5f6670" font-size="11" text-anchor="middle">DNS 이름 · headless Service</text>
+    <path d="M666 276 L700 276" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <rect x="704" y="248" width="372" height="56" rx="8" fill="#ffffff" stroke="#4a6fa5" stroke-width="1.6"/>
+    <text x="722" y="272" fill="#222e3b" font-size="14" font-weight="700">EKS Ready Pod 1 → 3</text>
+    <text x="722" y="292" fill="#5f6670" font-size="12">EndpointSlice 갱신</text>
+    <text x="44" y="274" fill="#5f6670" font-size="12">새 Pod가 Ready가 되면</text>
+    <text x="44" y="292" fill="#5f6670" font-size="12">DNS 응답에 그 IP가 추가되고</text>
+    <text x="44" y="310" fill="#5f6670" font-size="12">Envoy가 2초 안에 다시 조회</text>
+    <rect x="24" y="340" width="1072" height="146" rx="14" fill="#f4f5f2" stroke="#d6d6cf" stroke-width="1.2"/>
+    <text x="44" y="368" fill="#222e3b" font-size="16" font-weight="700">같은 Envoy 설정으로 120건씩 요청</text>
+    <text x="1076" y="368" fill="#5f6670" font-size="12" text-anchor="end">바꾼 것은 EKS replicas뿐</text>
+    <text x="44" y="406" fill="#222e3b" font-size="14" font-weight="700">고정 1 + EKS 1</text>
+    <rect x="200" y="388" width="298" height="26" rx="4" fill="#a7aea6"/>
+    <text x="210" y="406" fill="#ffffff" font-size="12" font-weight="700">고정 60</text>
+    <rect x="500" y="388" width="298" height="26" rx="4" fill="#4a6fa5"/>
+    <text x="510.0" y="406" fill="#ffffff" font-size="12" font-weight="700">Pod 60</text>
+    <text x="820" y="406" fill="#222e3b" font-size="13" font-weight="700">120건 성공 · EKS 60</text>
+    <text x="44" y="444" fill="#222e3b" font-size="14" font-weight="700">고정 1 + EKS 3</text>
+    <rect x="200" y="426" width="148" height="26" rx="4" fill="#a7aea6"/>
+    <text x="210" y="444" fill="#ffffff" font-size="12" font-weight="700">고정 30</text>
+    <rect x="350" y="426" width="148" height="26" rx="4" fill="#4a6fa5"/>
+    <text x="360.0" y="444" fill="#ffffff" font-size="12" font-weight="700">Pod 30</text>
+    <rect x="500" y="426" width="148" height="26" rx="4" fill="#6d8fbf"/>
+    <text x="510.0" y="444" fill="#ffffff" font-size="12" font-weight="700">Pod 30</text>
+    <rect x="650" y="426" width="148" height="26" rx="4" fill="#93acd2"/>
+    <text x="660.0" y="444" fill="#ffffff" font-size="12" font-weight="700">Pod 30</text>
+    <text x="820" y="444" fill="#222e3b" font-size="13" font-weight="700">120건 성공 · EKS 90</text>
+    <text x="200" y="472" fill="#5f6670" font-size="12">응답한 Pod 이름 = Ready EndpointSlice 명단</text>
+    <rect x="24" y="500" width="1072" height="46" rx="12" fill="#f6f0e1" stroke="#e0cfa6" stroke-width="1"/>
+    <text x="44" y="529" fill="#6b4f17" font-size="12">실제 두 사이트 전제: Envoy가 양쪽 Pod IP에 직접 연결 · 사이트별 DNS가 Ready 주소 전체를 반환 · ClusterIP나 게이트웨이 주소 하나만 보이면 이 비율이 나오지 않음</text>
   </g>
 </svg>

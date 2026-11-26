@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1120" height="770" viewBox="0 0 1120 770" role="img" aria-labelledby="title desc">
   <title id="title">Istio 리소스가 Envoy xDS 설정이 되는 과정</title>
-  <desc id="desc">Kubernetes API에 적용한 Istio 리소스는 프록시로 그대로 전달되지 않는다. istiod가 Gateway, VirtualService, DestinationRule, EnvoyFilter와 Service, EndpointSlice를 함께 읽어 프록시마다 Listener(LDS), RouteConfiguration(RDS), Cluster(CDS), 엔드포인트(EDS)를 계산하고 gRPC xDS로 푸시한다. ELB for Envoy에는 istiod가 들어 있지 않다. 도쿄 실습에서는 같은 Envoy 리소스를 bootstrap의 고정 리스너와 HTTP 필터, /xds/routes.yaml, /xds/clusters.yaml 파일로 직접 만들었고 EDS 대신 STATIC 주소나 STRICT_DNS를 썼다. 사이드카는 istiod에서 istio-agent를 거쳐 istio-proxy로 설정을 받고, 인입 프록시는 CloudFormation이 전달한 ZIP을 파일로 읽는다.</desc>
+  <desc id="desc">Kubernetes API에 적용한 Istio 리소스는 프록시로 그대로 전달되지 않는다. istiod가 Gateway, VirtualService, DestinationRule, EnvoyFilter와 Service, EndpointSlice를 함께 읽어 프록시마다 Listener(LDS), RouteConfiguration(RDS), Cluster(CDS), 엔드포인트(EDS)를 계산하고 gRPC xDS로 푸시한다. ELB for Envoy에는 istiod가 들어 있지 않다. 예제에서는 같은 Envoy 리소스를 bootstrap의 고정 리스너와 HTTP 필터, /xds/routes.yaml, /xds/clusters.yaml 파일로 직접 만들었고 EDS 대신 STATIC 주소나 STRICT_DNS를 썼다. 사이드카는 istiod에서 istio-agent를 거쳐 istio-proxy로 설정을 받고, 인입 프록시는 CloudFormation이 전달한 ZIP을 파일로 읽는다.</desc>
   <defs>
     <marker id="arrow" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#405267" stroke-width="1.6"/></marker>
     <marker id="arrow-ok" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#4f8a68" stroke-width="1.6"/></marker>
@@ -14,7 +14,7 @@
     <text x="370.0" y="140" fill="#5f6670" font-size="14" font-weight="700" text-anchor="middle">② 변환</text>
     <text x="458" y="140" fill="#5f6670" font-size="14" font-weight="700">③ Envoy가 실제로 받는 리소스</text>
     <rect x="766" y="120" width="338" height="406" rx="14" fill="#f1f5fb" stroke="#6f8fb8" stroke-width="1.4" stroke-dasharray="7 5"/>
-    <text x="778" y="140" fill="#1f3b63" font-size="14" font-weight="700">ELB for Envoy 실습에서 대신 쓴 것</text>
+    <text x="778" y="140" fill="#1f3b63" font-size="14" font-weight="700">ELB for Envoy에서 직접 쓰는 방법</text>
     <rect x="304" y="154" width="132" height="362" rx="14" fill="#e3ecf8" stroke="#4a6fa5" stroke-width="2"/>
     <text x="370.0" y="300" fill="#1f3b63" font-size="21" font-weight="700" text-anchor="middle">istiod</text>
     <text x="370.0" y="330" fill="#33557f" font-size="12" text-anchor="middle">선언 +</text>
@@ -91,7 +91,7 @@
     <text x="44" y="562" fill="#5f6670" font-size="15" font-weight="700">설정이 프록시에 도착하는 길</text>
     <rect x="24" y="578" width="1072" height="78" rx="12" fill="#f4f5f2" stroke="#d6d6cf" stroke-width="1.2"/>
     <text x="44" y="611" fill="#222e3b" font-size="16" font-weight="700">EKS 사이드카</text>
-    <text x="44" y="633" fill="#5f6670" font-size="12">도쿄: 두 사이드카가 LDS·RDS·CDS·EDS를 구독</text>
+    <text x="44" y="633" fill="#5f6670" font-size="12">사이드카는 LDS·RDS·CDS·EDS를 구독</text>
     <rect x="330" y="598" width="148" height="38" rx="8" fill="#ffffff" stroke="#8a96a3" stroke-width="1.3"/>
     <text x="404.0" y="622" fill="#222e3b" font-size="13" font-weight="700" text-anchor="middle">Kubernetes API</text>
     <path d="M480 617 L516 617" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>

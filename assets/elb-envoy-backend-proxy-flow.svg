@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="576" viewBox="0 0 1120 576" role="img" aria-labelledby="title desc">
+  <title id="title">백엔드 프록시를 더할지 정하는 흐름</title>
+  <desc id="desc">백엔드 프록시를 결정하는 흐름. 기본값은 백엔드에 프록시가 없는 구성이다. 요청은 CloudFront와 내부 NLB를 지나 ELB for Envoy에서 경로 재작성, 헤더, 가중치, 직접 응답, 로컬과 글로벌 요청 제한, 타임아웃과 재시도를 한 번에 처리한 뒤 EC2 사설 IP나 ECS 태스크 IP, EKS Pod IP의 8080으로 바로 간다. 백엔드는 평범한 HTTP 요청을 받는다. 백엔드가 다른 서비스를 호출하는 구간에도 이름 기반 발견과 타임아웃을 걸거나, 서비스 간 트래픽을 암호화하거나, 태스크·Pod 단위 지표나 EKS에서 Pod 안에서 집행할 정책이 필요할 때 프록시를 더한다. 어떤 프록시를 더할 수 있는지는 다음 비교 그림에서 다룬다.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#405267" stroke-width="1.6"/></marker>
+    <marker id="arrow-ok" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#4f8a68" stroke-width="1.6"/></marker>
+    <marker id="arrow-bad" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#b35a42" stroke-width="1.6"/></marker>
+  </defs>
+  <rect width="1120" height="576" rx="20" fill="#fbfaf7"/>
+  <g font-family="Noto Sans CJK KR, sans-serif">
+    <text x="42" y="49" fill="#5f6670" font-size="18" font-weight="600" letter-spacing="2">BACKEND PROXY · DEFAULT → WHEN TO ADD</text>
+    <text x="42" y="93" fill="#222e3b" font-size="27" font-weight="700">기본은 프록시 없이, 필요한 기능이 생길 때만 더합니다</text>
+    <rect x="24" y="118" width="1072" height="268" rx="16" fill="#f1f5fb" stroke="#6f8fb8" stroke-width="1.5"/>
+    <circle cx="52" cy="148" r="11" fill="#4a6fa5"/>
+    <text x="52" y="153" fill="#ffffff" font-size="13" font-weight="700" text-anchor="middle">1</text>
+    <text x="74" y="154" fill="#1f3b63" font-size="19" font-weight="700">기본값 · 백엔드에 프록시 없음</text>
+    <text x="1076" y="154" fill="#1f3b63" font-size="13" font-weight="600" text-anchor="end">백엔드 변경 없음</text>
+    <rect x="44" y="214" width="104" height="44" rx="10" fill="#ffffff" stroke="#d6d6cf" stroke-width="1.2"/>
+    <text x="96" y="241" fill="#222e3b" font-size="13" font-weight="600" text-anchor="middle">클라이언트</text>
+    <path d="M150 236 L176 236" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <rect x="180" y="214" width="132" height="44" rx="10" fill="#ffffff" stroke="#d6d6cf" stroke-width="1.2"/>
+    <text x="246" y="233" fill="#222e3b" font-size="13" font-weight="700" text-anchor="middle">CloudFront</text>
+    <text x="246" y="250" fill="#5f6670" font-size="11" text-anchor="middle">→ 내부 NLB</text>
+    <path d="M314 236 L340 236" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <rect x="344" y="176" width="380" height="196" rx="14" fill="#e3ecf8" stroke="#4a6fa5" stroke-width="2"/>
+    <text x="364" y="204" fill="#1f3b63" font-size="16" font-weight="700">ELB for Envoy · 유일한 Envoy 홉</text>
+    <rect x="364" y="220" width="164" height="26" rx="13" fill="#ffffff" stroke="#9db4d3" stroke-width="1"/>
+    <text x="446" y="238" fill="#222e3b" font-size="12" font-weight="600" text-anchor="middle">경로 재작성</text>
+    <rect x="536" y="220" width="164" height="26" rx="13" fill="#ffffff" stroke="#9db4d3" stroke-width="1"/>
+    <text x="618" y="238" fill="#222e3b" font-size="12" font-weight="600" text-anchor="middle">헤더 add/set</text>
+    <rect x="364" y="254" width="164" height="26" rx="13" fill="#ffffff" stroke="#9db4d3" stroke-width="1"/>
+    <text x="446" y="272" fill="#222e3b" font-size="12" font-weight="600" text-anchor="middle">가중치 선택</text>
+    <rect x="536" y="254" width="164" height="26" rx="13" fill="#ffffff" stroke="#9db4d3" stroke-width="1"/>
+    <text x="618" y="272" fill="#222e3b" font-size="12" font-weight="600" text-anchor="middle">직접 응답</text>
+    <rect x="364" y="288" width="164" height="26" rx="13" fill="#ffffff" stroke="#9db4d3" stroke-width="1"/>
+    <text x="446" y="306" fill="#222e3b" font-size="12" font-weight="600" text-anchor="middle">로컬 요청 제한</text>
+    <rect x="536" y="288" width="164" height="26" rx="13" fill="#ffffff" stroke="#9db4d3" stroke-width="1"/>
+    <text x="618" y="306" fill="#222e3b" font-size="12" font-weight="600" text-anchor="middle">글로벌 RLS 제한</text>
+    <rect x="364" y="322" width="164" height="26" rx="13" fill="#ffffff" stroke="#9db4d3" stroke-width="1"/>
+    <text x="446" y="340" fill="#222e3b" font-size="12" font-weight="600" text-anchor="middle">타임아웃·재시도</text>
+    <rect x="536" y="322" width="164" height="26" rx="13" fill="#ffffff" stroke="#9db4d3" stroke-width="1"/>
+    <text x="618" y="340" fill="#222e3b" font-size="12" font-weight="600" text-anchor="middle">이상 호스트 제외</text>
+    <text x="364" y="364" fill="#33557f" font-size="12">주소: STATIC 재렌더링 · STRICT_DNS · EDS</text>
+    <path d="M726 274 L778 206" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <rect x="782" y="180" width="294" height="52" rx="10" fill="#ffffff" stroke="#4a6fa5" stroke-width="1.4"/>
+    <text x="800" y="202" fill="#222e3b" font-size="15" font-weight="700">EC2 인스턴스</text>
+    <text x="800" y="221" fill="#5f6670" font-size="12">HTTP 서버 프로세스 · 사설 IP:8080</text>
+    <path d="M726 274 L778 270" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <rect x="782" y="244" width="294" height="52" rx="10" fill="#ffffff" stroke="#4a6fa5" stroke-width="1.4"/>
+    <text x="800" y="266" fill="#222e3b" font-size="15" font-weight="700">ECS 태스크</text>
+    <text x="800" y="285" fill="#5f6670" font-size="12">앱 컨테이너 하나 · awsvpc IP:8080</text>
+    <path d="M726 274 L778 334" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <rect x="782" y="308" width="294" height="52" rx="10" fill="#ffffff" stroke="#4a6fa5" stroke-width="1.4"/>
+    <text x="800" y="330" fill="#222e3b" font-size="15" font-weight="700">EKS Pod</text>
+    <text x="800" y="349" fill="#5f6670" font-size="12">앱 컨테이너만 · Pod IP:8080</text>
+    <text x="782" y="372" fill="#1f3b63" font-size="12" font-weight="600">백엔드는 이미 바뀐 경로·헤더의 평범한 HTTP 요청을 받음</text>
+    <text x="44" y="308" fill="#5f6670" font-size="12">보안 그룹: 백엔드 8080은</text>
+    <text x="44" y="326" fill="#5f6670" font-size="12">프록시 보안 그룹에서만 허용</text>
+    <rect x="24" y="404" width="1072" height="150" rx="16" fill="#f6f0e1" stroke="#b58938" stroke-width="1.5"/>
+    <circle cx="52" cy="434" r="11" fill="#b58938"/>
+    <text x="52" y="439" fill="#ffffff" font-size="13" font-weight="700" text-anchor="middle">2</text>
+    <text x="74" y="440" fill="#6b4f17" font-size="19" font-weight="700">이럴 때 백엔드에 프록시를 더합니다</text>
+    <text x="1076" y="440" fill="#6b4f17" font-size="13" font-weight="600" text-anchor="end">인입 프록시는 들어오는 요청만 봅니다</text>
+    <rect x="44" y="460" width="194" height="72" rx="12" fill="#ffffff" stroke="#e0cfa6" stroke-width="1.3"/>
+    <text x="58" y="488" fill="#222e3b" font-size="14" font-weight="700">서비스 간 호출 정책</text>
+    <text x="58" y="510" fill="#5f6670" font-size="12">이름 발견·타임아웃·재시도</text>
+    <rect x="248" y="460" width="194" height="72" rx="12" fill="#ffffff" stroke="#e0cfa6" stroke-width="1.3"/>
+    <text x="262" y="488" fill="#222e3b" font-size="14" font-weight="700">서비스 간 암호화</text>
+    <text x="262" y="510" fill="#5f6670" font-size="12">인증서 발급·교체 자동화</text>
+    <rect x="452" y="460" width="194" height="72" rx="12" fill="#ffffff" stroke="#e0cfa6" stroke-width="1.3"/>
+    <text x="466" y="488" fill="#222e3b" font-size="14" font-weight="700">태스크·Pod 단위 지표</text>
+    <text x="466" y="510" fill="#5f6670" font-size="12">연결 수·응답 시간·5xx</text>
+    <rect x="656" y="460" width="194" height="72" rx="12" fill="#ffffff" stroke="#e0cfa6" stroke-width="1.3"/>
+    <text x="670" y="488" fill="#222e3b" font-size="14" font-weight="700">Pod 안에서 집행 · EKS</text>
+    <text x="670" y="510" fill="#5f6670" font-size="12">Pod별 제한·메시 mTLS·인가</text>
+    <rect x="866" y="460" width="210" height="72" rx="12" fill="#eaf3ec" stroke="#4f8a68" stroke-width="1.4"/>
+    <text x="880" y="488" fill="#2f5e43" font-size="14" font-weight="700">외부 요청만 받으면</text>
+    <text x="880" y="510" fill="#2f5e43" font-size="13" font-weight="700">→ 프록시를 더하지 않음</text>
+  </g>
+</svg>
