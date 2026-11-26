@@ -1,0 +1,89 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Signed CloudFront requests to an internal TCP NLB through a VPC origin.
+Parameters:
+  Vpc: {Type: 'AWS::EC2::VPC::Id'}
+  PrivateA: {Type: 'AWS::EC2::Subnet::Id'}
+  PrivateB: {Type: 'AWS::EC2::Subnet::Id'}
+  ViewerPublicKey: {Type: String}
+Resources:
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+  Attach:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties: {VpcId: !Ref Vpc, InternetGatewayId: !Ref InternetGateway}
+  NlbSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref Vpc
+      GroupDescription: Only the CloudFront VPC origin security group may enter
+  Nlb:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Scheme: internal
+      Type: network
+      Subnets: [!Ref PrivateA, !Ref PrivateB]
+      SecurityGroups: [!Ref NlbSG]
+      LoadBalancerAttributes: [{Key: load_balancing.cross_zone.enabled, Value: 'true'}]
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      VpcId: !Ref Vpc
+      Protocol: TCP
+      Port: 8080
+      TargetType: ip
+      HealthCheckProtocol: HTTP
+      HealthCheckPath: /readyz
+      HealthCheckIntervalSeconds: 10
+      HealthyThresholdCount: 2
+      TargetGroupAttributes: [{Key: preserve_client_ip.enabled, Value: 'false'}]
+  Listener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref Nlb
+      Protocol: TCP
+      Port: 80
+      DefaultActions: [{Type: forward, TargetGroupArn: !Ref TargetGroup}]
+  Origin:
+    Type: AWS::CloudFront::VpcOrigin
+    DependsOn: [Listener, Attach]
+    Properties:
+      VpcOriginEndpointConfig:
+        Name: !Ref 'AWS::StackName'
+        Arn: !Ref Nlb
+        HTTPPort: 80
+        HTTPSPort: 443
+        OriginProtocolPolicy: http-only
+        OriginSSLProtocols: [TLSv1.2]
+  PublicKey:
+    Type: AWS::CloudFront::PublicKey
+    Properties:
+      PublicKeyConfig:
+        CallerReference: !Ref 'AWS::StackId'
+        Name: !Ref 'AWS::StackName'
+        EncodedKey: !Ref ViewerPublicKey
+  KeyGroup:
+    Type: AWS::CloudFront::KeyGroup
+    Properties:
+      KeyGroupConfig: {Name: !Ref 'AWS::StackName', Items: [!Ref PublicKey]}
+  Distribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: Tokyo Envoy ingress experiment
+        PriceClass: PriceClass_200
+        Origins:
+          - Id: nlb
+            DomainName: !GetAtt Nlb.DNSName
+            VpcOriginConfig: {VpcOriginId: !GetAtt Origin.Id}
+        DefaultCacheBehavior:
+          TargetOriginId: nlb
+          ViewerProtocolPolicy: https-only
+          AllowedMethods: [GET, HEAD]
+          TrustedKeyGroups: [!Ref KeyGroup]
+          CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+Outputs:
+  Hostname: {Value: !GetAtt Distribution.DomainName}
+  ViewerKeyId: {Value: !Ref PublicKey}
+  TargetGroup: {Value: !Ref TargetGroup}
+  NlbSG: {Value: !Ref NlbSG}

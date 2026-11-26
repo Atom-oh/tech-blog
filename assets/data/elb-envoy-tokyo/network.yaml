@@ -1,0 +1,59 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Tokyo Envoy lab - isolated dual-stack VPC, two private subnets and IPv6 egress.
+Parameters:
+  ZoneA:
+    Type: String
+    Default: apne1-az4
+  ZoneB:
+    Type: String
+    Default: apne1-az1
+Resources:
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.86.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags: [{Key: Name, Value: !Ref 'AWS::StackName'}]
+  IPv6:
+    Type: AWS::EC2::VPCCidrBlock
+    Properties: {VpcId: !Ref Vpc, AmazonProvidedIpv6CidrBlock: true}
+  EgressOnly:
+    Type: AWS::EC2::EgressOnlyInternetGateway
+    Properties: {VpcId: !Ref Vpc}
+  PrivateA:
+    Type: AWS::EC2::Subnet
+    DependsOn: IPv6
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZoneId: !Ref ZoneA
+      CidrBlock: 10.86.0.0/24
+      Ipv6CidrBlock: !Select [0, !Cidr [!Select [0, !GetAtt Vpc.Ipv6CidrBlocks], 2, 64]]
+      MapPublicIpOnLaunch: false
+  PrivateB:
+    Type: AWS::EC2::Subnet
+    DependsOn: IPv6
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZoneId: !Ref ZoneB
+      CidrBlock: 10.86.1.0/24
+      Ipv6CidrBlock: !Select [1, !Cidr [!Select [0, !GetAtt Vpc.Ipv6CidrBlocks], 2, 64]]
+      MapPublicIpOnLaunch: false
+  PrivateRoutes:
+    Type: AWS::EC2::RouteTable
+    Properties: {VpcId: !Ref Vpc}
+  OutboundV6:
+    Type: AWS::EC2::Route
+    Properties: {RouteTableId: !Ref PrivateRoutes, DestinationIpv6CidrBlock: '::/0', EgressOnlyInternetGatewayId: !Ref EgressOnly}
+  BindA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: {SubnetId: !Ref PrivateA, RouteTableId: !Ref PrivateRoutes}
+  BindB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: {SubnetId: !Ref PrivateB, RouteTableId: !Ref PrivateRoutes}
+Outputs:
+  Vpc: {Value: !Ref Vpc}
+  PrivateA: {Value: !Ref PrivateA}
+  PrivateB: {Value: !Ref PrivateB}
+  PrivateRoutes: {Value: !Ref PrivateRoutes}
+  EgressOnly: {Value: !Ref EgressOnly}
