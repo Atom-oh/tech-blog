@@ -42,7 +42,7 @@ tags: envoy, istio, elb, eks, gateway-api
 <h3 id="blue-green">Blue에서 천천히 빼고 Green으로 천천히 올리는 방법</h3>
 
 1. **두 클러스터를 동시에 연결합니다.** 이전 중에도 계속 살아 있을 인입 Gateway에서 Blue(기존)와 Green(신규)을 서로 다른 backend로 식별합니다. `HTTPRoute.backendRefs`에서 `api-blue`와 `api-green`을 참조하려면 라우트를 관리하는 클러스터에서 두 이름이 실제 대상으로 해석되고, 프록시에서 양쪽으로 연결돼야 합니다. 같은 이름의 Service를 두 클러스터에 만드는 것만으로 원격 엔드포인트가 발견되지는 않습니다. `ReferenceGrant`는 네임스페이스 간 참조를 승인할 때 쓰며 클러스터 간 발견을 제공하지 않습니다.
-2. **100:0에서 시작해 Green을 5%로 엽니다.** 0%인 동안에도 별도 시험 호스트나 헤더 매칭 라우트로 Green의 인증, 데이터 읽기·쓰기와 응답을 확인할 수 있습니다.
+2. **100:0에서 시작해 Green을 5%로 엽니다.** 0%인 동안에도 별도 시험 호스트나 헤더 매칭 라우트로 Green의 인증, 데이터 읽기·쓰기와 응답을 확인할 수 있습니다. mTLS를 쓴다면 Green 서버의 CA·SAN과 Gateway의 클라이언트 인증서를 이 단계에서 대조합니다. [95:5 mTLS 검증 결과](#mtls)
 3. **동일한 요청을 비교하며 75:25, 50:50, 0:100으로 진행합니다.** 각 단계에서 라우트의 `Accepted`·`ResolvedRefs`와 실제 Blue/Green 응답 수를 확인합니다. Green의 오류율, p95 지연, 포화도와 429 비율을 Blue와 비교해 다음 단계로 갈지 결정합니다. 가중치는 개별 요청의 선택 비율이라 짧은 표본에서 정확히 5%가 나올 필요는 없습니다.
 4. **0% 뒤에 Blue를 드레인합니다.** 새 요청이 Green으로 가도 이미 열린 WebSocket이나 장기 gRPC 스트림, 처리 중인 주문은 Blue에 남을 수 있습니다. 활성 연결과 미완료 요청을 확인한 뒤 Blue를 줄입니다. 예를 들어 50:50에서 Green의 오류율이 올라가면 승격을 멈추고 75:25, 95:5로 되돌릴 수 있습니다. 이를 위해 Blue의 용량과 데이터 호환성을 유지합니다. EKS가 300개까지 확장된 시점에 온프레미스 50개가 현재 부하를 전부 감당할 수 있는지는 별도 판단입니다.
 
@@ -131,6 +131,29 @@ spec:
 
 **검증 범위.** 위 Gateway·라우트·정책을 릴리스 CRD 스키마로 검사하고, 예시 Service 주소를 넣어 `egctl v1.10.0 x translate`로 xDS를 생성했습니다. 결과에는 두 backend의 90:10 가중치, 요청 헤더와 rewrite, 3초 타임아웃, 503 본문과 100토큰/초 버킷이 들어 있습니다. 이 버전의 번역 결과에서 일반 라우트는 Envoy 클러스터 하나를 가리켰고, 90과 10은 EDS 엔드포인트 그룹의 가중치로 나타났습니다. 운영자가 편집한 값은 두 `backendRefs.weight`뿐입니다. 이 검증은 로컬 번역입니다. 아래 도쿄 수치는 직접 구성한 관리형 Envoy에 실제 요청을 보낸 결과입니다. [검증한 xDS 발췌](/assets/data/elb-envoy-tokyo/order-gateway-xds.json)
 
+<h2 id="mtls">Blue/Green을 옮길 때 mTLS는 누가 누구를 인증하나?</h2>
+
+**Green이 Ready여도 Gateway와 서로의 인증서를 신뢰해야 주문을 받을 수 있습니다.** `클라이언트 ⇄ Gateway ⇄ Blue 또는 Green`에서 Gateway가 HTTPS를 종료하면 두 개의 TLS 연결이 생깁니다. 첫 연결에서 Gateway는 서버이고, 두 번째 연결에서는 클라이언트입니다. 백엔드가 TLS로 확인하는 호출자도 Gateway입니다. 최종 사용자를 인가해야 한다면 애플리케이션 토큰 같은 사용자 신원을 별도로 검증합니다.
+
+| 구간 | 서로를 인증하는 설정 | 인증서 운영 주체 |
+| --- | --- | --- |
+| **클라이언트 ⇄ Gateway** | 클라이언트는 `orders.example.com`의 서버 인증서를 검증합니다. Gateway의 HTTPS 리스너는 `tls.certificateRefs`로 서버 인증서를 제시하고, `Gateway.spec.tls.frontend.default.validation`에서 클라이언트 CA와 `mode: AllowValidOnly`를 지정합니다. | 플랫폼 팀이 서버용 TLS Secret과 신뢰할 클라이언트 CA를 배포합니다. 호출자는 해당 CA가 서명한 클라이언트 인증서를 제시합니다. 앞단에서 TLS가 이미 종료됐다면 Gateway가 확인할 수 있는 상대는 새 TLS 연결을 연 피어입니다. |
+| **Gateway ⇄ Blue/Green 백엔드** | 각 Service의 `BackendTLSPolicy`로 해당 서버의 CA와 DNS SAN을 검증합니다. Gateway는 `spec.tls.backend.clientCertificateRef`의 클라이언트 인증서를 제시하고, 양쪽 백엔드도 이 인증서를 **요구하고 검증**해야 합니다. | 플랫폼 팀이 Gateway의 클라이언트 인증서를, 각 사이트 운영팀이 서버 인증서와 신뢰할 Gateway CA를 관리합니다. EC2·ECS·EKS 앱이 직접 TLS를 처리할 수도 있습니다. |
+| **Istio 워크로드 ⇄ 워크로드** | 사이드카 모드에서는 송신 Envoy의 자동 mTLS 또는 `DestinationRule`의 `ISTIO_MUTUAL`과 수신 측 `PeerAuthentication`의 `STRICT`를 사용합니다. `AuthorizationPolicy`로 허용할 서비스 계정 신원을 제한할 수 있습니다. | Istio 에이전트가 워크로드 인증서를 발급받아 SDS로 공급·회전합니다. 인입 Gateway의 인증서를 설정해도 메시 전체의 Pod별 SPIFFE 신원이 자동으로 발급되지는 않습니다. |
+
+`BackendTLSPolicy`는 **Gateway가 어느 백엔드 서버를 신뢰할지** 정합니다. 서버가 Gateway를 식별하려면 반대 방향의 신뢰도 필요합니다. 예제에서는 Blue와 Green의 서버 CA를 분리하고, 두 서버가 같은 Gateway 클라이언트 CA를 신뢰하게 했습니다. 각 백엔드의 HTTPS 포트는 실제로 mTLS를 요구하도록 구성해야 합니다. 앞의 평문 echo 서버에 YAML만 적용해서는 이 구성이 완성되지 않습니다. [Gateway·HTTPRoute·두 BackendTLSPolicy 전체 YAML](/assets/data/elb-envoy-tokyo/order-gateway-mtls.yaml) · [Gateway API TLS 가이드](https://gateway-api.sigs.k8s.io/guides/user-guides/tls/)
+
+**95:5에서 Green의 CA만 틀리면 어떤 응답이 나올까요?** Gateway API v1.6.1 예제를 Envoy Gateway 1.10으로 xDS에 번역하고, 로컬 Envoy 1.40.0과 CA가 다른 두 TLS 서버에 같은 요청을 200건씩 보냈습니다. 생성된 TLS 설정과 라우트를 사용하고, 수신 주소와 인증서 공급은 루프백·로컬 테스트 키로 구성했습니다.
+
+| 가중치 Blue:Green = 95:5 | Blue 앱이 반환한 200 | Green 앱이 반환한 200 | Gateway가 반환한 503 |
+| --- | ---: | ---: | ---: |
+| 두 사이트의 CA와 서버 이름이 일치 | 190 | 10 | 0 |
+| Gateway에 Green 서버의 CA를 잘못 지정 | 190 | 0 | 10 |
+
+두 번째 행에서 Green 앱이 받은 HTTP 요청은 **0건**이었습니다. 연결이 앱에 닿기 전에 TLS 검증이 실패했습니다. 단일 사이트 검사에서도 Gateway의 업스트림 클라이언트 인증서를 빼거나 Green의 DNS SAN과 다른 이름을 지정하면 503이었습니다. 반대로 **인입 클라이언트의 인증서**가 없거나 신뢰하지 않는 CA가 발급한 인증서를 내면 HTTP 응답 전에 TLS 핸드셰이크가 종료됐습니다. 정상 요청에서 두 앱이 확인한 URI SAN은 모두 테스트용 Gateway 신원 `spiffe://example.test/gateway/orders`였습니다. [mTLS 요청 결과](/assets/data/elb-envoy-tokyo/order-gateway-mtls-results.json)
+
+**이전 순서에도 신뢰 설정을 포함합니다.** Green이 0%일 때 시험 라우트로 정상 신원은 통과하고 허용하지 않은 신원은 거부되는지 확인합니다. CA까지 교체한다면 양쪽에 필요한 기존 CA와 새 CA의 신뢰 루트를 겹쳐 배포한 뒤 새 인증서로 바꾸고, Blue로 되돌릴 기간과 기존 연결의 드레인이 끝난 후 이전 루트를 제거합니다. Blue와 Green이 각각 Istio `STRICT` 메시라면 같은 서비스 이름이어도 두 메시의 CA는 다를 수 있습니다. 메시가 신뢰하는 클라이언트 인증서와 올바른 SPIFFE 신원, 수신 사이드카의 TLS 협상 및 인가 정책까지 확인합니다. 기존 Istio 인입 게이트웨이를 경유해 해당 게이트웨이의 워크로드 신원으로 백엔드를 호출하는 구성도 가능합니다. 이 로컬 실험은 두 구간의 mTLS를 검증한 것이며 도쿄 관리형 ELB의 mTLS, Istio 간 신뢰 연동과 인증서 회전은 실측 범위 밖입니다. [AWS remote provider의 TLS 인증서 공급](https://github.com/aws/elb-envoy-remote-infra-provider/blob/v1.0.0/docs/guide/tls.md) · [Istio mTLS와 워크로드 신원](https://docs.atomai.click/kubernetes-docs/ko/service-mesh/istio/security/01-mtls)
+
 ## EC2·ECS·EKS에서 같은 요청을 비교했습니다
 
 도쿄 실측 환경의 진입 경로는 `CloudFront → 내부 NLB → 내부 ELB for Envoy`였습니다. 2026년 11월 26일 Envoy 1.40에서 EC2의 HTTP 서버, ECS Fargate 태스크, EKS 1.37의 `order/api`로 요청을 보냈습니다. EKS에는 임시 EC2 워커와 Istio 1.30.2를 사용했습니다. 두 Pod 모두 앱과 사이드카가 Ready였고 두 사이드카가 istiod의 LDS·RDS·CDS·EDS를 구독하는 것을 확인했습니다.
@@ -182,7 +205,7 @@ AWS가 **글로벌 rate limiting 미지원**이라고 명시한 대상은 EKS의
 | 연결 풀·회로 차단·이상 호스트 제외·부하 분산 방식 | `BackendTrafficPolicy`의 `circuitBreaker`·`healthCheck.passive`·`loadBalancer` | Istio의 `DestinationRule.trafficPolicy`를 동작별로 나눠 Gateway 또는 HTTPRoute에 붙입니다. 카운터의 기준과 제외·복귀 조건도 대조합니다. |
 | 오류·지연 주입 | Envoy Gateway `BackendTrafficPolicy.spec.faultInjection.abort`·`delay` | 대상 Route를 좁혀 적용할 수 있습니다. 미러링은 별도 `RequestMirror` 필터이며 복제 요청을 받는 앱이 실제 쓰기를 수행하는지도 확인합니다. |
 | EnvoyFilter 기반 요청 제한 | 인입 로컬은 `BackendTrafficPolicy.spec.rateLimit.local` | 인입 프록시 인스턴스별 한도입니다. AWS remote provider의 글로벌 RLS 정책은 미지원입니다. 직접 구성한 외부 RLS 실측은 앞 절의 별도 경로입니다. |
-| 백엔드 TLS·JWT·접근 정책 | 표준 `BackendTLSPolicy`로 Service에 대한 서버 인증서 검증, Envoy Gateway `SecurityPolicy`로 인입 JWT·인가 | 메시 내부의 `PeerAuthentication`, 워크로드 신원 발급과 동서 트래픽 인가는 별도로 운영합니다. |
+| 백엔드 TLS·JWT·접근 정책 | `BackendTLSPolicy`는 서버 CA·이름 검증, `Gateway.spec.tls.backend.clientCertificateRef`는 Gateway의 클라이언트 인증서, `SecurityPolicy`는 인입 JWT·인가 | 백엔드에서 클라이언트 인증서를 요구해야 mTLS가 됩니다. 메시의 `PeerAuthentication`과 워크로드 신원도 별도로 운영합니다. [구간별 mTLS](#mtls) |
 | Pod별 인바운드 한도 | 사이드카 모드에서는 기존 Istio `EnvoyFilter`를 `SIDECAR_INBOUND`에 적용 | 인입 `HTTPRoute`로 이전해도 각 Pod에 버킷이 생기지 않습니다. 뒤의 두 Pod에서 이 차이를 측정했습니다. |
 
 `HTTPRoute`는 인입 정책의 선언이고 Envoy Gateway가 이를 xDS로 변환합니다. Istio의 확장을 옮길 때는 어떤 프록시에서 실행했는지부터 확인하는 편이 좋습니다. 같은 100 TPS라도 게이트웨이와 주문 Pod에 적용할 때 보호하는 대상이 달라집니다. [Envoy Gateway 정책 API](https://gateway.envoyproxy.io/docs/api/extension_types/) · [BackendTLSPolicy](https://gateway-api.sigs.k8s.io/reference/api-types/policy/backendtlspolicy/) · [AWS remote provider의 기능별 지원](https://github.com/aws/elb-envoy-remote-infra-provider/blob/v1.0.0/docs/compatibility.md)
