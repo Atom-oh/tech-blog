@@ -1,0 +1,37 @@
+.prose .migration-share {
+  --site-color: light-dark(#596272, #9ba8bb);
+  --eks-color: light-dark(#146958, #60b7a4);
+  margin: 25px 0 32px;
+  padding: clamp(17px, 3vw, 29px);
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  line-height: 1.5;
+}
+.migration-share header, .migration-share section { margin: 0; }
+.migration-share header strong { display: block; font-size: clamp(19px, 2.5vw, 25px); letter-spacing: -.035em; }
+.migration-share .chart-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 20px; }
+.migration-share .chart-panels section + section { border-left: 1px solid var(--border); padding-left: 24px; }
+.migration-share .chart-heading { display: block; font-size: 16px; margin-bottom: 10px; }
+.migration-share .share-labels { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-top: 16px; font-size: 13px; }
+.migration-share .share-labels b { display: block; margin-top: 2px; font-size: clamp(22px, 3vw, 30px); line-height: 1.2; }
+.migration-share .share-labels span:last-child { text-align: right; }
+.migration-share .share-labels span:last-child b { color: var(--eks-color); }
+.migration-share .share-bar { display: block; width: 100%; height: 16px; margin: 8px 0 14px; overflow: hidden; border-radius: 3px; }
+.migration-share .old-site { fill: var(--site-color); }
+.migration-share .new-site { fill: var(--eks-color); }
+.migration-share .pod-selector { display: grid; gap: 2px; font-size: 13px; }
+.migration-share .pod-selector[hidden] { display: none; }
+.migration-share input { width: 100%; margin: 0; min-height: 30px; cursor: pointer; accent-color: var(--eks-color); }
+.migration-share .chart-note { display: block; font-size: 13px; line-height: 1.6; color: var(--muted); }
+.migration-share .cutover-bars { display: grid; gap: 5px; }
+.migration-share .cutover-bars > div { display: grid; grid-template-columns: 39px minmax(0, 1fr) 37px 38px; align-items: center; gap: 7px; font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; }
+.migration-share .cutover-bars .share-bar { margin: 0; height: 9px; }
+.migration-share .cutover-bars .stage { text-align: left; }
+.migration-share .cutover-bars b { font-size: 12px; color: var(--muted); }
+.prose .migration-share figcaption { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 16px; text-align: left; font-size: 13px; line-height: 1.6; }
+@media (max-width: 680px) {
+  .migration-share .chart-panels { grid-template-columns: 1fr; gap: 17px; }
+  .migration-share .chart-panels section + section { border-left: 0; border-top: 1px solid var(--border); padding: 16px 0 0; }
+}

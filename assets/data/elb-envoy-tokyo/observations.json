@@ -1,0 +1,740 @@
+{
+  "region": "ap-northeast-1",
+  "envoy_version": "1.40",
+  "revision_before": {
+    "time_utc": "2026-11-26T12:31:56.551885+00:00",
+    "path": "/revision",
+    "status": 200,
+    "body": "v1",
+    "limit": null,
+    "cache": "Miss from cloudfront"
+  },
+  "revision_after": {
+    "time_utc": "2026-11-26T12:32:29.393606+00:00",
+    "path": "/revision",
+    "status": 200,
+    "body": "v2",
+    "limit": null,
+    "cache": "Miss from cloudfront"
+  },
+  "change": {
+    "resource": "Proxy",
+    "property": "ConfigurationArchive",
+    "replacement": "False"
+  },
+  "private_path": {
+    "time_utc": "2026-11-26T12:33:10.358457+00:00",
+    "source": "lab EC2 (backend security group)",
+    "timeout_seconds": 3,
+    "direct": [
+      {
+        "destination": "EC2 loopback",
+        "status": 200
+      },
+      {
+        "destination": "NLB",
+        "error": "timeout"
+      },
+      {
+        "destination": "Envoy",
+        "error": "timeout"
+      },
+      {
+        "destination": "EKS Pod",
+        "error": "timeout"
+      },
+      {
+        "destination": "ECS task",
+        "error": "timeout"
+      }
+    ]
+  },
+  "probe": {
+    "time_utc": "2026-11-26T12:32:39.591308+00:00",
+    "unsigned": {
+      "path": "/readyz",
+      "status": 403,
+      "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Error><Code>MissingKey</Code><Message>Missing Key-Pair-Id query parameter or cook",
+      "limit": null,
+      "cache": "Error from cloudfront"
+    },
+    "routes": [
+      {
+        "path": "/eks/probe",
+        "status": 200,
+        "body": {
+          "backend": "eks",
+          "path": "/probe"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/ec2/probe",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/probe"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/ecs/probe",
+        "status": 200,
+        "body": {
+          "backend": "ecs",
+          "path": "/probe"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/revision",
+        "status": 200,
+        "body": "v2",
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/unmatched",
+        "status": 404,
+        "body": "",
+        "limit": null,
+        "cache": "Error from cloudfront"
+      }
+    ],
+    "limited": [
+      {
+        "path": "/limited/0",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/0"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/limited/1",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/1"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/limited/2",
+        "status": 429,
+        "body": "local_rate_limited",
+        "limit": "local",
+        "cache": "Error from cloudfront"
+      },
+      {
+        "path": "/limited/3",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/3"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/limited/4",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/4"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/limited/5",
+        "status": 429,
+        "body": "local_rate_limited",
+        "limit": "local",
+        "cache": "Error from cloudfront"
+      },
+      {
+        "path": "/limited/6",
+        "status": 429,
+        "body": "local_rate_limited",
+        "limit": "local",
+        "cache": "Error from cloudfront"
+      },
+      {
+        "path": "/limited/7",
+        "status": 429,
+        "body": "local_rate_limited",
+        "limit": "local",
+        "cache": "Error from cloudfront"
+      },
+      {
+        "path": "/limited/8",
+        "status": 429,
+        "body": "local_rate_limited",
+        "limit": "local",
+        "cache": "Error from cloudfront"
+      },
+      {
+        "path": "/limited/9",
+        "status": 429,
+        "body": "local_rate_limited",
+        "limit": "local",
+        "cache": "Error from cloudfront"
+      },
+      {
+        "path": "/limited/10",
+        "status": 429,
+        "body": "local_rate_limited",
+        "limit": "local",
+        "cache": "Error from cloudfront"
+      },
+      {
+        "path": "/limited/11",
+        "status": 429,
+        "body": "local_rate_limited",
+        "limit": "local",
+        "cache": "Error from cloudfront"
+      },
+      {
+        "path": "/limited/12",
+        "status": 429,
+        "body": "local_rate_limited",
+        "limit": "local",
+        "cache": "Error from cloudfront"
+      },
+      {
+        "path": "/limited/13",
+        "status": 429,
+        "body": "local_rate_limited",
+        "limit": "local",
+        "cache": "Error from cloudfront"
+      },
+      {
+        "path": "/limited/14",
+        "status": 429,
+        "body": "local_rate_limited",
+        "limit": "local",
+        "cache": "Error from cloudfront"
+      },
+      {
+        "path": "/limited/15",
+        "status": 429,
+        "body": "local_rate_limited",
+        "limit": "local",
+        "cache": "Error from cloudfront"
+      }
+    ],
+    "split": [
+      {
+        "path": "/split/0",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/0"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/1",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/1"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/2",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/2"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/3",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/3"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/4",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/4"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/5",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/5"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/6",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/6"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/7",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/7"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/8",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/8"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/9",
+        "status": 200,
+        "body": {
+          "backend": "ecs",
+          "path": "/split/9"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/10",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/10"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/11",
+        "status": 200,
+        "body": {
+          "backend": "ecs",
+          "path": "/split/11"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/12",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/12"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/13",
+        "status": 200,
+        "body": {
+          "backend": "ecs",
+          "path": "/split/13"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/14",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/14"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/15",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/15"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/16",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/16"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/17",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/17"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/18",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/18"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/19",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/19"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/20",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/20"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/21",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/21"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/22",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/22"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/23",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/23"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/24",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/24"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/25",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/25"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/26",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/26"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/27",
+        "status": 200,
+        "body": {
+          "backend": "ecs",
+          "path": "/split/27"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/28",
+        "status": 200,
+        "body": {
+          "backend": "ecs",
+          "path": "/split/28"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/29",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/29"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/30",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/30"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/31",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/31"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/32",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/32"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/33",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/33"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/34",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/34"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/35",
+        "status": 200,
+        "body": {
+          "backend": "ecs",
+          "path": "/split/35"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/36",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/36"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/37",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/37"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/38",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/38"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/39",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/39"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/40",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/40"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/41",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/41"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/42",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/42"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/43",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/43"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/44",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/44"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/45",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/45"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/46",
+        "status": 200,
+        "body": {
+          "backend": "ecs",
+          "path": "/split/46"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/47",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/47"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/48",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/48"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      },
+      {
+        "path": "/split/49",
+        "status": 200,
+        "body": {
+          "backend": "ec2",
+          "path": "/split/49"
+        },
+        "limit": null,
+        "cache": "Miss from cloudfront"
+      }
+    ],
+    "split_counts": {
+      "ec2": 43,
+      "ecs": 7
+    }
+  }
+}

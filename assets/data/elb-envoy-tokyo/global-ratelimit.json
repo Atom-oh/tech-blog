@@ -1,0 +1,241 @@
+{
+  "region": "ap-northeast-1",
+  "envoy_version": "1.40",
+  "configuration": "direct bootstrap and file-based xDS",
+  "start_utc": "2026-11-26T12:46:24.587662+00:00",
+  "elapsed_seconds": 0.21062,
+  "revision": "v3-rls",
+  "rls": {
+    "api": "envoy.service.ratelimit.v3.RateLimitService/ShouldRateLimit",
+    "domain": "envoy-blog",
+    "descriptor": {
+      "generic_key": "shared-demo"
+    },
+    "requests_per_window": 2,
+    "window_seconds": 60,
+    "state": "one RLS process with a shared in-memory counter",
+    "peer_identity": "A and B identify the two distinct caller IPs observed by RLS at the gRPC connection"
+  },
+  "counts": {
+    "429": 22,
+    "200": 2
+  },
+  "tested_config_fragments": {
+    "note": "The RLS private IP is replaced by the documentation address 192.0.2.10. The HTTP filter was inserted before envoy.filters.http.router; the route forwards allowed requests to the existing ec2 echo cluster.",
+    "http_filter": {
+      "name": "envoy.filters.http.ratelimit",
+      "typed_config": {
+        "@type": "type.googleapis.com/envoy.extensions.filters.http.ratelimit.v3.RateLimit",
+        "domain": "envoy-blog",
+        "timeout": "0.3s",
+        "failure_mode_deny": true,
+        "rate_limit_service": {
+          "grpc_service": {
+            "envoy_grpc": {
+              "cluster_name": "lab_rls"
+            }
+          },
+          "transport_api_version": "V3"
+        }
+      }
+    },
+    "route": {
+      "match": {
+        "prefix": "/global/"
+      },
+      "route": {
+        "cluster": "ec2",
+        "prefix_rewrite": "/",
+        "rate_limits": [
+          {
+            "actions": [
+              {
+                "generic_key": {
+                  "descriptor_value": "shared-demo"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "rls_cluster": {
+      "name": "lab_rls",
+      "type": "STATIC",
+      "connect_timeout": "2s",
+      "load_assignment": {
+        "cluster_name": "lab_rls",
+        "endpoints": [
+          {
+            "lb_endpoints": [
+              {
+                "endpoint": {
+                  "address": {
+                    "socket_address": {
+                      "address": "192.0.2.10",
+                      "port_value": 8080
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "typed_extension_protocol_options": {
+        "envoy.extensions.upstreams.http.v3.HttpProtocolOptions": {
+          "@type": "type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions",
+          "explicit_http_config": {
+            "http2_protocol_options": {}
+          }
+        }
+      }
+    }
+  },
+  "requests": [
+    {
+      "request": "/global/1795697184-0",
+      "status": 429,
+      "rls_decision": "OVER_LIMIT",
+      "rls_peer": "B"
+    },
+    {
+      "request": "/global/1795697184-1",
+      "status": 200,
+      "rls_decision": "OK",
+      "rls_peer": "B"
+    },
+    {
+      "request": "/global/1795697184-2",
+      "status": 200,
+      "rls_decision": "OK",
+      "rls_peer": "B"
+    },
+    {
+      "request": "/global/1795697184-3",
+      "status": 429,
+      "rls_decision": "OVER_LIMIT",
+      "rls_peer": "A"
+    },
+    {
+      "request": "/global/1795697184-4",
+      "status": 429,
+      "rls_decision": "OVER_LIMIT",
+      "rls_peer": "A"
+    },
+    {
+      "request": "/global/1795697184-5",
+      "status": 429,
+      "rls_decision": "OVER_LIMIT",
+      "rls_peer": "A"
+    },
+    {
+      "request": "/global/1795697184-6",
+      "status": 429,
+      "rls_decision": "OVER_LIMIT",
+      "rls_peer": "B"
+    },
+    {
+      "request": "/global/1795697184-7",
+      "status": 429,
+      "rls_decision": "OVER_LIMIT",
+      "rls_peer": "B"
+    },
+    {
+      "request": "/global/1795697184-8",
+      "status": 429,
+      "rls_decision": "OVER_LIMIT",
+      "rls_peer": "A"
+    },
+    {
+      "request": "/global/1795697184-9",
+      "status": 429,
+      "rls_decision": "OVER_LIMIT",
+      "rls_peer": "A"
+    },
+    {
+      "request": "/global/1795697184-10",
+      "status": 429,
+      "rls_decision": "OVER_LIMIT",
+      "rls_peer": "B"
+    },
+    {
+      "request": "/global/1795697184-11",
+      "status": 429,
+      "rls_decision": "OVER_LIMIT",
+      "rls_peer": "B"
+    },
+    {
+      "request": "/global/1795697184-12",
+      "status": 429,
+      "rls_decision": "OVER_LIMIT",
+      "rls_peer": "B"
+    },
+    {
+      "request": "/global/1795697184-13",
+      "status": 429,
+      "rls_decision": "OVER_LIMIT",
+      "rls_peer": "B"
+    },
+    {
+      "request": "/global/1795697184-14",
+      "status": 429,
+      "rls_decision": "OVER_LIMIT",
+      "rls_peer": "B"
+    },
+    {
+      "request": "/global/1795697184-15",
+      "status": 429,
+      "rls_decision": "OVER_LIMIT",
+      "rls_peer": "A"
+    },
+    {
+      "request": "/global/1795697184-16",
+      "status": 429,
+      "rls_decision": "OVER_LIMIT",
+      "rls_peer": "B"
+    },
+    {
+      "request": "/global/1795697184-17",
+      "status": 429,
+      "rls_decision": "OVER_LIMIT",
+      "rls_peer": "B"
+    },
+    {
+      "request": "/global/1795697184-18",
+      "status": 429,
+      "rls_decision": "OVER_LIMIT",
+      "rls_peer": "B"
+    },
+    {
+      "request": "/global/1795697184-19",
+      "status": 429,
+      "rls_decision": "OVER_LIMIT",
+      "rls_peer": "B"
+    },
+    {
+      "request": "/global/1795697184-20",
+      "status": 429,
+      "rls_decision": "OVER_LIMIT",
+      "rls_peer": "A"
+    },
+    {
+      "request": "/global/1795697184-21",
+      "status": 429,
+      "rls_decision": "OVER_LIMIT",
+      "rls_peer": "B"
+    },
+    {
+      "request": "/global/1795697184-22",
+      "status": 429,
+      "rls_decision": "OVER_LIMIT",
+      "rls_peer": "A"
+    },
+    {
+      "request": "/global/1795697184-23",
+      "status": 429,
+      "rls_decision": "OVER_LIMIT",
+      "rls_peer": "A"
+    }
+  ]
+}

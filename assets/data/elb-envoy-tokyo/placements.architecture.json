@@ -1,0 +1,228 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EC2와 ECS에 프록시를 추가하면 어디서 실행될까?",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1080,
+      580
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "components": [
+    {
+      "id": "vm-owner",
+      "type": "external",
+      "label": "플랫폼 팀",
+      "sublabel": "AMI · cloud-init · SSM",
+      "pos": [
+        30,
+        83
+      ],
+      "size": [
+        190,
+        62
+      ]
+    },
+    {
+      "id": "vm-proxy",
+      "type": "security",
+      "label": "Istio 에이전트 · Envoy",
+      "sublabel": "systemd 서비스",
+      "pos": [
+        420,
+        83
+      ],
+      "size": [
+        207,
+        62
+      ]
+    },
+    {
+      "id": "vm-app",
+      "type": "backend",
+      "label": "EC2 앱",
+      "sublabel": "같은 VM의 별도 프로세스",
+      "pos": [
+        820,
+        83
+      ],
+      "size": [
+        205,
+        62
+      ]
+    },
+    {
+      "id": "task-owner",
+      "type": "external",
+      "label": "플랫폼 팀 → ECS",
+      "sublabel": "태스크 정의를 등록하고 배포",
+      "pos": [
+        30,
+        276
+      ],
+      "size": [
+        190,
+        62
+      ]
+    },
+    {
+      "id": "task-proxy",
+      "type": "security",
+      "label": "istio-proxy",
+      "sublabel": "직접 정의한 컨테이너",
+      "pos": [
+        420,
+        276
+      ],
+      "size": [
+        207,
+        62
+      ]
+    },
+    {
+      "id": "task-app",
+      "type": "backend",
+      "label": "ECS 앱",
+      "sublabel": "같은 태스크의 앱 컨테이너",
+      "pos": [
+        820,
+        276
+      ],
+      "size": [
+        205,
+        62
+      ]
+    },
+    {
+      "id": "sc-owner",
+      "type": "cloud",
+      "label": "Amazon ECS",
+      "sublabel": "서비스에서 Service Connect 활성화",
+      "pos": [
+        30,
+        468
+      ],
+      "size": [
+        190,
+        62
+      ]
+    },
+    {
+      "id": "aws-proxy",
+      "type": "cloud",
+      "label": "Service Connect 프록시",
+      "sublabel": "ECS가 관리하는 컨테이너",
+      "pos": [
+        420,
+        468
+      ],
+      "size": [
+        207,
+        62
+      ]
+    },
+    {
+      "id": "sc-app",
+      "type": "backend",
+      "label": "ECS 앱",
+      "sublabel": "같은 태스크의 앱 컨테이너",
+      "pos": [
+        820,
+        468
+      ],
+      "size": [
+        205,
+        62
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "대안 1 · EC2 인스턴스 한 대 / Istio VM 편입",
+      "wraps": [
+        "vm-proxy",
+        "vm-app"
+      ],
+      "pad": 22
+    },
+    {
+      "kind": "region",
+      "label": "대안 2 · ECS 태스크 하나 / 직접 구성하는 Istio 연동",
+      "wraps": [
+        "task-proxy",
+        "task-app"
+      ],
+      "pad": 22
+    },
+    {
+      "kind": "region",
+      "label": "대안 3 · ECS 태스크 하나 / AWS Service Connect",
+      "wraps": [
+        "aws-proxy",
+        "sc-app"
+      ],
+      "pad": 22
+    }
+  ],
+  "connections": [
+    {
+      "id": "vm-owner-vm-proxy",
+      "from": "vm-owner",
+      "to": "vm-proxy",
+      "label": "설치 · 기동",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "vm-proxy-vm-app",
+      "from": "vm-proxy",
+      "to": "vm-app",
+      "label": "호스트 내부 요청",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "task-owner-task-proxy",
+      "from": "task-owner",
+      "to": "task-proxy",
+      "label": "ECS가 명세대로 시작",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "task-proxy-task-app",
+      "from": "task-proxy",
+      "to": "task-app",
+      "label": "태스크 내부 요청",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "sc-owner-aws-proxy",
+      "from": "sc-owner",
+      "to": "aws-proxy",
+      "label": "새 태스크에 추가",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "aws-proxy-sc-app",
+      "from": "aws-proxy",
+      "to": "sc-app",
+      "label": "태스크 내부 요청",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ]
+}

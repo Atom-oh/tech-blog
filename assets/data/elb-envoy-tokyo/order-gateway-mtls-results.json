@@ -1,0 +1,86 @@
+{
+  "scope": "Local loopback, Envoy 1.40.0 / Envoy Gateway egctl v1.10.0. Logical Blue and Green are independent TLS servers with different CAs. The published Gateway API resources were translated offline. Discovery and listener/endpoint addresses were adapted for local replay; named SDS secrets were supplied statically. No AWS remote-provider, Istio mesh or certificate rotation test.",
+  "utc": "2026-11-26T13:59:45.239049+00:00",
+  "cases": [
+    {
+      "http_status": 200,
+      "site": "blue",
+      "client_uri_san": [
+        "spiffe://example.test/gateway/orders"
+      ],
+      "config": "blue",
+      "client": "viewer",
+      "backend_http_requests": 1
+    },
+    {
+      "http_status": null,
+      "tls_error": "TLSV13_ALERT_CERTIFICATE_REQUIRED",
+      "config": "blue",
+      "client": "absent",
+      "backend_http_requests": 0
+    },
+    {
+      "http_status": null,
+      "tls_error": "TLSV1_ALERT_UNKNOWN_CA",
+      "config": "blue",
+      "client": "wrong-viewer",
+      "backend_http_requests": 0
+    },
+    {
+      "http_status": 200,
+      "site": "green",
+      "client_uri_san": [
+        "spiffe://example.test/gateway/orders"
+      ],
+      "config": "green",
+      "client": "viewer",
+      "backend_http_requests": 1
+    },
+    {
+      "http_status": 503,
+      "config": "no-upstream-client",
+      "client": "viewer",
+      "backend_http_requests": 0
+    },
+    {
+      "http_status": 503,
+      "config": "wrong-green-ca",
+      "client": "viewer",
+      "backend_http_requests": 0
+    },
+    {
+      "http_status": 503,
+      "config": "wrong-green-san",
+      "client": "viewer",
+      "backend_http_requests": 0
+    }
+  ],
+  "canaries": [
+    {
+      "config": "canary",
+      "weights": {
+        "blue": 95,
+        "green": 5
+      },
+      "sent": 200,
+      "http_200_blue": 190,
+      "http_200_green": 10,
+      "http_503": 0,
+      "blue_app_requests": 190,
+      "green_app_requests": 10
+    },
+    {
+      "config": "broken-canary",
+      "weights": {
+        "blue": 95,
+        "green": 5
+      },
+      "sent": 200,
+      "http_200_blue": 190,
+      "http_200_green": 0,
+      "http_503": 10,
+      "blue_app_requests": 190,
+      "green_app_requests": 0
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="560" viewBox="0 0 1120 560" role="img" aria-labelledby="title desc">
+  <title id="title">DNS 발견으로 확인한 Pod 수 비례 분배</title>
+  <desc id="desc">축소 측정. 온프레미스 대신 ECS 태스크 하나를 고정 대상으로 두고, 고정 대상과 EKS 주문 Pod를 각각 headless Service 이름 fixed-site와 elastic-site로 노출했다. 관리형 Envoy의 STRICT_DNS 클러스터 하나에 두 이름을 넣고 ROUND_ROBIN과 2초 DNS 재조회를 설정했다. 개별 사이트 가중치는 선언하지 않았다. EKS replicas만 1에서 3으로 바꾸자 120건이 60 대 60에서 30 대 30·30·30으로 바뀌었고, 응답한 Pod 이름은 Ready EndpointSlice 명단과 일치했다.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#405267" stroke-width="1.6"/></marker>
+    <marker id="arrow-ok" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#4f8a68" stroke-width="1.6"/></marker>
+    <marker id="arrow-bad" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#b35a42" stroke-width="1.6"/></marker>
+  </defs>
+  <rect width="1120" height="560" rx="20" fill="#fbfaf7"/>
+  <g font-family="Noto Sans CJK KR, sans-serif">
+    <text x="42" y="49" fill="#5f6670" font-size="18" font-weight="600" letter-spacing="2">TOKYO · STRICT_DNS POOL · REPLICAS 1 → 3</text>
+    <text x="42" y="93" fill="#222e3b" font-size="27" font-weight="700">replicas만 바꿨더니 분배가 Ready Pod 수를 따라갔습니다</text>
+    <rect x="24" y="124" width="1072" height="196" rx="16" fill="#f1f5fb" stroke="#6f8fb8" stroke-width="1.4"/>
+    <text x="44" y="154" fill="#1f3b63" font-size="15" font-weight="700">구성</text>
+    <text x="1076" y="154" fill="#33557f" font-size="13" font-weight="600" text-anchor="end">사이트 weight 선언 없음 · 컨트롤러 없음</text>
+    <rect x="44" y="178" width="150" height="62" rx="10" fill="#e3ecf8" stroke="#4a6fa5" stroke-width="1.6"/>
+    <text x="119.0" y="204" fill="#1f3b63" font-size="14" font-weight="700" text-anchor="middle">ELB for Envoy</text>
+    <text x="119.0" y="226" fill="#5f6670" font-size="11" text-anchor="middle">Route 하나</text>
+    <rect x="226" y="178" width="210" height="62" rx="10" fill="#ffffff" stroke="#4a6fa5" stroke-width="1.6"/>
+    <text x="331.0" y="204" fill="#222e3b" font-size="14" font-weight="700" text-anchor="middle" font-family="Menlo, Consolas, monospace">cluster hybrid-demo</text>
+    <text x="331.0" y="226" fill="#5f6670" font-size="11" text-anchor="middle">STRICT_DNS · ROUND_ROBIN · 2s</text>
+    <path d="M196 209 L222 209" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <path d="M438 209 L470 202" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <rect x="474" y="174" width="190" height="56" rx="8" fill="#ffffff" stroke="#9db4d3" stroke-width="1.2"/>
+    <text x="569" y="198" fill="#222e3b" font-size="14" font-weight="700" text-anchor="middle" font-family="Menlo, Consolas, monospace">fixed-site</text>
+    <text x="569" y="218" fill="#5f6670" font-size="11" text-anchor="middle">DNS 이름 · headless Service</text>
+    <path d="M666 202 L700 202" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <rect x="704" y="174" width="372" height="56" rx="8" fill="#ffffff" stroke="#a7aea6" stroke-width="1.6"/>
+    <text x="722" y="198" fill="#222e3b" font-size="14" font-weight="700">ECS 태스크 1개</text>
+    <text x="722" y="218" fill="#5f6670" font-size="12">온프레미스 대신</text>
+    <path d="M438 209 L470 276" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <rect x="474" y="248" width="190" height="56" rx="8" fill="#ffffff" stroke="#9db4d3" stroke-width="1.2"/>
+    <text x="569" y="272" fill="#222e3b" font-size="14" font-weight="700" text-anchor="middle" font-family="Menlo, Consolas, monospace">elastic-site</text>
+    <text x="569" y="292" fill="#5f6670" font-size="11" text-anchor="middle">DNS 이름 · headless Service</text>
+    <path d="M666 276 L700 276" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <rect x="704" y="248" width="372" height="56" rx="8" fill="#ffffff" stroke="#4a6fa5" stroke-width="1.6"/>
+    <text x="722" y="272" fill="#222e3b" font-size="14" font-weight="700">EKS Ready Pod 1 → 3</text>
+    <text x="722" y="292" fill="#5f6670" font-size="12">EndpointSlice 갱신</text>
+    <text x="44" y="274" fill="#5f6670" font-size="12">새 Pod가 Ready가 되면</text>
+    <text x="44" y="292" fill="#5f6670" font-size="12">DNS 응답에 그 IP가 추가되고</text>
+    <text x="44" y="310" fill="#5f6670" font-size="12">Envoy가 2초 안에 다시 조회</text>
+    <rect x="24" y="340" width="1072" height="146" rx="14" fill="#f4f5f2" stroke="#d6d6cf" stroke-width="1.2"/>
+    <text x="44" y="368" fill="#222e3b" font-size="16" font-weight="700">같은 Envoy 설정으로 120건씩 요청</text>
+    <text x="1076" y="368" fill="#5f6670" font-size="12" text-anchor="end">바꾼 것은 EKS replicas뿐</text>
+    <text x="44" y="406" fill="#222e3b" font-size="14" font-weight="700">고정 1 + EKS 1</text>
+    <rect x="200" y="388" width="298" height="26" rx="4" fill="#a7aea6"/>
+    <text x="210" y="406" fill="#ffffff" font-size="12" font-weight="700">고정 60</text>
+    <rect x="500" y="388" width="298" height="26" rx="4" fill="#4a6fa5"/>
+    <text x="510.0" y="406" fill="#ffffff" font-size="12" font-weight="700">Pod 60</text>
+    <text x="820" y="406" fill="#222e3b" font-size="13" font-weight="700">120건 성공 · EKS 60</text>
+    <text x="44" y="444" fill="#222e3b" font-size="14" font-weight="700">고정 1 + EKS 3</text>
+    <rect x="200" y="426" width="148" height="26" rx="4" fill="#a7aea6"/>
+    <text x="210" y="444" fill="#ffffff" font-size="12" font-weight="700">고정 30</text>
+    <rect x="350" y="426" width="148" height="26" rx="4" fill="#4a6fa5"/>
+    <text x="360.0" y="444" fill="#ffffff" font-size="12" font-weight="700">Pod 30</text>
+    <rect x="500" y="426" width="148" height="26" rx="4" fill="#6d8fbf"/>
+    <text x="510.0" y="444" fill="#ffffff" font-size="12" font-weight="700">Pod 30</text>
+    <rect x="650" y="426" width="148" height="26" rx="4" fill="#93acd2"/>
+    <text x="660.0" y="444" fill="#ffffff" font-size="12" font-weight="700">Pod 30</text>
+    <text x="820" y="444" fill="#222e3b" font-size="13" font-weight="700">120건 성공 · EKS 90</text>
+    <text x="200" y="472" fill="#5f6670" font-size="12">응답한 Pod 이름 = Ready EndpointSlice 명단</text>
+    <rect x="24" y="500" width="1072" height="46" rx="12" fill="#f6f0e1" stroke="#e0cfa6" stroke-width="1"/>
+    <text x="44" y="529" fill="#6b4f17" font-size="12">실제 두 사이트 전제: Envoy가 양쪽 Pod IP에 직접 연결 · 사이트별 DNS가 Ready 주소 전체를 반환 · ClusterIP나 게이트웨이 주소 하나만 보이면 이 비율이 나오지 않음</text>
+  </g>
+</svg>

@@ -1,0 +1,250 @@
+{
+  "verification": "Offline translation with Envoy Gateway egctl v1.10.0. The AWS remote provider was not run. The two Service IPs are documentation-only fixtures.",
+  "versions": {
+    "gateway_api": "v1.6.1",
+    "envoy_gateway": "v1.10.0",
+    "aws_remote_provider_schema": "v1.0.0"
+  },
+  "orders_route": {
+    "match": {
+      "pathSeparatedPrefix": "/orders"
+    },
+    "metadata": {
+      "filterMetadata": {
+        "envoy-gateway": {
+          "policies": [
+            {
+              "kind": "BackendTrafficPolicy",
+              "name": "orders-local-limit",
+              "namespace": "order"
+            }
+          ],
+          "resources": [
+            {
+              "kind": "HTTPRoute",
+              "name": "orders",
+              "namespace": "order"
+            }
+          ]
+        }
+      }
+    },
+    "name": "httproute/order/orders/rule/0/match/0/orders_example_com",
+    "requestHeadersToAdd": [
+      {
+        "header": {
+          "key": "x-order-hop",
+          "value": "ingress"
+        }
+      },
+      {
+        "appendAction": "OVERWRITE_IF_EXISTS_OR_ADD",
+        "header": {
+          "key": "x-order-source",
+          "value": "public-api"
+        }
+      }
+    ],
+    "route": {
+      "cluster": "httproute/order/orders/rule/0",
+      "idleTimeout": "3600s",
+      "regexRewrite": {
+        "pattern": {
+          "regex": "^/orders\\/*"
+        },
+        "substitution": "/"
+      },
+      "timeout": "3s",
+      "upgradeConfigs": [
+        {
+          "upgradeType": "websocket"
+        }
+      ]
+    },
+    "typedPerFilterConfig": {
+      "envoy.filters.http.local_ratelimit": {
+        "@type": "type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit",
+        "alwaysConsumeDefaultTokenBucket": false,
+        "enableRetryAfterHeader": true,
+        "enableXRatelimitHeaders": "DRAFT_VERSION_03",
+        "filterEnabled": {
+          "defaultValue": {
+            "numerator": 100
+          }
+        },
+        "filterEnforced": {
+          "defaultValue": {
+            "numerator": 100
+          }
+        },
+        "maxDynamicDescriptors": 10000,
+        "statPrefix": "http_local_rate_limiter",
+        "tokenBucket": {
+          "fillInterval": "1s",
+          "maxTokens": 100,
+          "tokensPerFill": 100
+        }
+      }
+    }
+  },
+  "maintenance_route": {
+    "directResponse": {
+      "bodyFormat": {
+        "textFormatSource": {
+          "inlineBytes": "b3JkZXJzIHVuZGVyIG1haW50ZW5hbmNl"
+        }
+      },
+      "status": 503
+    },
+    "match": {
+      "path": "/orders/maintenance"
+    },
+    "metadata": {
+      "filterMetadata": {
+        "envoy-gateway": {
+          "resources": [
+            {
+              "kind": "HTTPRoute",
+              "name": "orders-maintenance",
+              "namespace": "order"
+            }
+          ]
+        }
+      }
+    },
+    "name": "httproute/order/orders-maintenance/rule/0/match/0/orders_example_com",
+    "responseHeadersToAdd": [
+      {
+        "appendAction": "OVERWRITE_IF_EXISTS_OR_ADD",
+        "header": {
+          "key": "Content-Type",
+          "value": "text/plain"
+        }
+      }
+    ]
+  },
+  "endpoints": {
+    "@type": "type.googleapis.com/envoy.config.endpoint.v3.ClusterLoadAssignment",
+    "clusterName": "httproute/order/orders/rule/0",
+    "endpoints": [
+      {
+        "lbEndpoints": [
+          {
+            "endpoint": {
+              "address": {
+                "socketAddress": {
+                  "address": "192.0.2.110",
+                  "portValue": 8080
+                }
+              }
+            },
+            "loadBalancingWeight": 1
+          }
+        ],
+        "loadBalancingWeight": 90,
+        "locality": {
+          "region": "httproute/order/orders/rule/0/backend/0"
+        },
+        "metadata": {
+          "filterMetadata": {
+            "envoy-gateway": {
+              "resources": [
+                {
+                  "kind": "Service",
+                  "name": "api-stable",
+                  "namespace": "order",
+                  "sectionName": "8080"
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "lbEndpoints": [
+          {
+            "endpoint": {
+              "address": {
+                "socketAddress": {
+                  "address": "192.0.2.120",
+                  "portValue": 8080
+                }
+              }
+            },
+            "loadBalancingWeight": 1
+          }
+        ],
+        "loadBalancingWeight": 10,
+        "locality": {
+          "region": "httproute/order/orders/rule/0/backend/1"
+        },
+        "metadata": {
+          "filterMetadata": {
+            "envoy-gateway": {
+              "resources": [
+                {
+                  "kind": "Service",
+                  "name": "api-canary",
+                  "namespace": "order",
+                  "sectionName": "8080"
+                }
+              ]
+            }
+          }
+        }
+      }
+    ]
+  },
+  "blue_green_translation_examples": [
+    {
+      "declared": {
+        "blue": 100,
+        "green": 0
+      },
+      "offline_xds_locality_weights": {
+        "blue": 100,
+        "green": 0
+      }
+    },
+    {
+      "declared": {
+        "blue": 95,
+        "green": 5
+      },
+      "offline_xds_locality_weights": {
+        "blue": 95,
+        "green": 5
+      }
+    },
+    {
+      "declared": {
+        "blue": 75,
+        "green": 25
+      },
+      "offline_xds_locality_weights": {
+        "blue": 75,
+        "green": 25
+      }
+    },
+    {
+      "declared": {
+        "blue": 50,
+        "green": 50
+      },
+      "offline_xds_locality_weights": {
+        "blue": 50,
+        "green": 50
+      }
+    },
+    {
+      "declared": {
+        "blue": 0,
+        "green": 100
+      },
+      "offline_xds_locality_weights": {
+        "blue": 0,
+        "green": 100
+      }
+    }
+  ]
+}
