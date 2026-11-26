@@ -6,7 +6,7 @@
   </defs>
   <rect width="1120" height="820" rx="20" fill="#fbfaf7"/>
   <g font-family="Noto Sans CJK KR, sans-serif">
-    <text x="42" y="49" fill="#5f6670" font-size="18" font-weight="600" letter-spacing="2">ELB FOR ENVOY vs ISTIO INGRESS GATEWAY · TOKYO 2026-11-26 · 초기 실측</text>
+    <text x="42" y="49" fill="#5f6670" font-size="18" font-weight="600" letter-spacing="2">ELB FOR ENVOY vs ISTIO INGRESS GATEWAY · TOKYO 2026-11-26</text>
     <text x="42" y="93" fill="#222e3b" font-size="28" font-weight="700">인입 Envoy는 AWS로, Pod를 고르는 판단은 컨트롤 플레인에 남습니다</text>
     <rect x="24" y="122" width="1072" height="150" rx="16" fill="#f4f5f2" stroke="#d6d6cf" stroke-width="1"/>
     <text x="44" y="146" fill="#5f6670" font-size="14" font-weight="700">실측 경로</text>
@@ -119,7 +119,7 @@
     <text x="484" y="629" fill="#5f6670" font-size="12">UTC · /revision 응답 관찰</text>
     <rect x="704" y="292" width="392" height="368" rx="16" fill="#f6f0e1" stroke="#b58938" stroke-width="1.6" stroke-dasharray="7 5"/>
     <text x="724" y="324" fill="#6b4f17" font-size="19" font-weight="700">컨트롤 플레인이 계속 맡는 일</text>
-    <text x="1076" y="324" fill="#5f6670" font-size="13" text-anchor="end">초기 실험 범위 밖</text>
+    <text x="1076" y="324" fill="#5f6670" font-size="13" text-anchor="end">첫 회차 범위 밖</text>
     <rect x="720" y="344" width="360" height="68" rx="10" fill="#ffffff" stroke="#e0cfa6" stroke-width="1"/>
     <circle cx="742" cy="366" r="11" fill="#b58938"/>
     <text x="742" y="371" fill="#ffffff" font-size="13" font-weight="700" text-anchor="middle">1</text>
@@ -136,8 +136,8 @@
     <circle cx="742" cy="518" r="11" fill="#b58938"/>
     <text x="742" y="523" fill="#ffffff" font-size="13" font-weight="700" text-anchor="middle">3</text>
     <text x="762" y="523" fill="#222e3b" font-size="16" font-weight="700">사이드카 정책 배포</text>
-    <text x="762" y="543" fill="#5f6670" font-size="13">istiod가 VirtualService·</text>
-    <text x="762" y="559" fill="#5f6670" font-size="13">EnvoyFilter를 xDS로 전달</text>
+    <text x="762" y="543" fill="#5f6670" font-size="13">istiod가 CRD를 읽어 Envoy 설정으로</text>
+    <text x="762" y="559" fill="#5f6670" font-size="13">변환한 뒤 xDS로 푸시</text>
     <rect x="720" y="572" width="360" height="68" rx="10" fill="#ffffff" stroke="#e0cfa6" stroke-width="1"/>
     <circle cx="742" cy="594" r="11" fill="#b58938"/>
     <text x="742" y="599" fill="#ffffff" font-size="13" font-weight="700" text-anchor="middle">4</text>

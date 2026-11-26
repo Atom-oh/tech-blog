@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="770" viewBox="0 0 1120 770" role="img" aria-labelledby="title desc">
+  <title id="title">Istio 리소스가 Envoy xDS 설정이 되는 과정</title>
+  <desc id="desc">Kubernetes API에 적용한 Istio 리소스는 프록시로 그대로 전달되지 않는다. istiod가 Gateway, VirtualService, DestinationRule, EnvoyFilter와 Service, EndpointSlice를 함께 읽어 프록시마다 Listener(LDS), RouteConfiguration(RDS), Cluster(CDS), 엔드포인트(EDS)를 계산하고 gRPC xDS로 푸시한다. ELB for Envoy에는 istiod가 들어 있지 않다. 도쿄 실습에서는 같은 Envoy 리소스를 bootstrap의 고정 리스너와 HTTP 필터, /xds/routes.yaml, /xds/clusters.yaml 파일로 직접 만들었고 EDS 대신 STATIC 주소나 STRICT_DNS를 썼다. 사이드카는 istiod에서 istio-agent를 거쳐 istio-proxy로 설정을 받고, 인입 프록시는 CloudFormation이 전달한 ZIP을 파일로 읽는다.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#405267" stroke-width="1.6"/></marker>
+    <marker id="arrow-ok" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#4f8a68" stroke-width="1.6"/></marker>
+    <marker id="arrow-bad" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#b35a42" stroke-width="1.6"/></marker>
+  </defs>
+  <rect width="1120" height="770" rx="20" fill="#fbfaf7"/>
+  <g font-family="Noto Sans CJK KR, sans-serif">
+    <text x="42" y="49" fill="#5f6670" font-size="18" font-weight="600" letter-spacing="2">ISTIO CRD → ENVOY xDS</text>
+    <text x="42" y="93" fill="#222e3b" font-size="27" font-weight="700">istiod는 CRD를 그대로 보내지 않고 Envoy 설정으로 바꿔 보냅니다</text>
+    <text x="28" y="140" fill="#5f6670" font-size="14" font-weight="700">① Kubernetes API에 적용한 선언</text>
+    <text x="370.0" y="140" fill="#5f6670" font-size="14" font-weight="700" text-anchor="middle">② 변환</text>
+    <text x="458" y="140" fill="#5f6670" font-size="14" font-weight="700">③ Envoy가 실제로 받는 리소스</text>
+    <rect x="766" y="120" width="338" height="406" rx="14" fill="#f1f5fb" stroke="#6f8fb8" stroke-width="1.4" stroke-dasharray="7 5"/>
+    <text x="778" y="140" fill="#1f3b63" font-size="14" font-weight="700">ELB for Envoy 실습에서 대신 쓴 것</text>
+    <rect x="304" y="154" width="132" height="362" rx="14" fill="#e3ecf8" stroke="#4a6fa5" stroke-width="2"/>
+    <text x="370.0" y="300" fill="#1f3b63" font-size="21" font-weight="700" text-anchor="middle">istiod</text>
+    <text x="370.0" y="330" fill="#33557f" font-size="12" text-anchor="middle">선언 +</text>
+    <text x="370.0" y="351" fill="#33557f" font-size="12" text-anchor="middle">서비스 레지스트리</text>
+    <text x="370.0" y="372" fill="#33557f" font-size="12" text-anchor="middle">→ 프록시마다 계산</text>
+    <text x="370.0" y="393" fill="#33557f" font-size="12" text-anchor="middle">→ gRPC로 푸시</text>
+    <text x="370.0" y="192" fill="#33557f" font-size="11" font-weight="600" text-anchor="middle">EKS에 별도 설치</text>
+    <text x="370.0" y="208" fill="#33557f" font-size="11" text-anchor="middle">(Istio 1.30.2)</text>
+    <rect x="24" y="160" width="262" height="60" rx="10" fill="#ffffff" stroke="#c4cbd1" stroke-width="1.2"/>
+    <text x="40" y="185" fill="#222e3b" font-size="16" font-weight="700">Gateway</text>
+    <text x="40" y="206" fill="#5f6670" font-size="12">포트 · 호스트 · TLS</text>
+    <path d="M288 190 L300 190" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <path d="M438 190 L450 190" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <rect x="454" y="160" width="300" height="60" rx="10" fill="#ffffff" stroke="#4a6fa5" stroke-width="1.4"/>
+    <text x="470" y="185" fill="#1f3b63" font-size="16" font-weight="700">Listener</text>
+    <rect x="696" y="170" width="44" height="22" rx="6" fill="#e3ecf8" stroke="#4a6fa5" stroke-width="1"/>
+    <text x="718" y="186" fill="#1f3b63" font-size="12" font-weight="700" text-anchor="middle" font-family="Menlo, Consolas, monospace">LDS</text>
+    <text x="470" y="206" fill="#5f6670" font-size="12">포트별 리스너 · HTTP 연결 관리자</text>
+    <rect x="774" y="160" width="322" height="60" rx="10" fill="#ffffff" stroke="#9db4d3" stroke-width="1.2"/>
+    <text x="790" y="185" fill="#222e3b" font-size="14" font-weight="700">bootstrap static_resources</text>
+    <text x="790" y="206" fill="#5f6670" font-size="12">리스너 :8080 고정</text>
+    <rect x="24" y="232" width="262" height="60" rx="10" fill="#ffffff" stroke="#c4cbd1" stroke-width="1.2"/>
+    <text x="40" y="257" fill="#222e3b" font-size="16" font-weight="700">VirtualService</text>
+    <text x="40" y="278" fill="#5f6670" font-size="12">match · rewrite · 헤더 · weight</text>
+    <path d="M288 262 L300 262" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <path d="M438 262 L450 262" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <rect x="454" y="232" width="300" height="60" rx="10" fill="#ffffff" stroke="#4a6fa5" stroke-width="1.4"/>
+    <text x="470" y="257" fill="#1f3b63" font-size="16" font-weight="700">RouteConfiguration</text>
+    <rect x="696" y="242" width="44" height="22" rx="6" fill="#e3ecf8" stroke="#4a6fa5" stroke-width="1"/>
+    <text x="718" y="258" fill="#1f3b63" font-size="12" font-weight="700" text-anchor="middle" font-family="Menlo, Consolas, monospace">RDS</text>
+    <text x="470" y="278" fill="#5f6670" font-size="12">매칭 · 재작성 · 가중치 · 직접 응답</text>
+    <rect x="774" y="232" width="322" height="60" rx="10" fill="#ffffff" stroke="#9db4d3" stroke-width="1.2"/>
+    <text x="790" y="257" fill="#222e3b" font-size="14" font-weight="700" font-family="Menlo, Consolas, monospace">/xds/routes.yaml</text>
+    <text x="790" y="278" fill="#5f6670" font-size="12">감시 디렉터리의 파일로 읽음</text>
+    <rect x="24" y="304" width="262" height="60" rx="10" fill="#ffffff" stroke="#c4cbd1" stroke-width="1.2"/>
+    <text x="40" y="329" fill="#222e3b" font-size="16" font-weight="700">DestinationRule</text>
+    <text x="40" y="350" fill="#5f6670" font-size="12">subset · 연결 정책</text>
+    <path d="M288 334 L300 334" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <path d="M438 334 L450 334" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <rect x="454" y="304" width="300" height="60" rx="10" fill="#ffffff" stroke="#4a6fa5" stroke-width="1.4"/>
+    <text x="470" y="329" fill="#1f3b63" font-size="16" font-weight="700">Cluster</text>
+    <rect x="696" y="314" width="44" height="22" rx="6" fill="#e3ecf8" stroke="#4a6fa5" stroke-width="1"/>
+    <text x="718" y="330" fill="#1f3b63" font-size="12" font-weight="700" text-anchor="middle" font-family="Menlo, Consolas, monospace">CDS</text>
+    <text x="470" y="350" fill="#5f6670" font-size="12">subset마다 Cluster · 연결 설정</text>
+    <rect x="774" y="304" width="322" height="60" rx="10" fill="#ffffff" stroke="#9db4d3" stroke-width="1.2"/>
+    <text x="790" y="329" fill="#222e3b" font-size="14" font-weight="700" font-family="Menlo, Consolas, monospace">/xds/clusters.yaml</text>
+    <text x="790" y="350" fill="#5f6670" font-size="12">목적지마다 Cluster 하나</text>
+    <rect x="24" y="376" width="262" height="60" rx="10" fill="#ffffff" stroke="#c4cbd1" stroke-width="1.2"/>
+    <text x="40" y="401" fill="#222e3b" font-size="16" font-weight="700">EnvoyFilter</text>
+    <text x="40" y="422" fill="#5f6670" font-size="12">Envoy 설정 직접 패치</text>
+    <path d="M288 406 L300 406" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <path d="M438 406 L450 406" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <rect x="454" y="376" width="300" height="60" rx="10" fill="#ffffff" stroke="#4a6fa5" stroke-width="1.4"/>
+    <text x="470" y="401" fill="#1f3b63" font-size="16" font-weight="700">HTTP 필터 체인</text>
+    <rect x="696" y="386" width="44" height="22" rx="6" fill="#e3ecf8" stroke="#4a6fa5" stroke-width="1"/>
+    <text x="718" y="402" fill="#1f3b63" font-size="12" font-weight="700" text-anchor="middle" font-family="Menlo, Consolas, monospace">LDS</text>
+    <text x="470" y="422" fill="#5f6670" font-size="12">router 앞에 local_ratelimit 삽입</text>
+    <rect x="774" y="376" width="322" height="60" rx="10" fill="#ffffff" stroke="#9db4d3" stroke-width="1.2"/>
+    <text x="790" y="401" fill="#222e3b" font-size="14" font-weight="700">bootstrap HTTP 필터</text>
+    <text x="790" y="422" fill="#5f6670" font-size="12">local_ratelimit · ratelimit(RLS)</text>
+    <rect x="24" y="448" width="262" height="60" rx="10" fill="#ffffff" stroke="#c4cbd1" stroke-width="1.2"/>
+    <text x="40" y="473" fill="#222e3b" font-size="16" font-weight="700">Service · EndpointSlice</text>
+    <text x="40" y="494" fill="#5f6670" font-size="12">Pod IP · 레이블 · Ready</text>
+    <path d="M288 478 L300 478" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <path d="M438 478 L450 478" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <rect x="454" y="448" width="300" height="60" rx="10" fill="#ffffff" stroke="#4a6fa5" stroke-width="1.4"/>
+    <text x="470" y="473" fill="#1f3b63" font-size="16" font-weight="700">엔드포인트</text>
+    <rect x="696" y="458" width="44" height="22" rx="6" fill="#e3ecf8" stroke="#4a6fa5" stroke-width="1"/>
+    <text x="718" y="474" fill="#1f3b63" font-size="12" font-weight="700" text-anchor="middle" font-family="Menlo, Consolas, monospace">EDS</text>
+    <text x="470" y="494" fill="#5f6670" font-size="12">subset 레이블에 맞는 Ready Pod</text>
+    <rect x="774" y="448" width="322" height="60" rx="10" fill="#f6f0e1" stroke="#b58938" stroke-width="1.4" stroke-dasharray="5 4"/>
+    <text x="790" y="473" fill="#6b4f17" font-size="15" font-weight="700">EDS 없음</text>
+    <text x="790" y="494" fill="#6b4f17" font-size="12">STATIC 주소 입력 · STRICT_DNS 재조회</text>
+    <text x="44" y="562" fill="#5f6670" font-size="15" font-weight="700">설정이 프록시에 도착하는 길</text>
+    <rect x="24" y="578" width="1072" height="78" rx="12" fill="#f4f5f2" stroke="#d6d6cf" stroke-width="1.2"/>
+    <text x="44" y="611" fill="#222e3b" font-size="16" font-weight="700">EKS 사이드카</text>
+    <text x="44" y="633" fill="#5f6670" font-size="12">도쿄: 두 사이드카가 LDS·RDS·CDS·EDS를 구독</text>
+    <rect x="330" y="598" width="148" height="38" rx="8" fill="#ffffff" stroke="#8a96a3" stroke-width="1.3"/>
+    <text x="404.0" y="622" fill="#222e3b" font-size="13" font-weight="700" text-anchor="middle">Kubernetes API</text>
+    <path d="M480 617 L516 617" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <text x="499.0" y="592" fill="#5f6670" font-size="11" text-anchor="middle">watch</text>
+    <rect x="520" y="598" width="148" height="38" rx="8" fill="#ffffff" stroke="#8a96a3" stroke-width="1.3"/>
+    <text x="594.0" y="622" fill="#222e3b" font-size="13" font-weight="700" text-anchor="middle">istiod</text>
+    <path d="M670 617 L706 617" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <text x="689.0" y="592" fill="#5f6670" font-size="11" text-anchor="middle">gRPC xDS</text>
+    <rect x="710" y="598" width="148" height="38" rx="8" fill="#ffffff" stroke="#8a96a3" stroke-width="1.3"/>
+    <text x="784.0" y="622" fill="#222e3b" font-size="13" font-weight="700" text-anchor="middle">istio-agent</text>
+    <path d="M860 617 L896 617" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <text x="879.0" y="592" fill="#5f6670" font-size="11" text-anchor="middle">Pod 안 중계</text>
+    <rect x="900" y="598" width="148" height="38" rx="8" fill="#ffffff" stroke="#8a96a3" stroke-width="1.3"/>
+    <text x="974.0" y="622" fill="#222e3b" font-size="13" font-weight="700" text-anchor="middle">istio-proxy</text>
+    <rect x="24" y="670" width="1072" height="78" rx="12" fill="#f1f5fb" stroke="#6f8fb8" stroke-width="1.2"/>
+    <text x="44" y="703" fill="#1f3b63" font-size="16" font-weight="700">ELB for Envoy</text>
+    <text x="44" y="725" fill="#33557f" font-size="12">istiod도 상시 xDS 서버도 없음</text>
+    <rect x="330" y="690" width="148" height="38" rx="8" fill="#ffffff" stroke="#4a6fa5" stroke-width="1.3"/>
+    <text x="404.0" y="714" fill="#222e3b" font-size="13" font-weight="700" text-anchor="middle">render_proxy.py</text>
+    <path d="M480 709 L516 709" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <text x="499.0" y="684" fill="#5f6670" font-size="11" text-anchor="middle">템플릿</text>
+    <rect x="520" y="690" width="148" height="38" rx="8" fill="#ffffff" stroke="#4a6fa5" stroke-width="1.3"/>
+    <text x="594.0" y="714" fill="#222e3b" font-size="13" font-weight="700" text-anchor="middle">CloudFormation</text>
+    <path d="M670 709 L706 709" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <text x="689.0" y="684" fill="#5f6670" font-size="11" text-anchor="middle">bootstrap + ZIP</text>
+    <rect x="710" y="690" width="148" height="38" rx="8" fill="#ffffff" stroke="#4a6fa5" stroke-width="1.3"/>
+    <text x="784.0" y="714" fill="#222e3b" font-size="13" font-weight="700" text-anchor="middle">프록시 파일시스템</text>
+    <path d="M860 709 L896 709" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <text x="879.0" y="684" fill="#5f6670" font-size="11" text-anchor="middle">/xds 파일 읽기</text>
+    <rect x="900" y="690" width="148" height="38" rx="8" fill="#ffffff" stroke="#4a6fa5" stroke-width="1.3"/>
+    <text x="974.0" y="714" fill="#222e3b" font-size="13" font-weight="700" text-anchor="middle">관리형 Envoy</text>
+  </g>
+</svg>

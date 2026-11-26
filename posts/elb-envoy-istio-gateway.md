@@ -7,20 +7,40 @@ tags: envoy, istio, elb, eks
 
 **ELB for Envoy**를 쓰면 AWS가 Envoy 프록시의 패치와 확장을 맡고, 사용자는 리스너와 라우팅 규칙을 정의합니다. Istio Ingress Gateway의 역할을 어디까지 맡길 수 있을까요? 도쿄에서 관리형 Envoy에 직접 설정을 적용해 보니 경로 재작성, 가중치 라우팅, 로컬 요청 제한이 모두 별도 xDS 서버 없이 동작했습니다. [AWS 출시 공지](https://aws.amazon.com/ko/about-aws/whats-new/2026/11/elastic-load-balancing-for-envoy-generally-available/)
 
+**Istio YAML을 그대로 쓸 수 있는지는 누가 읽느냐에 달려 있습니다.** ELB for Envoy 자체는 `VirtualService`·`DestinationRule`·`EnvoyFilter`를 읽지 않습니다. Kubernetes에 CRD만 설치하면 이 객체들을 생성·저장할 수 있지만 요청 경로는 바뀌지 않습니다. istiod는 자신에게 연결된 프록시를 위해 이 선언을 xDS로 변환합니다. **기존 Istio 게이트웨이가 istiod에 연결돼 있다면 운영자는 Istio YAML을 계속 쓰고 xDS를 직접 작성할 필요가 없습니다.** 인입 프록시를 ELB for Envoy로 바꿀 때는 그 프록시가 호환되는 설정과 신원으로 같은 컨트롤 플레인에 연결돼야 합니다. 도쿄에서 istiod에 연결한 것은 EKS 사이드카였고, 인입 ELB에는 bootstrap과 파일 기반 xDS를 직접 전달했습니다. [AWS의 Envoy 설정 방식](https://docs.aws.amazon.com/elasticloadbalancing/latest/elbproxy/envoy-configuration.html) · [Istio 아키텍처](https://istio.io/latest/docs/ops/deployment/architecture/)
+
+AWS가 문서화한 Kubernetes 연동을 선택하면 **Envoy Gateway**가 `Gateway`·`HTTPRoute` 같은 **Gateway API**를 읽어 xDS를 만듭니다. 이 방식도 xDS를 손으로 쓸 필요는 없지만, 기존 Istio CRD를 그대로 소비하지는 않습니다. Istio 없이 `VirtualService` YAML 자체를 유지하려면 그 의미를 구현하고 대상 프록시까지 설정을 배포하는 별도 컨트롤러가 필요합니다. [AWS의 Envoy Gateway 통합](https://docs.aws.amazon.com/elasticloadbalancing/latest/elbproxy/kubernetes-overview.html)
+
 주문 API를 기준으로 보면 경계가 선명해집니다. “주문 요청의 10%를 새 버전으로 보낸다”는 정책에서 Envoy는 목적지를 선택합니다. 새 버전의 Pod가 교체될 때마다 레이블과 준비 상태를 보고 목적지 목록을 갱신하는 쪽은 컨트롤 플레인입니다. “Pod 하나가 초당 100건을 받는다”는 정책은 요청이 **어느 Pod에 도착했는지** 아는 지점에서 집행해야 합니다.
 
 ## 요청 경로와 설정 경로
 
-<figure class="diagram"><a href="/assets/data/elb-envoy-tokyo/topology.html"><img src="/assets/data/elb-envoy-tokyo/topology.svg" alt="CloudFormation은 인입 ELB for Envoy에 bootstrap과 xDS ZIP을 전달합니다. 관리형 프록시는 EC2 앱, ECS 앱 또는 EKS Pod의 istio-proxy로 HTTP 요청을 보내며, 글로벌 제한 경로에서는 외부 RLS를 호출합니다. istiod는 Kubernetes 리소스를 감시해 Pod 사이드카에 xDS 설정을 공급합니다."></a><figcaption>초록 실선은 HTTP 요청, 회색 선은 RLS 판정 호출, 보라색 점선은 설정 전달입니다. 그림을 누르면 확대할 수 있습니다. 확대 도구의 메뉴는 영어로 표시됩니다.</figcaption></figure>
+**주문 API Pod 하나에는 컨테이너가 두 개 있습니다.** 요청은 그 Pod의 `istio-proxy` 사이드카를 거쳐 같은 Pod의 `echo` 앱으로 갑니다. 둘은 Pod IP와 네트워크 네임스페이스를 공유합니다. `istio-system`의 별도 `istiod` Pod는 설정을 전달하며 주문 요청은 거치지 않습니다. 그림에서 **EKS 제어 플레인**은 AWS가 운영하는 Kubernetes API·etcd이고, **Istio 제어 플레인**은 플랫폼 팀이 EKS 워커에 설치한 istiod입니다.
+
+<figure class="diagram"><a href="/assets/data/elb-envoy-tokyo/topology.html"><img src="/assets/data/elb-envoy-tokyo/topology.svg" alt="AWS가 운영하는 EKS 제어 플레인에 kube-apiserver와 etcd가 있습니다. EKS 데이터 플레인의 워커에는 istio-system의 별도 istiod Pod와 order의 주문 Pod가 있습니다. 한 주문 Pod 안에 istio-proxy와 echo가 함께 있습니다. 인입 ELB는 파일 설정을 읽고 EC2·ECS·EKS로 요청을 전달합니다."></a><figcaption>초록 실선은 HTTP 요청, 회색 선은 RLS 판정 호출, 보라색 점선은 설정 전달입니다. 점선 테두리 안의 두 상자는 한 Pod의 컨테이너입니다. 같은 구조의 복제본 두 개 중 하나를 그렸습니다. 그림을 누르면 확대할 수 있습니다. 확대 도구의 메뉴는 영어로 표시됩니다.</figcaption></figure>
 
 | 궁금한 점 | 도쿄 실습에서의 답 |
 | --- | --- |
 | 인입 Envoy의 원본 설정은 어디에 있나? | `render_proxy.py`가 만드는 CloudFormation 템플릿입니다. `Proxy.ConfigurationFile`에는 bootstrap, `Proxy.ConfigurationArchive`에는 라우트와 업스트림을 담은 ZIP을 넣습니다. |
 | xDS 파일은 어디서 읽나? | AWS가 ZIP을 프록시 파일시스템에 펼칩니다. bootstrap의 HTTP 리스너가 `/xds/routes.yaml`(RDS)을, 클러스터 설정이 `/xds/clusters.yaml`(CDS)을 참조합니다. 이 인입 프록시에는 상시 xDS 서버가 없습니다. |
-| EKS 사이드카는 누가 만드나? | Deployment의 ReplicaSet이 새 Pod를 요청할 때 API 서버가 Istio 주입 웹훅을 호출합니다. 웹훅이 Pod 명세에 `istio-proxy`를 추가하고 kubelet이 실행합니다. 이번 Pod에서 `echo`는 앱 컨테이너, `istio-proxy`는 `restartPolicy: Always`인 네이티브 사이드카였습니다. 정책 변경은 istiod에서 xDS로 받습니다. |
+| EKS 사이드카는 누가 만드나? | Deployment의 ReplicaSet이 새 Pod를 요청할 때 API 서버가 Istio 주입 웹훅을 호출합니다. 웹훅이 Pod 명세에 `istio-proxy`를 추가하고 kubelet이 실행합니다. 이번 Pod에서 `echo`는 앱 컨테이너, `istio-proxy`는 `restartPolicy: Always`인 네이티브 사이드카였습니다. 정책 변경은 별도 `istio-system/istiod` Deployment의 Pod에서 xDS로 받습니다. |
 | EC2와 ECS에도 Envoy가 생기나? | 이 실험의 EC2에는 HTTP 서버가, ECS 태스크에는 echo 컨테이너가 요청을 받았습니다. 둘 다 관리형 Envoy의 원격 업스트림으로 등록했으며 백엔드에 Envoy를 설치하지 않았습니다. EC2에 별도 프록시를 설치하거나 ECS 태스크에 사이드카를 명시하면 그때 추가 프로세스가 생깁니다. 실험에 사용한 RLS는 별도 ECS 태스크입니다. |
 
 [관리형 프록시의 설정 생성 코드](/assets/data/elb-envoy-tokyo/render_proxy.py) · [Istio 주입 절차](https://docs.atomai.click/kubernetes-docs/ko/service-mesh/istio/advanced/07-sidecar-injection)
+
+## EC2와 ECS에는 프록시를 누가 넣나
+
+도쿄에서 **EC2에는 HTTP 서버 프로세스를, ECS의 echo 태스크에는 앱 컨테이너 하나를** 띄웠습니다. 관리형 Envoy가 두 백엔드의 IP로 연결했기 때문에 양쪽에 Istio를 설치할 필요가 없었습니다. 아래 그림은 백엔드에도 프록시를 두기로 했을 때 선택할 수 있는 세 가지 배치입니다. 세 줄은 서로 다른 선택지입니다. [실측 EC2 워크로드](/assets/data/elb-envoy-tokyo/workloads.yaml) · [실측 ECS 태스크 정의](/assets/data/elb-envoy-tokyo/ecs.yaml)
+
+<figure class="diagram"><a href="/assets/data/elb-envoy-tokyo/placements.html"><img src="/assets/data/elb-envoy-tokyo/placements.svg" alt="EC2의 Istio VM 구성에서는 플랫폼 팀이 같은 VM에 Istio 에이전트와 Envoy를 설치합니다. ECS에서 자체 구성하면 ECS가 태스크 정의대로 프록시와 앱 컨테이너를 같은 태스크에 시작합니다. Service Connect를 사용하면 ECS가 새 태스크에 AWS 관리 프록시를 추가합니다."></a><figcaption>점선은 설치·시작 주체, 실선은 프록시를 통과하는 요청입니다. 오른쪽 테두리가 인스턴스 또는 태스크 한 개입니다.</figcaption></figure>
+
+| 배치 | 프록시가 실행되는 위치 | 누가 시작하고 설정하나 |
+| --- | --- | --- |
+| **EC2를 Istio 메시로 편입** | 앱과 같은 VM에 별도 Envoy 프로세스 | 플랫폼 팀이 AMI·cloud-init·SSM 등으로 Istio VM 패키지와 bootstrap·신뢰 자료를 배치합니다. 호스트의 `istio` systemd 서비스가 에이전트를 시작하고 에이전트가 Envoy를 실행합니다. VM을 `WorkloadGroup`/`WorkloadEntry`로 등록하고 연결하면 istiod가 xDS를 공급합니다. |
+| **ECS 태스크에 Istio 호환 프록시를 직접 구성** | `awsvpc` 태스크 안에 앱과 별도 프록시 컨테이너 | 플랫폼 팀이 태스크 정의의 `containerDefinitions`에 둘을 명시하고 ECS가 새 태스크를 시작합니다. EKS의 주입 웹훅은 이 경로에 관여하지 않습니다. 외부 워크로드 등록·신원·istiod 연결과 앱으로 가는 포트 경로까지 설계해야 합니다. Fargate에서는 `NET_ADMIN`을 추가할 수 없어 Kubernetes의 iptables 초기화 방식을 그대로 적용할 수 없습니다. |
+| **ECS Service Connect 사용** | Service Connect가 활성화된 서비스의 각 새 태스크에 관리형 프록시 컨테이너 | 서비스 설정을 켜면 **ECS가 추가하고 관리**합니다. 해당 프록시는 사용자가 작성한 태스크 정의에 나타나지 않으며 Istio CRD 대신 ECS 서비스 설정을 따릅니다. |
+
+[Istio의 VM 설치 절차](https://istio.io/latest/docs/setup/install/virtual-machine/) · [ECS Service Connect 프록시 배치](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/service-connect-concepts-deploy.html) · [Fargate Linux 기능 제한](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-tasks-services.html)
 
 ## `order/api`로 보낸다는 뜻
 
@@ -108,6 +128,8 @@ AWS가 **글로벌 rate limiting 미지원**이라고 명시한 대상은 EKS의
 
 Istio의 `Gateway`는 게이트웨이가 열 포트·호스트·TLS를 기술합니다. `VirtualService`는 어떤 요청을 어디로 보낼지 정하고, `DestinationRule`은 목적지의 subset과 연결 정책을 정의합니다. istiod는 이 선언과 서비스 레지스트리를 함께 읽어 프록시별 xDS 리소스를 만듭니다. 아래 대응 관계는 기존 정책을 옮길 때 확인할 단위입니다. [Istio Gateway](https://istio.io/latest/docs/reference/config/networking/gateway/) · [VirtualService](https://istio.io/latest/docs/reference/config/networking/virtual-service/) · [DestinationRule](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
 
+<figure class="diagram"><a href="/assets/elb-envoy-crd-to-xds.svg"><img src="/assets/elb-envoy-crd-to-xds.svg" alt="Istio 리소스가 Envoy xDS 설정이 되는 과정. istiod가 Gateway, VirtualService, DestinationRule, EnvoyFilter와 Service, EndpointSlice를 함께 읽어 프록시마다 Listener(LDS), RouteConfiguration(RDS), Cluster(CDS), 엔드포인트(EDS)를 계산하고 gRPC xDS로 푸시한다. ELB for Envoy에는 istiod가 들어 있지 않으며, 도쿄 실습에서는 같은 리소스를 bootstrap의 고정 리스너와 HTTP 필터, /xds/routes.yaml, /xds/clusters.yaml로 직접 만들고 EDS 대신 STATIC 주소나 STRICT_DNS를 썼다. 사이드카는 istiod에서 istio-agent를 거쳐 설정을 받고, 인입 프록시는 CloudFormation이 전달한 ZIP을 파일로 읽는다." loading="lazy"></a><figcaption>Envoy가 받는 것은 CRD가 아니라 LDS·RDS·CDS·EDS 리소스입니다. istiod는 EKS에 따로 설치한 컨트롤 플레인이며 ELB for Envoy에 포함되어 있지 않습니다. 오른쪽 점선 칸이 인입 프록시에서 istiod 대신 쓴 방법입니다.</figcaption></figure>
+
 | Istio에서 적던 의도 | Envoy에서 준비할 설정 | 이번 실습에서 확인한 범위 |
 | --- | --- | --- |
 | 게이트웨이의 HTTP 포트와 라우트 바인딩 | Listener와 HTTP connection manager에서 RouteConfiguration 참조 | 8080 리스너와 파일 기반 RDS |
@@ -139,13 +161,34 @@ route:
 
 세 방식 모두 AWS는 Envoy 프로세스와 호스트의 패치, AZ별 용량과 확장을 맡습니다. 첫 번째 방식은 별도 상시 xDS 서버 없이 동작합니다. bootstrap에 모든 라우트를 넣을 수도 있고, 이번처럼 리스너를 고정한 채 `/xds/routes.yaml`(RDS)과 `/xds/clusters.yaml`(CDS)을 파일로 읽게 할 수도 있습니다. ZIP만 갱신하면 AWS가 파일을 교체하고, 감시 디렉터리를 설정한 Envoy가 새 내용을 읽습니다. bootstrap 자체를 바꾸면 hot restart가 일어나며 기존 연결의 drain 시간은 60초입니다. [Envoy 실행·설정 갱신 방식](https://docs.aws.amazon.com/elasticloadbalancing/latest/elbproxy/how-envoy-runs.html)
 
+<figure class="diagram"><a href="/assets/elb-envoy-config-update.svg"><img src="/assets/elb-envoy-config-update.svg" alt="ELB for Envoy의 설정 갱신 두 가지. xDS 파일을 담은 ZIP만 바꾸면 AWS가 새 파일을 제자리로 옮기고 Envoy는 재시작하지 않으며, 감시 디렉터리를 설정한 Envoy가 /xds의 RDS와 CDS 파일을 다시 읽는다. 도쿄에서는 변경 세트의 변경 속성이 Proxy.ConfigurationArchive 하나였고 /revision 응답이 12:31:56 UTC에 v1, 12:32:29 UTC에 v2였다. bootstrap 파일을 바꾸면 envoy --mode validate로 검사한 뒤 hot restart해 새 프로세스가 리스너를 넘겨받고, 이전 프로세스는 60초 동안 기존 연결을 drain한 뒤 종료한다. TCP와 WebSocket 연결은 강제로 닫지 않는다." loading="lazy"></a><figcaption>위 줄은 도쿄 실측, 아래 줄은 AWS 문서의 동작이며 이번에 측정하지 않았습니다. 검증에 실패한 bootstrap은 적용되지 않고 이전 설정이 계속 요청을 처리합니다.</figcaption></figure>
+
 기존 Istio CRD를 그대로 유지하려면 이를 해석하는 istiod 등의 구성 경로와 관리형 프록시 사이의 연결, 신원 발급, SDS, 버전 호환성을 별도로 검증해야 합니다. AWS가 문서화한 EKS 통합은 Envoy Gateway에 `elb-envoy-remote-infra-provider`를 붙이는 방식입니다. 이 컨트롤러가 관리형 프록시를 만들고 Envoy Gateway가 xDS를 제공합니다. 출시 시점의 통합 API는 `v1alpha1`입니다. [EKS 통합의 동작과 제약](https://docs.aws.amazon.com/elasticloadbalancing/latest/elbproxy/kubernetes-overview.html)
 
-## EKS 사이드카의 설정은 어디서 관리하나
+## EKS 제어 플레인, istiod, CRD의 운영 주체
 
-사이드카 모드에서는 운영팀이 Git에 둔 `VirtualService`, `DestinationRule`, `EnvoyFilter` 등을 Kubernetes API에 적용합니다. 클러스터의 **istiod**가 이 리소스와 Service·EndpointSlice의 변경을 보고, 어느 워크로드에 어떤 리스너·라우트·클러스터·엔드포인트가 필요한지 계산합니다. Pod 안의 Istio 에이전트가 istiod와의 xDS 연결을 중계하고 `istio-proxy`가 설정을 받아 적용합니다. 워크로드 인증서는 에이전트가 로컬 SDS로 Envoy에 제공합니다. 사이드카 자동 주입은 새 Pod를 만들 때 일어나고, 이후의 라우트·필터 변경은 xDS를 통해 전달됩니다. [Istio 아키텍처와 xDS 흐름](https://docs.atomai.click/kubernetes-docs/ko/service-mesh/istio/03-architecture) · [사이드카 주입과 revision](https://docs.atomai.click/kubernetes-docs/ko/service-mesh/istio/advanced/07-sidecar-injection)
+`istiod`는 **EKS 기준으로 데이터 플레인에 배치된 워크로드**이고 **Istio 기준으로는 메시 제어 플레인**입니다. 도쿄 실습에서는 `istio-system` 네임스페이스에 `Deployment/istiod`와 `Service/istiod`를 설치했습니다. 이 Deployment의 `discovery` 컨테이너가 EC2 워커에서 실행됐습니다. `order` 네임스페이스의 각 주문 Pod가 그 서비스에 연결됩니다. [EKS 클러스터 구성](https://docs.aws.amazon.com/eks/latest/userguide/clusters.html) · [Istio의 컨트롤 플레인](https://istio.io/latest/docs/ops/deployment/architecture/)
 
-따라서 **관리형 인입 프록시와 Istio 사이드카를 함께 쓰면 설정의 소유자가 둘**입니다. 이번 방식에서 인입 설정은 프록시 스택과 xDS 아카이브로 배포합니다. EKS 내부의 사이드카 정책은 클러스터의 Istio 리소스로 관리합니다. 운영팀은 보통 `istio-system`에서 istiod Deployment의 복제본·리소스와 인증서 신뢰 체계를 관리합니다. 업그레이드는 새 control plane revision을 설치하고, 시험 네임스페이스를 새 revision에 연결한 뒤 Pod를 순차 재생성하는 방식으로 진행할 수 있습니다. `istioctl proxy-status`로 각 프록시가 연결된 istiod와 설정 동기화 상태를 확인합니다. 인입 프록시만 AWS로 옮겨도 사이드카를 쓰는 동안에는 istiod가 계속 필요합니다. 목적지 사이드카가 `STRICT` mTLS를 요구하면 외부 인입 프록시도 목적지가 신뢰하는 클라이언트 인증서와 TLS 설정을 갖춰야 합니다. 도쿄 실측의 업스트림은 평문 HTTP였습니다.
+| 구성 요소 | 실제 위치와 범위 | 운영 책임 |
+| --- | --- | --- |
+| `kube-apiserver` · etcd | AWS 관리 EKS **제어 플레인**. Kubernetes API가 요청을 받고 etcd에 상태를 저장 | AWS가 제어 플레인 인프라와 가용성을 운영합니다. 고객 플랫폼 팀은 클러스터 버전·접근 권한과 어떤 리소스를 적용할지 관리합니다. |
+| Istio CRD 정의 | Kubernetes API에 등록하는 **클러스터 범위** 객체. `istio-system`에 속하지 않음 | 플랫폼 팀이 Istio 설치 시 등록하고 버전 업그레이드 시 스키마 호환성을 관리합니다. Helm이라면 `istio/base`가 기본 CRD를 제공합니다. |
+| `Deployment/istiod` · `Service/istiod` | `istio-system`. Pod는 EKS 워커에 배치되고 Service가 연결 주소를 제공 | 이 실습처럼 직접 설치한 Istio는 플랫폼 팀이 설치·업그레이드하고 복제본·자원·인증서 신뢰 체계를 관리합니다. K8s가 Pod를 스케줄하고 재시작합니다. |
+| `VirtualService` · `DestinationRule` · `EnvoyFilter` 인스턴스 | 예제의 `order` 네임스페이스. 정의된 종류의 **정책 객체** | 권한을 부여받은 앱 팀 또는 플랫폼 팀이 GitOps·kubectl로 적용합니다. istiod가 API를 감시하고 해당 게이트웨이·사이드카에 맞는 설정을 생성합니다. |
+| `istio-proxy` · `echo` | EKS **데이터 플레인**의 동일한 `order/api` Pod | 주입 웹훅이 프록시 컨테이너를 Pod 명세에 추가하고 kubelet이 실행합니다. 애플리케이션 팀은 앱을, 플랫폼 팀은 주입 정책과 프록시 버전을 관리합니다. |
+
+**CRD와 정책 객체의 차이**는 조회 명령에서 드러납니다. `envoyfilters.networking.istio.io` CRD는 어떤 필드를 받을지와 인스턴스의 범위를 정합니다. 이 CRD의 `spec.scope: Namespaced`는 **생성할 EnvoyFilter가 네임스페이스에 속한다**는 뜻입니다. 실측 정책의 이름은 `order/api-inbound-100rps`입니다. 같은 원리로 `virtualservices.networking.istio.io`와 `destinationrules.networking.istio.io`는 클러스터에 한 번 등록하고, 각 팀은 권한이 있는 네임스페이스에서 인스턴스를 만듭니다. [Kubernetes의 CRD 범위](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/) · [Istio Helm 설치](https://istio.io/latest/docs/setup/install/helm/)
+
+```bash
+kubectl get crd envoyfilters.networking.istio.io -o jsonpath='{.spec.scope}'
+kubectl -n order get envoyfilter api-inbound-100rps
+kubectl -n istio-system get deployment/istiod service/istiod
+istioctl proxy-status
+```
+
+실습에서 클러스터 범위의 `MutatingWebhookConfiguration/istio-sidecar-injector`가 가리킨 대상은 `istio-system`의 `Service/istiod`, 경로는 `/inject`였습니다. 새 Pod가 생성될 때 주입 대상과 맞으면 API 서버가 웹훅을 호출합니다. 이후 istiod가 Service·EndpointSlice·Istio 정책 변경을 읽고, Pod의 Istio 에이전트가 중계하는 xDS 연결을 통해 Envoy에 새 설정을 전달합니다. 워크로드 인증서는 에이전트가 로컬 SDS로 제공합니다. `VirtualService` 수정만으로 기존 Pod를 다시 만들 필요는 없습니다. 인입 ELB도 같은 설정을 받으려면 그 프록시가 해당 컨트롤 플레인의 클라이언트로 연결되어 있어야 합니다.
+
+목적지 사이드카에 `STRICT` mTLS를 요구한다면 외부 인입 프록시에도 목적지가 신뢰하는 클라이언트 인증서와 TLS 설정이 필요합니다. 도쿄 실측의 업스트림은 평문 HTTP였습니다.
 
 ## `order/api`의 각 Pod를 100 TPS로 제한하려면
 
@@ -185,7 +228,9 @@ spec:
 
 버킷 용량은 100개이고 설정한 보충률은 초당 100토큰입니다. 초기 버스트 동안에도 시간이 흐르면서 토큰을 다시 쓸 수 있습니다. 토큰을 얻지 못한 요청에 사이드카가 429를 반환합니다. 어떤 연속된 1초 구간에서도 반드시 100건 이하를 보장하는 슬라이딩 윈도와는 동작이 다릅니다. 같은 HTTP 필터 설정을 쓰는 Pod 3개에 부하가 고르게 분산되면 명목상 합계는 약 300요청/초입니다. 한 Pod로 트래픽이 몰리면 다른 Pod에 토큰이 남아 있어도 그 Pod에서는 429가 납니다. 같은 인바운드 HTTP 필터 인스턴스를 지나는 요청은 호출자가 달라도 버킷을 공유합니다. 평문과 mTLS가 서로 다른 필터 체인을 쓰는 배포라면 두 경로를 합친 한도도 따로 확인해야 합니다. 인입 ELB에만 로컬 필터를 두면 목적지 Pod를 선택하기 전에 **게이트웨이 프로세스**의 토큰을 소비하므로 Pod별 예산을 보장할 수 없습니다. 서비스 전체에 고정된 100요청/초가 필요하면 요청들이 같은 descriptor를 쓰도록 글로벌 RLS에 한도를 둡니다.
 
-실제 측정에서는 사이드카가 없는 클라이언트 Job이 각 Pod IP의 8080으로 직접 140건씩 보냈습니다. 200 응답에서는 앱이 돌려준 Pod 이름을, 429에서는 `x-order-pod-limit: true`를 확인했습니다. 두 번째 라운드는 2.1초 이상 쉰 뒤 같은 순서로 실행했습니다.
+<figure class="diagram"><a href="/assets/elb-envoy-ratelimit-placement.svg"><img src="/assets/elb-envoy-ratelimit-placement.svg" alt="요청 제한 세 가지가 토큰을 쓰는 위치. 인입 로컬 제한은 ELB for Envoy의 라우트별 버킷 2개로 EC2, ECS, EKS 목적지마다 16건 중 4건이 통과하고 12건이 429였으며, 버킷보다 많이 통과한 것은 Envoy 프로세스마다 버킷이 따로 있기 때문이다. 글로벌 제한은 세 목적지가 외부 RLS의 카운터 하나를 공유해 한 건씩 보낸 3건이 OK, 후속 12건이 모두 429였다. 사이드카 제한은 EKS Pod마다 istio-proxy가 버킷 100개를 갖고, 각 Pod IP로 140건을 보내자 Pod A는 107건, Pod B는 102건을 허용했다." loading="lazy"></a><figcaption>같은 “한도”라도 토큰을 쓰는 곳이 다릅니다. 세 칸 모두 도쿄 재측정 값이고, 세 번째 칸은 인입 게이트웨이를 거치지 않고 Pod 인바운드에서 따로 측정했습니다.</figcaption></figure>
+
+실측 당시 `order/api-5cc587ffc9-8h2d2`와 `order/api-5cc587ffc9-zbx47`은 각각 `istio-proxy`와 `echo`가 함께 실행 중인 `2/2 Ready` Pod였습니다. 사이드카가 없는 클라이언트 Job이 각 Pod IP의 8080으로 직접 140건씩 보냈습니다. 200 응답에서는 앱이 돌려준 Pod 이름을, 429에서는 `x-order-pod-limit: true`를 확인했습니다. 두 번째 라운드는 2.1초 이상 쉰 뒤 같은 순서로 실행했습니다.
 
 | EKS 대상 | 첫 버스트 200 / 429 | 보충 후 200 / 429 |
 | --- | --- | --- |

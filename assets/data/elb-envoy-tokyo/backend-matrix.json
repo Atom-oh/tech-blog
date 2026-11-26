@@ -3301,7 +3301,15 @@
       ],
       "init_completed": [
         "istio-init"
-      ]
+      ],
+      "pod_spec": {
+        "app_containers": [
+          "echo"
+        ],
+        "native_sidecars": [
+          "istio-proxy"
+        ]
+      }
     },
     "api-5cc587ffc9-zbx47": {
       "namespace": "order",
@@ -3369,7 +3377,15 @@
       ],
       "init_completed": [
         "istio-init"
-      ]
+      ],
+      "pod_spec": {
+        "app_containers": [
+          "echo"
+        ],
+        "native_sidecars": [
+          "istio-proxy"
+        ]
+      }
     }
   },
   "pod_bursts": [
@@ -3607,6 +3623,41 @@
           ]
         }
       }
+    }
+  },
+  "installed_istio_objects": {
+    "source": "Istio 1.30.2 installation manifest applied to the dedicated Tokyo EKS cluster. Container layout below is from the live Pod specs.",
+    "deployment": {
+      "namespace": "istio-system",
+      "name": "istiod"
+    },
+    "crd_definitions": {
+      "destinationrules.networking.istio.io": {
+        "resource_kind": "DestinationRule",
+        "scope_of_instances": "Namespaced"
+      },
+      "envoyfilters.networking.istio.io": {
+        "resource_kind": "EnvoyFilter",
+        "scope_of_instances": "Namespaced"
+      },
+      "virtualservices.networking.istio.io": {
+        "resource_kind": "VirtualService",
+        "scope_of_instances": "Namespaced"
+      }
+    },
+    "mutating_webhook": {
+      "name": "istio-sidecar-injector",
+      "service": {
+        "name": "istiod",
+        "namespace": "istio-system",
+        "path": "/inject",
+        "port": 443
+      }
+    },
+    "applied_policy": {
+      "kind": "EnvoyFilter",
+      "namespace": "order",
+      "name": "api-inbound-100rps"
     }
   }
 }

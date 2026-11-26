@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="584" viewBox="0 0 1120 584" role="img" aria-labelledby="title desc">
+  <title id="title">ELB for Envoy의 설정 갱신 방식</title>
+  <desc id="desc">ELB for Envoy의 설정 갱신 두 가지. xDS 파일을 담은 ZIP만 바꾸면 AWS가 새 파일을 제자리에 옮기고 Envoy는 재시작하지 않는다. 감시 디렉터리를 설정한 Envoy가 /xds의 RDS와 CDS 파일을 다시 읽는다. 도쿄에서는 CloudFormation 변경 세트의 변경 속성이 Proxy.ConfigurationArchive 하나였고 /revision 응답이 12:31:56 UTC에 v1, 12:32:29 UTC에 v2였다. bootstrap 파일을 바꾸면 ELB for Envoy가 envoy --mode validate로 검사한 뒤 hot restart한다. 새 프로세스가 리스너를 넘겨받고 이전 프로세스는 60초 동안 기존 연결을 drain한 뒤 종료한다. HTTP/1.1에는 Connection: close, HTTP/2에는 GOAWAY를 보내며 TCP와 WebSocket 연결은 강제로 닫지 않는다. 두 번째 경로는 AWS 문서 내용이고 이번에 측정하지 않았다.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#405267" stroke-width="1.6"/></marker>
+    <marker id="arrow-ok" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#4f8a68" stroke-width="1.6"/></marker>
+    <marker id="arrow-bad" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#b35a42" stroke-width="1.6"/></marker>
+  </defs>
+  <rect width="1120" height="584" rx="20" fill="#fbfaf7"/>
+  <g font-family="Noto Sans CJK KR, sans-serif">
+    <text x="42" y="49" fill="#5f6670" font-size="18" font-weight="600" letter-spacing="2">CONFIGURATION UPDATE · ELB FOR ENVOY</text>
+    <text x="42" y="93" fill="#222e3b" font-size="28" font-weight="700">ZIP만 바꾸면 그 자리에서, bootstrap을 바꾸면 hot restart로</text>
+    <rect x="24" y="122" width="1072" height="250" rx="16" fill="#f1f5fb" stroke="#6f8fb8" stroke-width="1.5"/>
+    <text x="44" y="154" fill="#1f3b63" font-size="18" font-weight="700">xDS 파일만 바꿀 때 · 도쿄 실측</text>
+    <text x="1076" y="154" fill="#2f5e43" font-size="13" font-weight="700" text-anchor="end">Envoy 재시작 없음</text>
+    <rect x="44" y="174" width="192" height="96" rx="10" fill="#ffffff" stroke="#4a6fa5" stroke-width="1.3"/>
+    <circle cx="66" cy="196" r="11" fill="#4a6fa5"/>
+    <text x="66" y="201" fill="#ffffff" font-size="13" font-weight="700" text-anchor="middle">1</text>
+    <text x="84" y="201" fill="#222e3b" font-size="14" font-weight="700" font-family="Menlo, Consolas, monospace">render_proxy.py</text>
+    <text x="60" y="228" fill="#5f6670" font-size="12" font-family="Menlo, Consolas, monospace">--revision v2</text>
+    <text x="60" y="247" fill="#5f6670" font-size="12">새 routes·clusters 파일</text>
+    <path d="M237 222 L251 222" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <rect x="254" y="174" width="192" height="96" rx="10" fill="#ffffff" stroke="#4a6fa5" stroke-width="1.3"/>
+    <circle cx="276" cy="196" r="11" fill="#4a6fa5"/>
+    <text x="276" y="201" fill="#ffffff" font-size="13" font-weight="700" text-anchor="middle">2</text>
+    <text x="294" y="201" fill="#222e3b" font-size="14" font-weight="700">변경 세트</text>
+    <text x="270" y="228" fill="#5f6670" font-size="12">바뀐 속성 1개</text>
+    <text x="270" y="247" fill="#5f6670" font-size="12">Proxy.ConfigurationArchive</text>
+    <path d="M447 222 L461 222" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <rect x="464" y="174" width="192" height="96" rx="10" fill="#ffffff" stroke="#4a6fa5" stroke-width="1.3"/>
+    <circle cx="486" cy="196" r="11" fill="#4a6fa5"/>
+    <text x="486" y="201" fill="#ffffff" font-size="13" font-weight="700" text-anchor="middle">3</text>
+    <text x="504" y="201" fill="#222e3b" font-size="14" font-weight="700">AWS가 ZIP 배치</text>
+    <text x="480" y="228" fill="#5f6670" font-size="12">새 파일을 제자리로 이동</text>
+    <text x="480" y="247" fill="#5f6670" font-size="12">프로세스는 그대로</text>
+    <path d="M657 222 L671 222" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <rect x="674" y="174" width="192" height="96" rx="10" fill="#ffffff" stroke="#4a6fa5" stroke-width="1.3"/>
+    <circle cx="696" cy="196" r="11" fill="#4a6fa5"/>
+    <text x="696" y="201" fill="#ffffff" font-size="13" font-weight="700" text-anchor="middle">4</text>
+    <text x="714" y="201" fill="#222e3b" font-size="14" font-weight="700" font-family="Menlo, Consolas, monospace">watched_directory</text>
+    <text x="690" y="228" fill="#5f6670" font-size="12">/xds 변경을 감지</text>
+    <text x="690" y="247" fill="#5f6670" font-size="12">routes.yaml · clusters.yaml</text>
+    <path d="M867 222 L881 222" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <rect x="884" y="174" width="192" height="96" rx="10" fill="#ffffff" stroke="#4a6fa5" stroke-width="1.3"/>
+    <circle cx="906" cy="196" r="11" fill="#4a6fa5"/>
+    <text x="906" y="201" fill="#ffffff" font-size="13" font-weight="700" text-anchor="middle">5</text>
+    <text x="924" y="201" fill="#222e3b" font-size="14" font-weight="700">RDS · CDS 재적용</text>
+    <text x="900" y="228" fill="#5f6670" font-size="12">같은 프로세스가</text>
+    <text x="900" y="247" fill="#5f6670" font-size="12">새 라우트로 응답</text>
+    <path d="M120 314 L1000 314" stroke="#9db4d3" stroke-width="2"/>
+    <circle cx="180" cy="314" r="7" fill="#4a6fa5"/>
+    <text x="194" y="306" fill="#5f6670" font-size="12" font-family="Menlo, Consolas, monospace">12:31:56 UTC</text>
+    <text x="194" y="332" fill="#1f3b63" font-size="13" font-weight="700">/revision → v1</text>
+    <circle cx="760" cy="314" r="7" fill="#4a6fa5"/>
+    <text x="774" y="306" fill="#5f6670" font-size="12" font-family="Menlo, Consolas, monospace">12:32:29 UTC</text>
+    <text x="774" y="332" fill="#1f3b63" font-size="13" font-weight="700">/revision → v2</text>
+    <text x="1000" y="354" fill="#5f6670" font-size="12" text-anchor="end">두 점은 응답을 관찰한 시각이며 적용에 걸린 시간이 아닙니다</text>
+    <rect x="24" y="392" width="1072" height="170" rx="16" fill="#f6f0e1" stroke="#b58938" stroke-width="1.5" stroke-dasharray="7 5"/>
+    <text x="44" y="424" fill="#6b4f17" font-size="18" font-weight="700">bootstrap을 바꿀 때 · AWS 문서</text>
+    <text x="1076" y="424" fill="#6b4f17" font-size="13" font-weight="700" text-anchor="end">이번에 측정하지 않음</text>
+    <rect x="44" y="444" width="192" height="96" rx="10" fill="#ffffff" stroke="#e0cfa6" stroke-width="1.3"/>
+    <circle cx="66" cy="466" r="11" fill="#b58938"/>
+    <text x="66" y="471" fill="#ffffff" font-size="13" font-weight="700" text-anchor="middle">1</text>
+    <text x="84" y="471" fill="#222e3b" font-size="14" font-weight="700">설정 파일 변경</text>
+    <text x="60" y="498" fill="#5f6670" font-size="12">UpdateProxyConfiguration</text>
+    <text x="60" y="517" fill="#5f6670" font-size="12">Proxy.ConfigurationFile</text>
+    <path d="M237 492 L251 492" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <rect x="254" y="444" width="192" height="96" rx="10" fill="#ffffff" stroke="#e0cfa6" stroke-width="1.3"/>
+    <circle cx="276" cy="466" r="11" fill="#b58938"/>
+    <text x="276" y="471" fill="#ffffff" font-size="13" font-weight="700" text-anchor="middle">2</text>
+    <text x="294" y="471" fill="#222e3b" font-size="14" font-weight="700">사전 검증</text>
+    <text x="270" y="498" fill="#5f6670" font-size="12">envoy --mode validate</text>
+    <text x="270" y="517" fill="#5f6670" font-size="12">실패하면 이전 설정 유지</text>
+    <path d="M447 492 L461 492" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <rect x="464" y="444" width="192" height="96" rx="10" fill="#ffffff" stroke="#e0cfa6" stroke-width="1.3"/>
+    <circle cx="486" cy="466" r="11" fill="#b58938"/>
+    <text x="486" y="471" fill="#ffffff" font-size="13" font-weight="700" text-anchor="middle">3</text>
+    <text x="504" y="471" fill="#222e3b" font-size="14" font-weight="700">hot restart</text>
+    <text x="480" y="498" fill="#5f6670" font-size="12">새 프로세스가</text>
+    <text x="480" y="517" fill="#5f6670" font-size="12">리스너를 넘겨받음</text>
+    <path d="M657 492 L671 492" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <rect x="674" y="444" width="192" height="96" rx="10" fill="#ffffff" stroke="#e0cfa6" stroke-width="1.3"/>
+    <circle cx="696" cy="466" r="11" fill="#b58938"/>
+    <text x="696" y="471" fill="#ffffff" font-size="13" font-weight="700" text-anchor="middle">4</text>
+    <text x="714" y="471" fill="#222e3b" font-size="14" font-weight="700">60초 drain</text>
+    <text x="690" y="498" fill="#5f6670" font-size="12">HTTP/1.1 Connection: close</text>
+    <text x="690" y="517" fill="#5f6670" font-size="12">HTTP/2 GOAWAY</text>
+    <path d="M867 492 L881 492" stroke="#405267" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+    <rect x="884" y="444" width="192" height="96" rx="10" fill="#ffffff" stroke="#e0cfa6" stroke-width="1.3"/>
+    <circle cx="906" cy="466" r="11" fill="#b58938"/>
+    <text x="906" y="471" fill="#ffffff" font-size="13" font-weight="700" text-anchor="middle">5</text>
+    <text x="924" y="471" fill="#222e3b" font-size="14" font-weight="700">이전 프로세스 종료</text>
+    <text x="900" y="498" fill="#5f6670" font-size="12">TCP·WebSocket은</text>
+    <text x="900" y="517" fill="#5f6670" font-size="12">강제로 닫지 않음</text>
+  </g>
+</svg>

@@ -1,0 +1,285 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "요청은 어디로 가고, Envoy 설정은 어디에서 오는가",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1144,
+      575
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "components": [
+    {
+      "id": "cfg",
+      "type": "cloud",
+      "label": "CloudFormation",
+      "sublabel": "bootstrap · xDS 파일 ZIP",
+      "pos": [
+        35,
+        253
+      ],
+      "size": [
+        178,
+        64
+      ]
+    },
+    {
+      "id": "ing",
+      "type": "cloud",
+      "label": "ELB for Envoy",
+      "sublabel": "AWS 관리형 인입 프록시",
+      "pos": [
+        335,
+        253
+      ],
+      "size": [
+        184,
+        64
+      ]
+    },
+    {
+      "id": "ec2",
+      "type": "backend",
+      "label": "EC2 인스턴스",
+      "sublabel": "HTTP 앱 · Envoy 없음",
+      "pos": [
+        323,
+        453
+      ],
+      "size": [
+        184,
+        64
+      ]
+    },
+    {
+      "id": "ecs",
+      "type": "backend",
+      "label": "ECS 태스크",
+      "sublabel": "echo · Envoy 없음",
+      "pos": [
+        633,
+        453
+      ],
+      "size": [
+        184,
+        64
+      ]
+    },
+    {
+      "id": "sc",
+      "type": "security",
+      "label": "istio-proxy",
+      "sublabel": "사이드카 컨테이너",
+      "pos": [
+        645,
+        253
+      ],
+      "size": [
+        172,
+        64
+      ]
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "echo",
+      "sublabel": "주문 앱 컨테이너",
+      "pos": [
+        926,
+        253
+      ],
+      "size": [
+        162,
+        64
+      ]
+    },
+    {
+      "id": "pilot",
+      "type": "cloud",
+      "label": "istiod Pod",
+      "sublabel": "Istio 제어 플레인",
+      "pos": [
+        645,
+        87
+      ],
+      "size": [
+        172,
+        64
+      ]
+    },
+    {
+      "id": "k8s",
+      "type": "cloud",
+      "label": "kube-apiserver · etcd",
+      "sublabel": "API 요청 처리 · 객체 저장",
+      "pos": [
+        316,
+        87
+      ],
+      "size": [
+        228,
+        64
+      ]
+    },
+    {
+      "id": "rls",
+      "type": "backend",
+      "label": "외부 RLS",
+      "sublabel": "공유 한도 판정",
+      "pos": [
+        35,
+        453
+      ],
+      "size": [
+        178,
+        64
+      ]
+    },
+    {
+      "id": "operator",
+      "type": "external",
+      "label": "플랫폼 운영팀",
+      "sublabel": "Istio 설치 · 업그레이드",
+      "pos": [
+        26,
+        87
+      ],
+      "size": [
+        178,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS 데이터 플레인 · EC2 워커 노드",
+      "wraps": [
+        "sc",
+        "app",
+        "pilot"
+      ],
+      "pad": 46
+    },
+    {
+      "kind": "region",
+      "label": "order · 같은 Pod 안의 두 컨테이너 (복제본 2개)",
+      "wraps": [
+        "sc",
+        "app"
+      ],
+      "pad": 18
+    },
+    {
+      "kind": "region",
+      "label": "istio-system · 플랫폼 팀 운영",
+      "wraps": [
+        "pilot"
+      ],
+      "pad": 16
+    },
+    {
+      "kind": "region",
+      "label": "EKS 제어 플레인 · AWS 운영",
+      "wraps": [
+        "k8s"
+      ],
+      "pad": 20
+    }
+  ],
+  "connections": [
+    {
+      "from": "cfg",
+      "to": "ing",
+      "id": "cfg-ing",
+      "label": "bootstrap + ZIP",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "from": "ing",
+      "to": "ec2",
+      "id": "ing-ec2",
+      "label": "HTTP",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        413,
+        378
+      ]
+    },
+    {
+      "from": "ing",
+      "to": "ecs",
+      "id": "ing-ecs",
+      "label": "HTTP",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "from": "ing",
+      "to": "sc",
+      "id": "ing-sc",
+      "label": "HTTP",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "from": "sc",
+      "to": "app",
+      "id": "sc-app",
+      "label": "Pod 내부 HTTP",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "from": "pilot",
+      "to": "sc",
+      "id": "pilot-sc",
+      "label": "xDS",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        731,
+        194
+      ]
+    },
+    {
+      "from": "k8s",
+      "to": "pilot",
+      "id": "k8s-pilot",
+      "label": "watch 이벤트",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "from": "ing",
+      "to": "rls",
+      "id": "ing-rls",
+      "label": "gRPC",
+      "variant": "default",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "operator-k8s",
+      "from": "operator",
+      "to": "k8s",
+      "label": "CRD·설치 명세",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ]
+}
