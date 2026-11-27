@@ -309,6 +309,8 @@ AWS가 **글로벌 rate limiting 미지원**이라고 명시한 대상은 EKS의
 
 <h2 id="xds-auth">자체 xDS 서버에 붙일 때 연결은 어떻게 인증하고 인가하나?</h2>
 
+이 절의 설정 예시와 점검 항목을 한 페이지로 정리한 [가이드](/elb-envoy-xds-auth-guide/)도 있습니다.
+
 **ELB for Envoy가 xDS 서버에 자기를 증명할 수단은 설정 아카이브에 넣은 클라이언트 인증서입니다.** Kubernetes의 사이드카는 Pod의 서비스 계정 토큰으로 istiod에서 워크로드 인증서를 받습니다. 관리형 프록시에는 그런 토큰이 없고, 옆에 에이전트를 띄우거나 Envoy CLI 플래그를 바꿀 수도 없습니다. bootstrap의 `node`에서 지정할 수 있는 값은 `node.cluster`뿐이고(생략하면 프록시 이름), `node.id`는 AWS가 인스턴스 ID로 채웁니다. 그래서 첫 자격 증명은 `configurationArchive`로 넣을 수밖에 없습니다. AWS 문서는 xDS 인증 방식을 따로 정하지 않습니다. 다만 제어 플레인용 TLS 인증서를 아카이브 파일에서 `watched_directory`로 읽어 재시작 없이 교체하는 방법을 안내합니다. AWS의 EKS 통합도 Envoy Gateway 접속용 클라이언트 인증서·키·CA를 아카이브에 담아 Envoy Gateway Pod IP의 18000 포트로 mTLS 연결합니다. 아래는 여기에 프록시별 인증서와 서버 쪽 인가를 더한 구성입니다. [How the proxy runs Envoy](https://docs.aws.amazon.com/elasticloadbalancing/latest/elbproxy/how-envoy-runs.html) · [remote provider의 설정 전달 방식](https://github.com/aws/elb-envoy-remote-infra-provider/blob/v1.0.0/docs/how-it-works.md#how-the-proxy-gets-its-configuration)
 
 정적 공유 키(bearer 토큰)는 권하지 않습니다. 아카이브에 비밀 값을 넣는 일 자체는 피할 수 없으니, 정할 것은 **무엇을 넣느냐**입니다.
