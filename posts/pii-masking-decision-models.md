@@ -242,6 +242,14 @@ SeaweedFS의 문서를 S3로 옮겨 사내 검색에 쓰려 한다고 해 보겠
 
 아래는 이 글에서 학습한 개인정보 모델을 **S3 최초 수집 시점**에 적용하는 설계안입니다. 77건으로 측정한 범위는 금융 OCR 텍스트의 추출·판정입니다. Unlimited OCR 2부터 검색 인덱스까지 연결한 처리량과 누락률은 후속 실험에서 확인할 값입니다.
 
+<figure class="diagram" id="etl-architecture">
+  <a href="/assets/pii-search-etl.svg"><picture>
+    <source media="(max-width: 600px)" srcset="../assets/pii-search-etl-mobile.svg" width="381" height="1166">
+    <img src="/assets/pii-search-etl.svg" width="761" height="1051" loading="lazy" alt="SeaweedFS와 Confluence에서 S3로 수집한 원본을 텍스트·OCR·전사로 읽습니다. 전량 마스킹 경로는 추출 LLM과 잔여 검사를 모두 거칩니다. 사전 선별 실험에서 Decider가 음성으로 판정해도 잔여 검사와 Guardrails를 통과해야 S3 정제본을 만들고 검색에 쓸 수 있습니다. 실패한 단위는 색인을 보류합니다.">
+  </picture></a>
+  <figcaption>점선은 Decider 사전 선별 실험입니다. 음성 판정으로 생략하는 단계는 추출 LLM 호출뿐이며, 색인 전 검사는 두 경로에 공통입니다. <a href="/assets/pii-search-etl.svg">데스크톱 그림 확대</a> · <a href="/assets/pii-search-etl-mobile.svg">모바일 그림 확대</a> · <a href="/assets/pii-search-etl.drawio" download>편집용 Draw.io 원본</a></figcaption>
+</figure>
+
 <h4 id="etl-input">파일을 어디에서 나누고 무엇을 함께 읽을까</h4>
 
 원본의 AWS 반입이 허용되면 SeaweedFS에서 접근을 제한한 S3 원본 버킷으로 복사하고, ETL 작업자에게 그 버킷의 읽기 권한을 줍니다. 검색 시스템에는 정제본 버킷만 연결합니다. 원본을 SeaweedFS에 보관해야 하는 경우에는 그쪽에서 추출과 마스킹을 끝낸 뒤 정제본을 S3에 씁니다. 어느 쪽이든 수집 시점에 문서 ID, 원본 버전, 원본의 열람 권한을 기록해야 나중에 같은 문서의 새 버전이나 권한 변경을 반영할 수 있습니다.

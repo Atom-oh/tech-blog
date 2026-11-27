@@ -1,0 +1,511 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="background: #F8FAF8; background-color: light-dark(#F8FAF8, #151715); color-scheme: light;" version="1.1" width="761px" height="1051px" viewBox="0 0 761 1051" role="img" aria-labelledby="title desc" xml:lang="ko">
+  <title id="title">검색용 문서 정제 ETL</title>
+  <desc id="desc">SeaweedFS·Confluence 원본을 접근이 제한된 S3 버킷에 수집하고, 본문과 OCR 및 전사를 처리합니다. 실선은 모든 단위를 추출 LLM으로 마스킹하고 Decider와 Guardrails로 검사하는 경로입니다. 점선은 Decider 사전 선별 실험으로, 음성이어도 잔여 검사를 통과해야 합니다. 실패 시 재처리하거나 색인을 보류합니다. 검증을 통과한 Markdown과 출처·권한을 S3에 저장하고 검색용 청크를 임베딩해 색인합니다. 조회 시 이용자의 현재 권한을 확인합니다.</desc>
+  <defs/>
+  <rect fill="#F8FAF8" width="100%" height="100%" x="0" y="0" style="fill: light-dark(rgb(248, 250, 248), rgb(21, 23, 21));"/>
+  <g>
+    <g data-cell-id="0">
+      <g data-cell-id="1">
+        <g data-cell-id="etl-wide-canvas">
+          <g>
+            <rect x="0" y="0" width="760" height="1050" fill="#f8faf8" stroke="none" pointer-events="all" style="fill: light-dark(rgb(248, 250, 248), rgb(21, 23, 21));"/>
+          </g>
+        </g>
+        <g data-cell-id="etl-wide-head">
+          <g>
+            <rect x="0" y="0" width="760" height="118" fill="#173d42" stroke="none" pointer-events="all" style="fill: light-dark(rgb(23, 61, 66), rgb(166, 198, 203));"/>
+          </g>
+        </g>
+        <g data-cell-id="etl-wide-title">
+          <g transform="translate(0.5,0.5)">
+            <rect x="28" y="19" width="455" height="48" fill="none" stroke="none" pointer-events="all"/>
+          </g>
+          <g>
+            <g fill="#FFFFFF" font-family="Helvetica, 'Noto Sans CJK KR', sans-serif" font-weight="bold" text-anchor="start" font-size="36px" style="fill: light-dark(rgb(255, 255, 255), rgb(18, 18, 18));">
+              <text x="28" y="60">검색용 문서 정제 ETL</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="etl-wide-scope">
+          <g transform="translate(0.5,0.5)">
+            <rect x="30" y="73" width="470" height="26" fill="none" stroke="none" pointer-events="all"/>
+          </g>
+          <g>
+            <g fill="#D4E5E2" font-family="Helvetica, 'Noto Sans CJK KR', sans-serif" text-anchor="start" font-size="18px" style="fill: light-dark(rgb(212, 229, 226), rgb(32, 47, 44));">
+              <text x="30" y="94">원본의 AWS 반입이 허용된 경우의 설계안</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="etl-wide-solid-key">
+          <g>
+            <rect x="550" y="38" width="23" height="3" fill="#b9dad8" stroke="none" pointer-events="all" style="fill: light-dark(rgb(185, 218, 216), rgb(34, 62, 61));"/>
+          </g>
+        </g>
+        <g data-cell-id="etl-wide-solid-label">
+          <g transform="translate(0.5,0.5)">
+            <rect x="582" y="26" width="140" height="27" fill="none" stroke="none" pointer-events="all"/>
+          </g>
+          <g>
+            <g fill="#EDF7F5" font-family="Helvetica, 'Noto Sans CJK KR', sans-serif" font-weight="bold" text-anchor="start" font-size="17px" style="fill: light-dark(rgb(237, 247, 245), rgb(21, 29, 28));">
+              <text x="582" y="47">전량 마스킹</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="etl-wide-dash-key0">
+          <g>
+            <rect x="550" y="67" width="6" height="3" fill="#ffcc80" stroke="none" pointer-events="all" style="fill: light-dark(rgb(255, 204, 128), rgb(97, 53, 0));"/>
+          </g>
+        </g>
+        <g data-cell-id="etl-wide-dash-key1">
+          <g>
+            <rect x="559" y="67" width="6" height="3" fill="#ffcc80" stroke="none" pointer-events="all" style="fill: light-dark(rgb(255, 204, 128), rgb(97, 53, 0));"/>
+          </g>
+        </g>
+        <g data-cell-id="etl-wide-dash-key2">
+          <g>
+            <rect x="568" y="67" width="6" height="3" fill="#ffcc80" stroke="none" pointer-events="all" style="fill: light-dark(rgb(255, 204, 128), rgb(97, 53, 0));"/>
+          </g>
+        </g>
+        <g data-cell-id="etl-wide-dash-label">
+          <g transform="translate(0.5,0.5)">
+            <rect x="582" y="55" width="165" height="27" fill="none" stroke="none" pointer-events="all"/>
+          </g>
+          <g>
+            <g fill="#FFE0AA" font-family="Helvetica, 'Noto Sans CJK KR', sans-serif" font-weight="bold" text-anchor="start" font-size="17px" style="fill: light-dark(rgb(255, 224, 170), rgb(67, 40, 0));">
+              <text x="582" y="76">사전 선별 실험</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="etl-wide-source">
+          <g>
+            <rect x="30" y="146" width="307" height="83" rx="9" ry="9" fill="#ffffff" stroke="#a9bec1" stroke-width="1.8" pointer-events="all" style="fill: light-dark(rgb(255, 255, 255), rgb(18, 18, 18)); stroke: light-dark(rgb(169, 190, 193), rgb(63, 81, 84));"/>
+          </g>
+          <g data-cell-id="etl-wide-source-sheet-0">
+            <g>
+              <path d="M 51 173 L 72 173 L 81 182 L 81 210 L 51 210 L 51 173 Z" fill="#ffffff" stroke="#385c65" stroke-width="1.8" stroke-miterlimit="10" pointer-events="all" style="fill: light-dark(rgb(255, 255, 255), rgb(18, 18, 18)); stroke: light-dark(rgb(56, 92, 101), rgb(139, 170, 178));"/>
+              <path d="M 72 173 L 72 182 L 81 182" fill="none" stroke="#385c65" stroke-width="1.8" stroke-miterlimit="10" pointer-events="all" style="stroke: light-dark(rgb(56, 92, 101), rgb(139, 170, 178));"/>
+            </g>
+          </g>
+          <g data-cell-id="etl-wide-source-sheet-1">
+            <g>
+              <path d="M 56 178 L 77 178 L 86 187 L 86 215 L 56 215 L 56 178 Z" fill="#ffffff" stroke="#385c65" stroke-width="1.8" stroke-miterlimit="10" pointer-events="all" style="fill: light-dark(rgb(255, 255, 255), rgb(18, 18, 18)); stroke: light-dark(rgb(56, 92, 101), rgb(139, 170, 178));"/>
+              <path d="M 77 178 L 77 187 L 86 187" fill="none" stroke="#385c65" stroke-width="1.8" stroke-miterlimit="10" pointer-events="all" style="stroke: light-dark(rgb(56, 92, 101), rgb(139, 170, 178));"/>
+            </g>
+          </g>
+          <g data-cell-id="etl-wide-source-title">
+            <g transform="translate(0.5,0.5)">
+              <rect x="112" y="161" width="215" height="32" fill="none" stroke="none" pointer-events="all"/>
+            </g>
+            <g>
+              <g fill="#16353D" font-family="Helvetica, 'Noto Sans CJK KR', sans-serif" font-weight="bold" text-anchor="start" font-size="24px" style="fill: light-dark(rgb(22, 53, 61), rgb(176, 202, 209));">
+                <text x="112" y="188">문서·미디어 원본</text>
+              </g>
+            </g>
+          </g>
+          <g data-cell-id="etl-wide-source-line0">
+            <g transform="translate(0.5,0.5)">
+              <rect x="112" y="194" width="217" height="23" fill="none" stroke="none" pointer-events="all"/>
+            </g>
+            <g>
+              <g fill="#39545D" font-family="Helvetica, 'Noto Sans CJK KR', sans-serif" text-anchor="start" font-size="18px" style="fill: light-dark(rgb(57, 84, 93), rgb(151, 174, 182));">
+                <text x="112" y="213.5">SeaweedFS · Confluence</text>
+              </g>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="etl-wide-raw">
+          <g>
+            <rect x="420" y="146" width="310" height="83" rx="9" ry="9" fill="#eef5ef" stroke="#9cb6a3" stroke-width="1.8" pointer-events="all" style="fill: light-dark(rgb(238, 245, 239), rgb(23, 29, 23)); stroke: light-dark(rgb(156, 182, 163), rgb(71, 93, 77));"/>
+          </g>
+          <g data-cell-id="etl-wide-raw-bucket">
+            <g>
+              <image x="440" y="172" width="46" height="46" xlink:href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iNDhweCIgaGVpZ2h0PSI0OHB4IiB2aWV3Qm94PSIwIDAgNDggNDgiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1SZXNvdXJjZS9TdG9yYWdlL1Jlc19BbWF6b24tU2ltcGxlLVN0b3JhZ2UtU2VydmljZV9CdWNrZXRfNDg8L3RpdGxlPgogICAgPGcgaWQ9Ikljb24tUmVzb3VyY2UvU3RvcmFnZS9SZXNfQW1hem9uLVNpbXBsZS1TdG9yYWdlLVNlcnZpY2VfQnVja2V0XzQ4IiBzdHJva2U9Im5vbmUiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj4KICAgICAgICA8cGF0aCBkPSJNNDAuNTAzOCwyNi4xNjAxIEw0MC43Mjc4LDI0LjQ5NDEgQzQyLjUxMTgsMjUuNTgxMSA0My4wNjI4LDI2LjIwOTEgNDMuMjIyOCwyNi40NzQxIEM0Mi43NDk4LDI2LjYxNzEgNDEuNzk0OCwyNi40OTExIDQwLjUwMzgsMjYuMTYwMSBMNDAuNTAzOCwyNi4xNjAxIFogTTIyLjgwMTgsMjAuMTExMSBDMjIuODAxOCwyMC4wNTgxIDIyLjg0NDgsMjAuMDE1MSAyMi44OTc4LDIwLjAxNTEgQzIyLjkxMjgsMjAuMDE1MSAyMi45MjM4LDIwLjAyNTEgMjIuOTM2OCwyMC4wMzIxIEwyMi44NjM4LDIwLjE3OTEgQzIyLjgzMDgsMjAuMTY5MSAyMi44MDE4LDIwLjE0OTEgMjIuODAxOCwyMC4xMTExIEwyMi44MDE4LDIwLjExMTEgWiBNMzYuNTEzOCw0MC43OTgxIEMzNi41MDc4LDQwLjg0MzEgMzYuNTA0OCw0MC44ODcxIDM2LjUwNDgsNDAuOTMxMSBDMzYuNTA0OCw0MS4wODYxIDM2LjEyNTgsNDEuNjc1MSAzNC40NDA4LDQyLjM0MDEgQzMzLjY4OTgsNDIuNjM3MSAzMi44MDI4LDQyLjkwMzEgMzEuODAyOCw0My4xMzMxIEMyOS4yMjc4LDQzLjcyOTEgMjYuMDYzOCw0NC4wNTcxIDIyLjg5NTgsNDQuMDU3MSBDMTQuNDI5OCw0NC4wNTcxIDkuMjg4OCw0MS44ODcxIDkuMjg4OCw0MC45MzExIEM5LjI4ODgsNDAuODg3MSA5LjI4NTgsNDAuODQzMSA5LjI3OTgsNDAuNzk4MSBMNS40NDA4LDEyLjI4NTEgQzUuNjg3OCwxMi40MjkxIDUuOTUyOCwxMi41NjYxIDYuMjMwOCwxMi43MDAxIEM2LjMwOTgsMTIuNzM4MSA2LjM5NTgsMTIuNzc0MSA2LjQ3NzgsMTIuODEyMSBDNi43MTc4LDEyLjkyMzEgNi45NjY4LDEzLjAzMDEgNy4yMjY4LDEzLjEzNDEgQzcuMzM4OCwxMy4xNzgxIDcuNDUxOCwxMy4yMjIxIDcuNTY2OCwxMy4yNjUxIEM3Ljg0MjgsMTMuMzY5MSA4LjEyNzgsMTMuNDY5MSA4LjQyMjgsMTMuNTY1MSBDOC41MDk4LDEzLjU5NDEgOC41OTI4LDEzLjYyNDEgOC42ODA4LDEzLjY1MTEgQzkuMDU5OCwxMy43NzAxIDkuNDUyOCwxMy44ODQxIDkuODU3OCwxMy45OTExIEM5Ljk3MDgsMTQuMDIxMSAxMC4wODc4LDE0LjA1MDEgMTAuMjAyOCwxNC4wNzgxIEMxMC41MTQ4LDE0LjE1ODEgMTAuODMyOCwxNC4yMzQxIDExLjE1NzgsMTQuMzA2MSBDMTEuMjk4OCwxNC4zMzgxIDExLjQzODgsMTQuMzY5MSAxMS41ODA4LDE0LjM5ODEgQzExLjk0NTgsMTQuNDc1MSAxMi4zMTg4LDE0LjU0OTEgMTIuNjk3OCwxNC42MTgxIEMxMi43Nzk4LDE0LjYzMzEgMTIuODU4OCwxNC42NDkxIDEyLjk0MTgsMTQuNjY0MSBDMTMuMzk5OCwxNC43NDQxIDEzLjg2ODgsMTQuODE4MSAxNC4zNDQ4LDE0Ljg4ODEgQzE0LjQ3ODgsMTQuOTA3MSAxNC42MTQ4LDE0LjkyNDEgMTQuNzUwOCwxNC45NDIxIEMxNS4xMTA4LDE0Ljk5MjEgMTUuNDc1OCwxNS4wMzgxIDE1Ljg0MzgsMTUuMDgxMSBDMTUuOTkzOCwxNS4wOTgxIDE2LjE0NDgsMTUuMTE2MSAxNi4yOTY4LDE1LjEzMzEgQzE2Ljc0MDgsMTUuMTgwMSAxNy4xODg4LDE1LjIyMzEgMTcuNjM5OCwxNS4yNjIxIEMxNy42OTI4LDE1LjI2NjEgMTcuNzQ2OCwxNS4yNzIxIDE3LjgwMTgsMTUuMjc2MSBDMTguMzA1OCwxNS4zMTcxIDE4LjgxMjgsMTUuMzUwMSAxOS4zMjA4LDE1LjM4MDEgQzE5LjQ2NTgsMTUuMzg4MSAxOS42MTA4LDE1LjM5NDEgMTkuNzU2OCwxNS40MDExIEMyMC4xNDA4LDE1LjQyMDEgMjAuNTI0OCwxNS40MzUxIDIwLjkwODgsMTUuNDQ4MSBDMjEuMDU5OCwxNS40NTMxIDIxLjIwODgsMTUuNDU4MSAyMS4zNTg4LDE1LjQ2MjEgQzIxLjg3MTgsMTUuNDczMSAyMi4zODQ4LDE1LjQ4MjEgMjIuODk1OCwxNS40ODIxIEMyMy40MDU4LDE1LjQ4MjEgMjMuOTE4OCwxNS40NzMxIDI0LjQzMTgsMTUuNDYyMSBDMjQuNTgxOCwxNS40NTgxIDI0LjczMjgsMTUuNDUzMSAyNC44ODI4LDE1LjQ0ODEgQzI1LjI2NzgsMTUuNDM1MSAyNS42NTA4LDE1LjQyMDEgMjYuMDMzOCwxNS40MDExIEMyNi4xODA4LDE1LjM5NDEgMjYuMzI1OCwxNS4zODgxIDI2LjQ3MTgsMTUuMzgwMSBDMjYuOTgwOCwxNS4zNTAxIDI3LjQ4NjgsMTUuMzE3MSAyNy45ODk4LDE1LjI3NjEgQzI4LjA0NTgsMTUuMjcxMSAyOC4xMDA4LDE1LjI2NTEgMjguMTU1OCwxNS4yNjIxIEMyOC42MDY4LDE1LjIyMzEgMjkuMDUxOCwxNS4xODAxIDI5LjQ5MzgsMTUuMTMzMSBDMjkuNjQ3OCwxNS4xMTYxIDI5Ljc5ODgsMTUuMDk4MSAyOS45NTA4LDE1LjA4MTEgQzMwLjMxNjgsMTUuMDM4MSAzMC42ODA4LDE0Ljk5MjEgMzEuMDM5OCwxNC45NDMxIEMzMS4xNzY4LDE0LjkyNTEgMzEuMzE0OCwxNC45MDcxIDMxLjQ0OTgsMTQuODg3MSBDMzEuOTI0OCwxNC44MTgxIDMyLjM5MjgsMTQuNzQ0MSAzMi44NTE4LDE0LjY2NDEgQzMyLjkzNDgsMTQuNjQ5MSAzMy4wMTU4LDE0LjYzMzEgMzMuMDk4OCwxNC42MTcxIEMzMy40NzY4LDE0LjU0OTEgMzMuODQ3OCwxNC40NzUxIDM0LjIxMjgsMTQuMzk4MSBDMzQuMzU1OCwxNC4zNjkxIDM0LjQ5NDgsMTQuMzM4MSAzNC42MzU4LDE0LjMwNjEgQzM0Ljk2MDgsMTQuMjMzMSAzNS4yNzg4LDE0LjE1NzEgMzUuNTkxOCwxNC4wNzgxIEMzNS43MDU4LDE0LjA0OTEgMzUuODIyOCwxNC4wMjExIDM1LjkzNTgsMTMuOTkyMSBDMzYuMzQxOCwxMy44ODQxIDM2LjczNDgsMTMuNzcwMSAzNy4xMTM4LDEzLjY1MTEgQzM3LjIwMDgsMTMuNjI0MSAzNy4yODI4LDEzLjU5NTEgMzcuMzY3OCwxMy41NjYxIEMzNy42NjQ4LDEzLjQ3MDEgMzcuOTUxOCwxMy4zNjkxIDM4LjIyOTgsMTMuMjY0MSBDMzguMzQyOCwxMy4yMjIxIDM4LjQ1NDgsMTMuMTc5MSAzOC41NjU4LDEzLjEzNTEgQzM4LjgyNzgsMTMuMDMwMSAzOS4wNzg4LDEyLjkyMjEgMzkuMzIxOCwxMi44MTAxIEMzOS40MDA4LDEyLjc3MzEgMzkuNDg0OCwxMi43MzgxIDM5LjU2MjgsMTIuNzAxMSBDMzkuODQwOCwxMi41NjcxIDQwLjEwNjgsMTIuNDI5MSA0MC4zNTM4LDEyLjI4NTEgTDM4LjU2MTgsMjUuNTkxMSBDMzQuOTI0OCwyNC40MjQxIDI5LjgxNjgsMjIuMzA3MSAyNC45ODE4LDIwLjAwODEgQzI0LjkyNjgsMTguOTAxMSAyNC4wMTc4LDE4LjAxNTEgMjIuODk3OCwxOC4wMTUxIEMyMS43NDE4LDE4LjAxNTEgMjAuODAxOCwxOC45NTYxIDIwLjgwMTgsMjAuMTExMSBDMjAuODAxOCwyMS4yNjYxIDIxLjc0MTgsMjIuMjA2MSAyMi44OTc4LDIyLjIwNjEgQzIzLjM1MTgsMjIuMjA2MSAyMy43Njk4LDIyLjA1NzEgMjQuMTEyOCwyMS44MTAxIEMyOC40NDQ4LDIzLjg4OTEgMzMuOTc1OCwyNi4zNDIxIDM4LjI5MjgsMjcuNTg4MSBMMzYuNTEzOCw0MC43OTgxIFogTTIyLjg5NTgsNC4wMDAxIEMzMy4zMTQ4LDQuMDAwMSA0MC42NTU4LDcuMjI4MSA0MC43OTE4LDkuMDIxMSBMNDAuNzY1OCw5LjIyOTEgQzQwLjc0NzgsOS4yOTExIDQwLjcwODgsOS4zNTQxIDQwLjY3NTgsOS40MTgxIEM0MC42NDg4LDkuNDcwMSA0MC42Mjg4LDkuNTIwMSA0MC41OTE4LDkuNTczMSBDNDAuNTQ3OCw5LjYzNTEgNDAuNDgyOCw5LjY5ODEgNDAuNDI1OCw5Ljc2MTEgQzQwLjM3NDgsOS44MTYxIDQwLjMzMTgsOS44NzExIDQwLjI3MDgsOS45MjcxIEM0MC4yMDI4LDkuOTg4MSA0MC4xMTU4LDEwLjA1MTEgNDAuMDM0OCwxMC4xMTMxIEMzOS45NTk4LDEwLjE3MTEgMzkuODkzOCwxMC4yMjgxIDM5LjgwNzgsMTAuMjg3MSBDMzkuNzE2OCwxMC4zNDcxIDM5LjYwNzgsMTAuNDA5MSAzOS41MDU4LDEwLjQ3MTEgQzM5LjQwNjgsMTAuNTMwMSAzOS4zMTU4LDEwLjU5MDEgMzkuMjA0OCwxMC42NDkxIEMzOS4wOTQ4LDEwLjcwOTEgMzguOTY1OCwxMC43NjcxIDM4Ljg0NDgsMTAuODI3MSBDMzguNzIwOCwxMC44ODgxIDM4LjYwNDgsMTAuOTQ4MSAzOC40Njg4LDExLjAwOTEgQzM4LjMzOTgsMTEuMDY2MSAzOC4xOTI4LDExLjEyMzEgMzguMDU0OCwxMS4xODAxIEMzNy45MDQ4LDExLjI0MDEgMzcuNzYzOCwxMS4zMDIxIDM3LjYwMzgsMTEuMzYxMSBDMzcuNDU1OCwxMS40MTcxIDM3LjI4OTgsMTEuNDcxMSAzNy4xMzI4LDExLjUyNTEgQzM2Ljk2MTgsMTEuNTg0MSAzNi43OTc4LDExLjY0NDEgMzYuNjE1OCwxMS43MDIxIEMzNi40NDY4LDExLjc1NjEgMzYuMjYwOCwxMS44MDYxIDM2LjA4MTgsMTEuODU5MSBDMzUuODkxOCwxMS45MTUxIDM1LjcwODgsMTEuOTcyMSAzNS41MDg4LDEyLjAyNjEgQzM1LjMxNjgsMTIuMDc4MSAzNS4xMDk4LDEyLjEyNjEgMzQuOTA5OCwxMi4xNzYxIEMzNC43MDI4LDEyLjIyNzEgMzQuNTAyOCwxMi4yODAxIDM0LjI4NTgsMTIuMzMwMSBDMzQuMDY5OCwxMi4zNzkxIDMzLjgzNzgsMTIuNDI0MSAzMy42MTE4LDEyLjQ3MTEgQzMzLjM5MzgsMTIuNTE2MSAzMy4xODE4LDEyLjU2NDEgMzIuOTUzOCwxMi42MDcxIEMzMi43MTM4LDEyLjY1MzEgMzIuNDU2OCwxMi42OTQxIDMyLjIwNjgsMTIuNzM3MSBDMzEuOTc2OCwxMi43NzYxIDMxLjc1MzgsMTIuODE4MSAzMS41MTQ4LDEyLjg1NTEgQzMxLjI1NDgsMTIuODk1MSAzMC45Nzg4LDEyLjkzMTEgMzAuNzA4OCwxMi45NjgxIEMzMC40NjQ4LDEzLjAwMTEgMzAuMjI2OCwxMy4wMzgxIDI5Ljk3NDgsMTMuMDY4MSBDMjkuNjgxOCwxMy4xMDQxIDI5LjM3MjgsMTMuMTM0MSAyOS4wNjk4LDEzLjE2NTEgQzI4LjgyNTgsMTMuMTkxMSAyOC41ODk4LDEzLjIyMDEgMjguMzM5OCwxMy4yNDIxIEMyOC4wMDM4LDEzLjI3MzEgMjcuNjUxOCwxMy4yOTYxIDI3LjMwNTgsMTMuMzIwMSBDMjcuMDcyOCwxMy4zMzgxIDI2Ljg0NzgsMTMuMzU4MSAyNi42MDk4LDEzLjM3MzEgQzI2LjIzMDgsMTMuMzk1MSAyNS44MzM4LDEzLjQwOTEgMjUuNDQwOCwxMy40MjYxIEMyNS4yMjQ4LDEzLjQzNDEgMjUuMDE0OCwxMy40NDcxIDI0Ljc5MzgsMTMuNDU0MSBDMjQuMTc0OCwxMy40NzIxIDIzLjU0MTgsMTMuNDgyMSAyMi44OTU4LDEzLjQ4MjEgQzIyLjI0OTgsMTMuNDgyMSAyMS42MTY4LDEzLjQ3MjEgMjAuOTk2OCwxMy40NTQxIEMyMC43NzQ4LDEzLjQ0NzEgMjAuNTYyOCwxMy40MzMxIDIwLjM0MjgsMTMuNDI1MSBDMTkuOTUyOCwxMy40MDkxIDE5LjU1OTgsMTMuMzk1MSAxOS4xODE4LDEzLjM3MzEgQzE4LjkzMTgsMTMuMzU3MSAxOC42OTM4LDEzLjMzNjEgMTguNDQ4OCwxMy4zMTgxIEMxOC4xMTU4LDEzLjI5NDEgMTcuNzc1OCwxMy4yNzIxIDE3LjQ1MjgsMTMuMjQyMSBDMTcuMjAxOCwxMy4yMjAxIDE2Ljk2NTgsMTMuMTkwMSAxNi43MjA4LDEzLjE2NTEgQzE2LjQxNzgsMTMuMTM0MSAxNi4xMDg4LDEzLjEwNDEgMTUuODE2OCwxMy4wNjgxIEMxNS41NjY4LDEzLjAzODEgMTUuMzI5OCwxMy4wMDIxIDE1LjA4NjgsMTIuOTY4MSBDMTQuODE2OCwxMi45MzExIDE0LjUzODgsMTIuODk2MSAxNC4yNzc4LDEyLjg1NTEgQzE0LjAyOTgsMTIuODE3MSAxMy43OTc4LDEyLjc3MzEgMTMuNTU4OCwxMi43MzIxIEMxMy4zMTc4LDEyLjY5MDEgMTMuMDcwOCwxMi42NTExIDEyLjgzOTgsMTIuNjA3MSBDMTIuNjA3OCwxMi41NjMxIDEyLjM5MjgsMTIuNTE1MSAxMi4xNjg4LDEyLjQ2OTEgQzExLjk0NjgsMTIuNDIyMSAxMS43MTg4LDEyLjM3ODEgMTEuNTA1OCwxMi4zMjkxIEMxMS4yODk4LDEyLjI4MDEgMTEuMDkwOCwxMi4yMjcxIDEwLjg4MzgsMTIuMTc2MSBDMTAuNjgzOCwxMi4xMjYxIDEwLjQ3NTgsMTIuMDc4MSAxMC4yODQ4LDEyLjAyNjEgQzEwLjA4MTgsMTEuOTcyMSA5Ljg5NjgsMTEuOTE0MSA5LjcwMzgsMTEuODU3MSBDOS41Mjc4LDExLjgwNjEgOS4zNDQ4LDExLjc1NTEgOS4xNzc4LDExLjcwMjEgQzguOTkyOCwxMS42NDMxIDguODI2OCwxMS41ODMxIDguNjUzOCwxMS41MjIxIEM4LjQ5ODgsMTEuNDY5MSA4LjMzNTgsMTEuNDE2MSA4LjE5MDgsMTEuMzYxMSBDOC4wMjg4LDExLjMwMjEgNy44ODc4LDExLjIzOTEgNy43Mzc4LDExLjE3OTEgQzcuNTk5OCwxMS4xMjIxIDcuNDUyOCwxMS4wNjUxIDcuMzI0OCwxMS4wMDkxIEM3LjE5MDgsMTAuOTQ4MSA3LjA3MzgsMTAuODg4MSA2Ljk0OTgsMTAuODI3MSBDNi44Mjg4LDEwLjc2NzEgNi42OTg4LDEwLjcwOTEgNi41ODg4LDEwLjY0ODEgQzYuNDc4OCwxMC41ODkxIDYuMzg2OCwxMC41MjkxIDYuMjg2OCwxMC40NjkxIEM2LjE4NTgsMTAuNDA4MSA2LjA3NjgsMTAuMzQ3MSA1Ljk4NjgsMTAuMjg3MSBDNS44OTk4LDEwLjIyNzEgNS44MzE4LDEwLjE2OTEgNS43NTU4LDEwLjExMDEgQzUuNjc2OCwxMC4wNDkxIDUuNTkwOCw5Ljk4NzEgNS41MjQ4LDkuOTI3MSBDNS40NjE4LDkuODcwMSA1LjQxNzgsOS44MTMxIDUuMzY1OCw5Ljc1ODEgQzUuMzA5OCw5LjY5NjEgNS4yNDY4LDkuNjM0MSA1LjIwMjgsOS41NzMxIEM1LjE2NDgsOS41MTkxIDUuMTQ1OCw5LjQ2NzEgNS4xMTc4LDkuNDEzMSBDNS4wODU4LDkuMzUxMSA1LjA0NjgsOS4yODkxIDUuMDI5OCw5LjIyOTEgTDUuMDAxOCw5LjAyMDEgQzUuMTQwOCw3LjIyNzEgMTIuNDc5OCw0LjAwMDEgMjIuODk1OCw0LjAwMDEgTDIyLjg5NTgsNC4wMDAxIFogTTQ1LjI1NDgsMjYuMjU3MSBDNDUuMDQxOCwyNS4xMDcxIDQzLjcxNjgsMjMuODg5MSA0MS4wMTc4LDIyLjM0NzEgTDQyLjczMzgsOS41OTUxIEw0Mi43MzM4LDkuNTkxMSBMNDIuNzMzOCw5LjU5MDEgTDQyLjc4NDgsOS4yMDAxIEM0Mi43OTA4LDkuMTU3MSA0Mi43OTM4LDkuMTE0MSA0Mi43OTM4LDkuMDcxMSBDNDIuNzkzOCw0LjkwNDEgMzIuMzA3OCwyLjAwMDEgMjIuODk1OCwyLjAwMDEgQzEzLjQ4NDgsMi4wMDAxIDIuOTk5OCw0LjkwNDEgMi45OTk4LDkuMDcxMSBDMi45OTk4LDkuMTE1MSAzLjAwMjgsOS4xNTkxIDMuMDA4OCw5LjIwMzEgTDMuMDYwOCw5LjU5MzEgTDMuMDYwOCw5LjU5NTEgTDcuMjg5OCw0MS4wMDkxIEM3LjQyMDgsNDQuNjg1MSAxNi45MDI4LDQ2LjA1NzEgMjIuODk1OCw0Ni4wNTcxIEMyNi4yMTA4LDQ2LjA1NzEgMjkuNTMzOCw0NS43MTExIDMyLjI1MjgsNDUuMDgyMSBDMzMuMzQ3OCw0NC44MzAxIDM0LjMzMDgsNDQuNTMzMSAzNS4xNzQ4LDQ0LjIwMDEgQzM3LjM0MDgsNDMuMzQ1MSAzOC40NTk4LDQyLjI3MTEgMzguNTAzOCw0MS4wMDkxIEw0MC4yNDQ4LDI4LjA4MDEgQzQxLjE5NjgsMjguMjgyMSA0Mi4wNjE4LDI4LjQwNTEgNDIuNzgwOCwyOC40MDUxIEM0My43NDk4LDI4LjQwNTEgNDQuNDc0OCwyOC4yMDAxIDQ0Ljg2NjgsMjcuNzMyMSBDNDUuMjE2OCwyNy4zMTYxIDQ1LjM1NDgsMjYuNzkyMSA0NS4yNTQ4LDI2LjI1NzEgTDQ1LjI1NDgsMjYuMjU3MSBaIiBpZD0iQVdTLUFtYXpvbi1TaW1wbGUtU3RvcmFnZV9CdWNrZXRfUmVzb3VyY2UtSWNvbl9saWdodC1iZyIgZmlsbD0iIzdBQTExNiI+PC9wYXRoPgogICAgPC9nPgo8L3N2Zz4="/>
+            </g>
+          </g>
+          <g data-cell-id="etl-wide-raw-title">
+            <g transform="translate(0.5,0.5)">
+              <rect x="502" y="161" width="218" height="32" fill="none" stroke="none" pointer-events="all"/>
+            </g>
+            <g>
+              <g fill="#224A36" font-family="Helvetica, 'Noto Sans CJK KR', sans-serif" font-weight="bold" text-anchor="start" font-size="24px" style="fill: light-dark(rgb(34, 74, 54), rgb(157, 191, 174));">
+                <text x="502" y="188">S3 원본 버킷</text>
+              </g>
+            </g>
+          </g>
+          <g data-cell-id="etl-wide-raw-line0">
+            <g transform="translate(0.5,0.5)">
+              <rect x="502" y="194" width="220" height="23" fill="none" stroke="none" pointer-events="all"/>
+            </g>
+            <g>
+              <g fill="#3A5947" font-family="Helvetica, 'Noto Sans CJK KR', sans-serif" text-anchor="start" font-size="18px" style="fill: light-dark(rgb(58, 89, 71), rgb(148, 174, 159));">
+                <text x="502" y="213.5">ETL 작업자만 열람</text>
+              </g>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="etl-wide-read">
+          <g>
+            <rect x="30" y="286" width="352" height="109" rx="9" ry="9" fill="#eff5fb" stroke="#93abca" stroke-width="1.8" pointer-events="all" style="fill: light-dark(rgb(239, 245, 251), rgb(22, 28, 33)); stroke: light-dark(rgb(147, 171, 202), rgb(74, 95, 122));"/>
+          </g>
+          <g data-cell-id="etl-wide-read-title">
+            <g transform="translate(0.5,0.5)">
+              <rect x="50" y="297" width="322" height="32" fill="none" stroke="none" pointer-events="all"/>
+            </g>
+            <g>
+              <g fill="#203F67" font-family="Helvetica, 'Noto Sans CJK KR', sans-serif" font-weight="bold" text-anchor="start" font-size="24px" style="fill: light-dark(rgb(32, 63, 103), rgb(163, 190, 224));">
+                <text x="50" y="324">본문·표·미디어 추출</text>
+              </g>
+            </g>
+          </g>
+          <g data-cell-id="etl-wide-read-line0">
+            <g transform="translate(0.5,0.5)">
+              <rect x="50" y="333" width="324" height="23" fill="none" stroke="none" pointer-events="all"/>
+            </g>
+            <g>
+              <g fill="#345376" font-family="Helvetica, 'Noto Sans CJK KR', sans-serif" text-anchor="start" font-size="18px" style="fill: light-dark(rgb(52, 83, 118), rgb(147, 173, 203));">
+                <text x="50" y="352.5">Unlimited OCR 2 · 음성 전사</text>
+              </g>
+            </g>
+          </g>
+          <g data-cell-id="etl-wide-read-line1">
+            <g transform="translate(0.5,0.5)">
+              <rect x="50" y="358" width="324" height="23" fill="none" stroke="none" pointer-events="all"/>
+            </g>
+            <g>
+              <g fill="#345376" font-family="Helvetica, 'Noto Sans CJK KR', sans-serif" text-anchor="start" font-size="18px" style="fill: light-dark(rgb(52, 83, 118), rgb(147, 173, 203));">
+                <text x="50" y="377.5">슬라이드 · 셀 범위 · 타임코드</text>
+              </g>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="etl-wide-screen">
+          <g>
+            <rect x="446" y="286" width="284" height="109" rx="9" ry="9" fill="#fff5e4" stroke="#ba803d" stroke-width="1.8" stroke-dasharray="9 5.4" pointer-events="all" style="fill: light-dark(rgb(255, 245, 228), rgb(33, 25, 10)); stroke: light-dark(rgb(186, 128, 61), rgb(164, 114, 56));"/>
+          </g>
+          <g data-cell-id="etl-wide-screen-title">
+            <g transform="translate(0.5,0.5)">
+              <rect x="466" y="297" width="254" height="32" fill="none" stroke="none" pointer-events="all"/>
+            </g>
+            <g>
+              <g fill="#784110" font-family="Helvetica, 'Noto Sans CJK KR', sans-serif" font-weight="bold" text-anchor="start" font-size="24px" style="fill: light-dark(rgb(120, 65, 16), rgb(214, 167, 125));">
+                <text x="466" y="324">Decider v2 사전 선별</text>
+              </g>
+            </g>
+          </g>
+          <g data-cell-id="etl-wide-screen-line0">
+            <g transform="translate(0.5,0.5)">
+              <rect x="466" y="333" width="256" height="23" fill="none" stroke="none" pointer-events="all"/>
+            </g>
+            <g>
+              <g fill="#83501F" font-family="Helvetica, 'Noto Sans CJK KR', sans-serif" text-anchor="start" font-size="18px" style="fill: light-dark(rgb(131, 80, 31), rgb(199, 155, 113));">
+                <text x="466" y="352.5">원본에 개인정보가 있는가?</text>
+              </g>
+            </g>
+          </g>
+          <g data-cell-id="etl-wide-screen-line1">
+            <g transform="translate(0.5,0.5)">
+              <rect x="466" y="358" width="256" height="23" fill="none" stroke="none" pointer-events="all"/>
+            </g>
+            <g>
+              <g fill="#83501F" font-family="Helvetica, 'Noto Sans CJK KR', sans-serif" text-anchor="start" font-size="18px" style="fill: light-dark(rgb(131, 80, 31), rgb(199, 155, 113));">
+                <text x="466" y="377.5">처리 단위별로 판정</text>
+              </g>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="etl-wide-mask">
+          <g>
+            <rect x="30" y="450" width="352" height="109" rx="9" ry="9" fill="#f2f1fc" stroke="#aea6c9" stroke-width="1.8" pointer-events="all" style="fill: light-dark(rgb(242, 241, 252), rgb(29, 28, 38)); stroke: light-dark(rgb(174, 166, 201), rgb(93, 87, 117));"/>
+          </g>
+          <g data-cell-id="etl-wide-mask-title">
+            <g transform="translate(0.5,0.5)">
+              <rect x="50" y="461" width="322" height="32" fill="none" stroke="none" pointer-events="all"/>
+            </g>
+            <g>
+              <g fill="#3E3564" font-family="Helvetica, 'Noto Sans CJK KR', sans-serif" font-weight="bold" text-anchor="start" font-size="24px" style="fill: light-dark(rgb(62, 53, 100), rgb(191, 183, 224));">
+                <text x="50" y="488">개인정보 추출·치환</text>
+              </g>
+            </g>
+          </g>
+          <g data-cell-id="etl-wide-mask-line0">
+            <g transform="translate(0.5,0.5)">
+              <rect x="50" y="497" width="324" height="23" fill="none" stroke="none" pointer-events="all"/>
+            </g>
+            <g>
+              <g fill="#534971" font-family="Helvetica, 'Noto Sans CJK KR', sans-serif" text-anchor="start" font-size="18px" style="fill: light-dark(rgb(83, 73, 113), rgb(174, 166, 200));">
+                <text x="50" y="516.5">Gemma 4 또는 Qwen3-8B</text>
+              </g>
+            </g>
+          </g>
+          <g data-cell-id="etl-wide-mask-line1">
+            <g transform="translate(0.5,0.5)">
+              <rect x="50" y="522" width="324" height="23" fill="none" stroke="none" pointer-events="all"/>
+            </g>
+            <g>
+              <g fill="#534971" font-family="Helvetica, 'Noto Sans CJK KR', sans-serif" text-anchor="start" font-size="18px" style="fill: light-dark(rgb(83, 73, 113), rgb(174, 166, 200));">
+                <text x="50" y="541.5">원문 대조 후 토큰으로 치환</text>
+              </g>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="etl-wide-verify">
+          <g>
+            <rect x="30" y="612" width="352" height="109" rx="9" ry="9" fill="#ecf6f0" stroke="#91b9a2" stroke-width="1.8" pointer-events="all" style="fill: light-dark(rgb(236, 246, 240), rgb(22, 30, 25)); stroke: light-dark(rgb(145, 185, 162), rgb(61, 95, 75));"/>
+          </g>
+          <g data-cell-id="etl-wide-verify-title">
+            <g transform="translate(0.5,0.5)">
+              <rect x="50" y="623" width="322" height="32" fill="none" stroke="none" pointer-events="all"/>
+            </g>
+            <g>
+              <g fill="#22513F" font-family="Helvetica, 'Noto Sans CJK KR', sans-serif" font-weight="bold" text-anchor="start" font-size="24px" style="fill: light-dark(rgb(34, 81, 63), rgb(146, 187, 171));">
+                <text x="50" y="650">잔여 개인정보 검사</text>
+              </g>
+            </g>
+          </g>
+          <g data-cell-id="etl-wide-verify-line0">
+            <g transform="translate(0.5,0.5)">
+              <rect x="50" y="659" width="324" height="23" fill="none" stroke="none" pointer-events="all"/>
+            </g>
+            <g>
+              <g fill="#355C48" font-family="Helvetica, 'Noto Sans CJK KR', sans-serif" text-anchor="start" font-size="18px" style="fill: light-dark(rgb(53, 92, 72), rgb(141, 175, 158));">
+                <text x="50" y="678.5">규칙 · Strands Decider v2 E4B</text>
+              </g>
+            </g>
+          </g>
+          <g data-cell-id="etl-wide-verify-line1">
+            <g transform="translate(0.5,0.5)">
+              <rect x="50" y="684" width="324" height="23" fill="none" stroke="none" pointer-events="all"/>
+            </g>
+            <g>
+              <g fill="#355C48" font-family="Helvetica, 'Noto Sans CJK KR', sans-serif" text-anchor="start" font-size="18px" style="fill: light-dark(rgb(53, 92, 72), rgb(141, 175, 158));">
+                <text x="50" y="703.5">Amazon Bedrock Guardrails</text>
+              </g>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="etl-wide-clean">
+          <g>
+            <rect x="30" y="781" width="352" height="98" rx="9" ry="9" fill="#e0f2ea" stroke="#79a993" stroke-width="1.8" pointer-events="all" style="fill: light-dark(rgb(224, 242, 234), rgb(21, 37, 30)); stroke: light-dark(rgb(121, 169, 147), rgb(71, 112, 93));"/>
+          </g>
+          <g data-cell-id="etl-wide-clean-bucket">
+            <g>
+              <image x="50" y="807" width="46" height="46" xlink:href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iNDhweCIgaGVpZ2h0PSI0OHB4IiB2aWV3Qm94PSIwIDAgNDggNDgiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1SZXNvdXJjZS9TdG9yYWdlL1Jlc19BbWF6b24tU2ltcGxlLVN0b3JhZ2UtU2VydmljZV9CdWNrZXRfNDg8L3RpdGxlPgogICAgPGcgaWQ9Ikljb24tUmVzb3VyY2UvU3RvcmFnZS9SZXNfQW1hem9uLVNpbXBsZS1TdG9yYWdlLVNlcnZpY2VfQnVja2V0XzQ4IiBzdHJva2U9Im5vbmUiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj4KICAgICAgICA8cGF0aCBkPSJNNDAuNTAzOCwyNi4xNjAxIEw0MC43Mjc4LDI0LjQ5NDEgQzQyLjUxMTgsMjUuNTgxMSA0My4wNjI4LDI2LjIwOTEgNDMuMjIyOCwyNi40NzQxIEM0Mi43NDk4LDI2LjYxNzEgNDEuNzk0OCwyNi40OTExIDQwLjUwMzgsMjYuMTYwMSBMNDAuNTAzOCwyNi4xNjAxIFogTTIyLjgwMTgsMjAuMTExMSBDMjIuODAxOCwyMC4wNTgxIDIyLjg0NDgsMjAuMDE1MSAyMi44OTc4LDIwLjAxNTEgQzIyLjkxMjgsMjAuMDE1MSAyMi45MjM4LDIwLjAyNTEgMjIuOTM2OCwyMC4wMzIxIEwyMi44NjM4LDIwLjE3OTEgQzIyLjgzMDgsMjAuMTY5MSAyMi44MDE4LDIwLjE0OTEgMjIuODAxOCwyMC4xMTExIEwyMi44MDE4LDIwLjExMTEgWiBNMzYuNTEzOCw0MC43OTgxIEMzNi41MDc4LDQwLjg0MzEgMzYuNTA0OCw0MC44ODcxIDM2LjUwNDgsNDAuOTMxMSBDMzYuNTA0OCw0MS4wODYxIDM2LjEyNTgsNDEuNjc1MSAzNC40NDA4LDQyLjM0MDEgQzMzLjY4OTgsNDIuNjM3MSAzMi44MDI4LDQyLjkwMzEgMzEuODAyOCw0My4xMzMxIEMyOS4yMjc4LDQzLjcyOTEgMjYuMDYzOCw0NC4wNTcxIDIyLjg5NTgsNDQuMDU3MSBDMTQuNDI5OCw0NC4wNTcxIDkuMjg4OCw0MS44ODcxIDkuMjg4OCw0MC45MzExIEM5LjI4ODgsNDAuODg3MSA5LjI4NTgsNDAuODQzMSA5LjI3OTgsNDAuNzk4MSBMNS40NDA4LDEyLjI4NTEgQzUuNjg3OCwxMi40MjkxIDUuOTUyOCwxMi41NjYxIDYuMjMwOCwxMi43MDAxIEM2LjMwOTgsMTIuNzM4MSA2LjM5NTgsMTIuNzc0MSA2LjQ3NzgsMTIuODEyMSBDNi43MTc4LDEyLjkyMzEgNi45NjY4LDEzLjAzMDEgNy4yMjY4LDEzLjEzNDEgQzcuMzM4OCwxMy4xNzgxIDcuNDUxOCwxMy4yMjIxIDcuNTY2OCwxMy4yNjUxIEM3Ljg0MjgsMTMuMzY5MSA4LjEyNzgsMTMuNDY5MSA4LjQyMjgsMTMuNTY1MSBDOC41MDk4LDEzLjU5NDEgOC41OTI4LDEzLjYyNDEgOC42ODA4LDEzLjY1MTEgQzkuMDU5OCwxMy43NzAxIDkuNDUyOCwxMy44ODQxIDkuODU3OCwxMy45OTExIEM5Ljk3MDgsMTQuMDIxMSAxMC4wODc4LDE0LjA1MDEgMTAuMjAyOCwxNC4wNzgxIEMxMC41MTQ4LDE0LjE1ODEgMTAuODMyOCwxNC4yMzQxIDExLjE1NzgsMTQuMzA2MSBDMTEuMjk4OCwxNC4zMzgxIDExLjQzODgsMTQuMzY5MSAxMS41ODA4LDE0LjM5ODEgQzExLjk0NTgsMTQuNDc1MSAxMi4zMTg4LDE0LjU0OTEgMTIuNjk3OCwxNC42MTgxIEMxMi43Nzk4LDE0LjYzMzEgMTIuODU4OCwxNC42NDkxIDEyLjk0MTgsMTQuNjY0MSBDMTMuMzk5OCwxNC43NDQxIDEzLjg2ODgsMTQuODE4MSAxNC4zNDQ4LDE0Ljg4ODEgQzE0LjQ3ODgsMTQuOTA3MSAxNC42MTQ4LDE0LjkyNDEgMTQuNzUwOCwxNC45NDIxIEMxNS4xMTA4LDE0Ljk5MjEgMTUuNDc1OCwxNS4wMzgxIDE1Ljg0MzgsMTUuMDgxMSBDMTUuOTkzOCwxNS4wOTgxIDE2LjE0NDgsMTUuMTE2MSAxNi4yOTY4LDE1LjEzMzEgQzE2Ljc0MDgsMTUuMTgwMSAxNy4xODg4LDE1LjIyMzEgMTcuNjM5OCwxNS4yNjIxIEMxNy42OTI4LDE1LjI2NjEgMTcuNzQ2OCwxNS4yNzIxIDE3LjgwMTgsMTUuMjc2MSBDMTguMzA1OCwxNS4zMTcxIDE4LjgxMjgsMTUuMzUwMSAxOS4zMjA4LDE1LjM4MDEgQzE5LjQ2NTgsMTUuMzg4MSAxOS42MTA4LDE1LjM5NDEgMTkuNzU2OCwxNS40MDExIEMyMC4xNDA4LDE1LjQyMDEgMjAuNTI0OCwxNS40MzUxIDIwLjkwODgsMTUuNDQ4MSBDMjEuMDU5OCwxNS40NTMxIDIxLjIwODgsMTUuNDU4MSAyMS4zNTg4LDE1LjQ2MjEgQzIxLjg3MTgsMTUuNDczMSAyMi4zODQ4LDE1LjQ4MjEgMjIuODk1OCwxNS40ODIxIEMyMy40MDU4LDE1LjQ4MjEgMjMuOTE4OCwxNS40NzMxIDI0LjQzMTgsMTUuNDYyMSBDMjQuNTgxOCwxNS40NTgxIDI0LjczMjgsMTUuNDUzMSAyNC44ODI4LDE1LjQ0ODEgQzI1LjI2NzgsMTUuNDM1MSAyNS42NTA4LDE1LjQyMDEgMjYuMDMzOCwxNS40MDExIEMyNi4xODA4LDE1LjM5NDEgMjYuMzI1OCwxNS4zODgxIDI2LjQ3MTgsMTUuMzgwMSBDMjYuOTgwOCwxNS4zNTAxIDI3LjQ4NjgsMTUuMzE3MSAyNy45ODk4LDE1LjI3NjEgQzI4LjA0NTgsMTUuMjcxMSAyOC4xMDA4LDE1LjI2NTEgMjguMTU1OCwxNS4yNjIxIEMyOC42MDY4LDE1LjIyMzEgMjkuMDUxOCwxNS4xODAxIDI5LjQ5MzgsMTUuMTMzMSBDMjkuNjQ3OCwxNS4xMTYxIDI5Ljc5ODgsMTUuMDk4MSAyOS45NTA4LDE1LjA4MTEgQzMwLjMxNjgsMTUuMDM4MSAzMC42ODA4LDE0Ljk5MjEgMzEuMDM5OCwxNC45NDMxIEMzMS4xNzY4LDE0LjkyNTEgMzEuMzE0OCwxNC45MDcxIDMxLjQ0OTgsMTQuODg3MSBDMzEuOTI0OCwxNC44MTgxIDMyLjM5MjgsMTQuNzQ0MSAzMi44NTE4LDE0LjY2NDEgQzMyLjkzNDgsMTQuNjQ5MSAzMy4wMTU4LDE0LjYzMzEgMzMuMDk4OCwxNC42MTcxIEMzMy40NzY4LDE0LjU0OTEgMzMuODQ3OCwxNC40NzUxIDM0LjIxMjgsMTQuMzk4MSBDMzQuMzU1OCwxNC4zNjkxIDM0LjQ5NDgsMTQuMzM4MSAzNC42MzU4LDE0LjMwNjEgQzM0Ljk2MDgsMTQuMjMzMSAzNS4yNzg4LDE0LjE1NzEgMzUuNTkxOCwxNC4wNzgxIEMzNS43MDU4LDE0LjA0OTEgMzUuODIyOCwxNC4wMjExIDM1LjkzNTgsMTMuOTkyMSBDMzYuMzQxOCwxMy44ODQxIDM2LjczNDgsMTMuNzcwMSAzNy4xMTM4LDEzLjY1MTEgQzM3LjIwMDgsMTMuNjI0MSAzNy4yODI4LDEzLjU5NTEgMzcuMzY3OCwxMy41NjYxIEMzNy42NjQ4LDEzLjQ3MDEgMzcuOTUxOCwxMy4zNjkxIDM4LjIyOTgsMTMuMjY0MSBDMzguMzQyOCwxMy4yMjIxIDM4LjQ1NDgsMTMuMTc5MSAzOC41NjU4LDEzLjEzNTEgQzM4LjgyNzgsMTMuMDMwMSAzOS4wNzg4LDEyLjkyMjEgMzkuMzIxOCwxMi44MTAxIEMzOS40MDA4LDEyLjc3MzEgMzkuNDg0OCwxMi43MzgxIDM5LjU2MjgsMTIuNzAxMSBDMzkuODQwOCwxMi41NjcxIDQwLjEwNjgsMTIuNDI5MSA0MC4zNTM4LDEyLjI4NTEgTDM4LjU2MTgsMjUuNTkxMSBDMzQuOTI0OCwyNC40MjQxIDI5LjgxNjgsMjIuMzA3MSAyNC45ODE4LDIwLjAwODEgQzI0LjkyNjgsMTguOTAxMSAyNC4wMTc4LDE4LjAxNTEgMjIuODk3OCwxOC4wMTUxIEMyMS43NDE4LDE4LjAxNTEgMjAuODAxOCwxOC45NTYxIDIwLjgwMTgsMjAuMTExMSBDMjAuODAxOCwyMS4yNjYxIDIxLjc0MTgsMjIuMjA2MSAyMi44OTc4LDIyLjIwNjEgQzIzLjM1MTgsMjIuMjA2MSAyMy43Njk4LDIyLjA1NzEgMjQuMTEyOCwyMS44MTAxIEMyOC40NDQ4LDIzLjg4OTEgMzMuOTc1OCwyNi4zNDIxIDM4LjI5MjgsMjcuNTg4MSBMMzYuNTEzOCw0MC43OTgxIFogTTIyLjg5NTgsNC4wMDAxIEMzMy4zMTQ4LDQuMDAwMSA0MC42NTU4LDcuMjI4MSA0MC43OTE4LDkuMDIxMSBMNDAuNzY1OCw5LjIyOTEgQzQwLjc0NzgsOS4yOTExIDQwLjcwODgsOS4zNTQxIDQwLjY3NTgsOS40MTgxIEM0MC42NDg4LDkuNDcwMSA0MC42Mjg4LDkuNTIwMSA0MC41OTE4LDkuNTczMSBDNDAuNTQ3OCw5LjYzNTEgNDAuNDgyOCw5LjY5ODEgNDAuNDI1OCw5Ljc2MTEgQzQwLjM3NDgsOS44MTYxIDQwLjMzMTgsOS44NzExIDQwLjI3MDgsOS45MjcxIEM0MC4yMDI4LDkuOTg4MSA0MC4xMTU4LDEwLjA1MTEgNDAuMDM0OCwxMC4xMTMxIEMzOS45NTk4LDEwLjE3MTEgMzkuODkzOCwxMC4yMjgxIDM5LjgwNzgsMTAuMjg3MSBDMzkuNzE2OCwxMC4zNDcxIDM5LjYwNzgsMTAuNDA5MSAzOS41MDU4LDEwLjQ3MTEgQzM5LjQwNjgsMTAuNTMwMSAzOS4zMTU4LDEwLjU5MDEgMzkuMjA0OCwxMC42NDkxIEMzOS4wOTQ4LDEwLjcwOTEgMzguOTY1OCwxMC43NjcxIDM4Ljg0NDgsMTAuODI3MSBDMzguNzIwOCwxMC44ODgxIDM4LjYwNDgsMTAuOTQ4MSAzOC40Njg4LDExLjAwOTEgQzM4LjMzOTgsMTEuMDY2MSAzOC4xOTI4LDExLjEyMzEgMzguMDU0OCwxMS4xODAxIEMzNy45MDQ4LDExLjI0MDEgMzcuNzYzOCwxMS4zMDIxIDM3LjYwMzgsMTEuMzYxMSBDMzcuNDU1OCwxMS40MTcxIDM3LjI4OTgsMTEuNDcxMSAzNy4xMzI4LDExLjUyNTEgQzM2Ljk2MTgsMTEuNTg0MSAzNi43OTc4LDExLjY0NDEgMzYuNjE1OCwxMS43MDIxIEMzNi40NDY4LDExLjc1NjEgMzYuMjYwOCwxMS44MDYxIDM2LjA4MTgsMTEuODU5MSBDMzUuODkxOCwxMS45MTUxIDM1LjcwODgsMTEuOTcyMSAzNS41MDg4LDEyLjAyNjEgQzM1LjMxNjgsMTIuMDc4MSAzNS4xMDk4LDEyLjEyNjEgMzQuOTA5OCwxMi4xNzYxIEMzNC43MDI4LDEyLjIyNzEgMzQuNTAyOCwxMi4yODAxIDM0LjI4NTgsMTIuMzMwMSBDMzQuMDY5OCwxMi4zNzkxIDMzLjgzNzgsMTIuNDI0MSAzMy42MTE4LDEyLjQ3MTEgQzMzLjM5MzgsMTIuNTE2MSAzMy4xODE4LDEyLjU2NDEgMzIuOTUzOCwxMi42MDcxIEMzMi43MTM4LDEyLjY1MzEgMzIuNDU2OCwxMi42OTQxIDMyLjIwNjgsMTIuNzM3MSBDMzEuOTc2OCwxMi43NzYxIDMxLjc1MzgsMTIuODE4MSAzMS41MTQ4LDEyLjg1NTEgQzMxLjI1NDgsMTIuODk1MSAzMC45Nzg4LDEyLjkzMTEgMzAuNzA4OCwxMi45NjgxIEMzMC40NjQ4LDEzLjAwMTEgMzAuMjI2OCwxMy4wMzgxIDI5Ljk3NDgsMTMuMDY4MSBDMjkuNjgxOCwxMy4xMDQxIDI5LjM3MjgsMTMuMTM0MSAyOS4wNjk4LDEzLjE2NTEgQzI4LjgyNTgsMTMuMTkxMSAyOC41ODk4LDEzLjIyMDEgMjguMzM5OCwxMy4yNDIxIEMyOC4wMDM4LDEzLjI3MzEgMjcuNjUxOCwxMy4yOTYxIDI3LjMwNTgsMTMuMzIwMSBDMjcuMDcyOCwxMy4zMzgxIDI2Ljg0NzgsMTMuMzU4MSAyNi42MDk4LDEzLjM3MzEgQzI2LjIzMDgsMTMuMzk1MSAyNS44MzM4LDEzLjQwOTEgMjUuNDQwOCwxMy40MjYxIEMyNS4yMjQ4LDEzLjQzNDEgMjUuMDE0OCwxMy40NDcxIDI0Ljc5MzgsMTMuNDU0MSBDMjQuMTc0OCwxMy40NzIxIDIzLjU0MTgsMTMuNDgyMSAyMi44OTU4LDEzLjQ4MjEgQzIyLjI0OTgsMTMuNDgyMSAyMS42MTY4LDEzLjQ3MjEgMjAuOTk2OCwxMy40NTQxIEMyMC43NzQ4LDEzLjQ0NzEgMjAuNTYyOCwxMy40MzMxIDIwLjM0MjgsMTMuNDI1MSBDMTkuOTUyOCwxMy40MDkxIDE5LjU1OTgsMTMuMzk1MSAxOS4xODE4LDEzLjM3MzEgQzE4LjkzMTgsMTMuMzU3MSAxOC42OTM4LDEzLjMzNjEgMTguNDQ4OCwxMy4zMTgxIEMxOC4xMTU4LDEzLjI5NDEgMTcuNzc1OCwxMy4yNzIxIDE3LjQ1MjgsMTMuMjQyMSBDMTcuMjAxOCwxMy4yMjAxIDE2Ljk2NTgsMTMuMTkwMSAxNi43MjA4LDEzLjE2NTEgQzE2LjQxNzgsMTMuMTM0MSAxNi4xMDg4LDEzLjEwNDEgMTUuODE2OCwxMy4wNjgxIEMxNS41NjY4LDEzLjAzODEgMTUuMzI5OCwxMy4wMDIxIDE1LjA4NjgsMTIuOTY4MSBDMTQuODE2OCwxMi45MzExIDE0LjUzODgsMTIuODk2MSAxNC4yNzc4LDEyLjg1NTEgQzE0LjAyOTgsMTIuODE3MSAxMy43OTc4LDEyLjc3MzEgMTMuNTU4OCwxMi43MzIxIEMxMy4zMTc4LDEyLjY5MDEgMTMuMDcwOCwxMi42NTExIDEyLjgzOTgsMTIuNjA3MSBDMTIuNjA3OCwxMi41NjMxIDEyLjM5MjgsMTIuNTE1MSAxMi4xNjg4LDEyLjQ2OTEgQzExLjk0NjgsMTIuNDIyMSAxMS43MTg4LDEyLjM3ODEgMTEuNTA1OCwxMi4zMjkxIEMxMS4yODk4LDEyLjI4MDEgMTEuMDkwOCwxMi4yMjcxIDEwLjg4MzgsMTIuMTc2MSBDMTAuNjgzOCwxMi4xMjYxIDEwLjQ3NTgsMTIuMDc4MSAxMC4yODQ4LDEyLjAyNjEgQzEwLjA4MTgsMTEuOTcyMSA5Ljg5NjgsMTEuOTE0MSA5LjcwMzgsMTEuODU3MSBDOS41Mjc4LDExLjgwNjEgOS4zNDQ4LDExLjc1NTEgOS4xNzc4LDExLjcwMjEgQzguOTkyOCwxMS42NDMxIDguODI2OCwxMS41ODMxIDguNjUzOCwxMS41MjIxIEM4LjQ5ODgsMTEuNDY5MSA4LjMzNTgsMTEuNDE2MSA4LjE5MDgsMTEuMzYxMSBDOC4wMjg4LDExLjMwMjEgNy44ODc4LDExLjIzOTEgNy43Mzc4LDExLjE3OTEgQzcuNTk5OCwxMS4xMjIxIDcuNDUyOCwxMS4wNjUxIDcuMzI0OCwxMS4wMDkxIEM3LjE5MDgsMTAuOTQ4MSA3LjA3MzgsMTAuODg4MSA2Ljk0OTgsMTAuODI3MSBDNi44Mjg4LDEwLjc2NzEgNi42OTg4LDEwLjcwOTEgNi41ODg4LDEwLjY0ODEgQzYuNDc4OCwxMC41ODkxIDYuMzg2OCwxMC41MjkxIDYuMjg2OCwxMC40NjkxIEM2LjE4NTgsMTAuNDA4MSA2LjA3NjgsMTAuMzQ3MSA1Ljk4NjgsMTAuMjg3MSBDNS44OTk4LDEwLjIyNzEgNS44MzE4LDEwLjE2OTEgNS43NTU4LDEwLjExMDEgQzUuNjc2OCwxMC4wNDkxIDUuNTkwOCw5Ljk4NzEgNS41MjQ4LDkuOTI3MSBDNS40NjE4LDkuODcwMSA1LjQxNzgsOS44MTMxIDUuMzY1OCw5Ljc1ODEgQzUuMzA5OCw5LjY5NjEgNS4yNDY4LDkuNjM0MSA1LjIwMjgsOS41NzMxIEM1LjE2NDgsOS41MTkxIDUuMTQ1OCw5LjQ2NzEgNS4xMTc4LDkuNDEzMSBDNS4wODU4LDkuMzUxMSA1LjA0NjgsOS4yODkxIDUuMDI5OCw5LjIyOTEgTDUuMDAxOCw5LjAyMDEgQzUuMTQwOCw3LjIyNzEgMTIuNDc5OCw0LjAwMDEgMjIuODk1OCw0LjAwMDEgTDIyLjg5NTgsNC4wMDAxIFogTTQ1LjI1NDgsMjYuMjU3MSBDNDUuMDQxOCwyNS4xMDcxIDQzLjcxNjgsMjMuODg5MSA0MS4wMTc4LDIyLjM0NzEgTDQyLjczMzgsOS41OTUxIEw0Mi43MzM4LDkuNTkxMSBMNDIuNzMzOCw5LjU5MDEgTDQyLjc4NDgsOS4yMDAxIEM0Mi43OTA4LDkuMTU3MSA0Mi43OTM4LDkuMTE0MSA0Mi43OTM4LDkuMDcxMSBDNDIuNzkzOCw0LjkwNDEgMzIuMzA3OCwyLjAwMDEgMjIuODk1OCwyLjAwMDEgQzEzLjQ4NDgsMi4wMDAxIDIuOTk5OCw0LjkwNDEgMi45OTk4LDkuMDcxMSBDMi45OTk4LDkuMTE1MSAzLjAwMjgsOS4xNTkxIDMuMDA4OCw5LjIwMzEgTDMuMDYwOCw5LjU5MzEgTDMuMDYwOCw5LjU5NTEgTDcuMjg5OCw0MS4wMDkxIEM3LjQyMDgsNDQuNjg1MSAxNi45MDI4LDQ2LjA1NzEgMjIuODk1OCw0Ni4wNTcxIEMyNi4yMTA4LDQ2LjA1NzEgMjkuNTMzOCw0NS43MTExIDMyLjI1MjgsNDUuMDgyMSBDMzMuMzQ3OCw0NC44MzAxIDM0LjMzMDgsNDQuNTMzMSAzNS4xNzQ4LDQ0LjIwMDEgQzM3LjM0MDgsNDMuMzQ1MSAzOC40NTk4LDQyLjI3MTEgMzguNTAzOCw0MS4wMDkxIEw0MC4yNDQ4LDI4LjA4MDEgQzQxLjE5NjgsMjguMjgyMSA0Mi4wNjE4LDI4LjQwNTEgNDIuNzgwOCwyOC40MDUxIEM0My43NDk4LDI4LjQwNTEgNDQuNDc0OCwyOC4yMDAxIDQ0Ljg2NjgsMjcuNzMyMSBDNDUuMjE2OCwyNy4zMTYxIDQ1LjM1NDgsMjYuNzkyMSA0NS4yNTQ4LDI2LjI1NzEgTDQ1LjI1NDgsMjYuMjU3MSBaIiBpZD0iQVdTLUFtYXpvbi1TaW1wbGUtU3RvcmFnZV9CdWNrZXRfUmVzb3VyY2UtSWNvbl9saWdodC1iZyIgZmlsbD0iIzdBQTExNiI+PC9wYXRoPgogICAgPC9nPgo8L3N2Zz4="/>
+            </g>
+          </g>
+          <g data-cell-id="etl-wide-clean-title">
+            <g transform="translate(0.5,0.5)">
+              <rect x="112" y="792" width="260" height="32" fill="none" stroke="none" pointer-events="all"/>
+            </g>
+            <g>
+              <g fill="#174C3C" font-family="Helvetica, 'Noto Sans CJK KR', sans-serif" font-weight="bold" text-anchor="start" font-size="24px" style="fill: light-dark(rgb(23, 76, 60), rgb(148, 193, 179));">
+                <text x="112" y="819">Amazon S3 정제본</text>
+              </g>
+            </g>
+          </g>
+          <g data-cell-id="etl-wide-clean-line0">
+            <g transform="translate(0.5,0.5)">
+              <rect x="112" y="828" width="262" height="23" fill="none" stroke="none" pointer-events="all"/>
+            </g>
+            <g>
+              <g fill="#2E5848" font-family="Helvetica, 'Noto Sans CJK KR', sans-serif" text-anchor="start" font-size="18px" style="fill: light-dark(rgb(46, 88, 72), rgb(142, 179, 165));">
+                <text x="112" y="847.5">마스킹한 Markdown</text>
+              </g>
+            </g>
+          </g>
+          <g data-cell-id="etl-wide-clean-line1">
+            <g transform="translate(0.5,0.5)">
+              <rect x="112" y="853" width="262" height="23" fill="none" stroke="none" pointer-events="all"/>
+            </g>
+            <g>
+              <g fill="#2E5848" font-family="Helvetica, 'Noto Sans CJK KR', sans-serif" text-anchor="start" font-size="18px" style="fill: light-dark(rgb(46, 88, 72), rgb(142, 179, 165));">
+                <text x="112" y="872.5">출처 · 버전 · 열람 범위</text>
+              </g>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="etl-wide-hold">
+          <g>
+            <rect x="432" y="781" width="298" height="98" rx="9" ry="9" fill="#fdf1eb" stroke="#ca9c8e" stroke-width="1.8" pointer-events="all" style="fill: light-dark(rgb(253, 241, 235), rgb(36, 26, 21)); stroke: light-dark(rgb(202, 156, 142), rgb(128, 88, 76));"/>
+          </g>
+          <g data-cell-id="etl-wide-hold-title">
+            <g transform="translate(0.5,0.5)">
+              <rect x="452" y="792" width="268" height="32" fill="none" stroke="none" pointer-events="all"/>
+            </g>
+            <g>
+              <g fill="#78382D" font-family="Helvetica, 'Noto Sans CJK KR', sans-serif" font-weight="bold" text-anchor="start" font-size="24px" style="fill: light-dark(rgb(120, 56, 45), rgb(222, 167, 158));">
+                <text x="452" y="819">재처리 · 색인 보류</text>
+              </g>
+            </g>
+          </g>
+          <g data-cell-id="etl-wide-hold-line0">
+            <g transform="translate(0.5,0.5)">
+              <rect x="452" y="828" width="270" height="23" fill="none" stroke="none" pointer-events="all"/>
+            </g>
+            <g>
+              <g fill="#78463B" font-family="Helvetica, 'Noto Sans CJK KR', sans-serif" text-anchor="start" font-size="18px" style="fill: light-dark(rgb(120, 70, 59), rgb(203, 160, 151));">
+                <text x="452" y="847.5">OCR·전사 실패도 보류</text>
+              </g>
+            </g>
+          </g>
+          <g data-cell-id="etl-wide-hold-line1">
+            <g transform="translate(0.5,0.5)">
+              <rect x="452" y="853" width="270" height="23" fill="none" stroke="none" pointer-events="all"/>
+            </g>
+            <g>
+              <g fill="#78463B" font-family="Helvetica, 'Noto Sans CJK KR', sans-serif" text-anchor="start" font-size="18px" style="fill: light-dark(rgb(120, 70, 59), rgb(203, 160, 151));">
+                <text x="452" y="872.5">복구 후 다시 검증</text>
+              </g>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="etl-wide-index">
+          <g>
+            <rect x="30" y="927" width="700" height="98" rx="9" ry="9" fill="#173d42" stroke="#173d42" stroke-width="1.8" pointer-events="all" style="fill: light-dark(rgb(23, 61, 66), rgb(166, 198, 203)); stroke: light-dark(rgb(23, 61, 66), rgb(166, 198, 203));"/>
+          </g>
+          <g data-cell-id="etl-wide-index-lens">
+            <g transform="translate(0.5,0.5)">
+              <ellipse cx="68.5" cy="969.5" rx="16.5" ry="16.5" fill="none" stroke="#b9e0d1" stroke-width="3" pointer-events="all" style="stroke: light-dark(rgb(185, 224, 209), rgb(28, 61, 49));"/>
+            </g>
+          </g>
+          <g data-cell-id="etl-wide-index-handle">
+            <g transform="translate(0.5,0.5)">
+              <rect x="79" y="984" width="17" height="3" rx="0.45" ry="0.45" fill="#b9e0d1" stroke="none" transform="rotate(48,87.5,985.5)" pointer-events="all" style="fill: light-dark(rgb(185, 224, 209), rgb(28, 61, 49));"/>
+            </g>
+          </g>
+          <g data-cell-id="etl-wide-index-title">
+            <g transform="translate(0.5,0.5)">
+              <rect x="112" y="938" width="608" height="32" fill="none" stroke="none" pointer-events="all"/>
+            </g>
+            <g>
+              <g fill="#FFFFFF" font-family="Helvetica, 'Noto Sans CJK KR', sans-serif" font-weight="bold" text-anchor="start" font-size="24px" style="fill: light-dark(rgb(255, 255, 255), rgb(18, 18, 18));">
+                <text x="112" y="965">검색 청크 생성 · 임베딩 · 색인</text>
+              </g>
+            </g>
+          </g>
+          <g data-cell-id="etl-wide-index-line0">
+            <g transform="translate(0.5,0.5)">
+              <rect x="112" y="974" width="610" height="23" fill="none" stroke="none" pointer-events="all"/>
+            </g>
+            <g>
+              <g fill="#D2E6E3" font-family="Helvetica, 'Noto Sans CJK KR', sans-serif" text-anchor="start" font-size="18px" style="fill: light-dark(rgb(210, 230, 227), rgb(29, 47, 44));">
+                <text x="112" y="993.5">S3 Vectors · OpenSearch · Neptune Analytics 중 선택</text>
+              </g>
+            </g>
+          </g>
+          <g data-cell-id="etl-wide-index-line1">
+            <g transform="translate(0.5,0.5)">
+              <rect x="112" y="999" width="610" height="23" fill="none" stroke="none" pointer-events="all"/>
+            </g>
+            <g>
+              <g fill="#D2E6E3" font-family="Helvetica, 'Noto Sans CJK KR', sans-serif" text-anchor="start" font-size="18px" style="fill: light-dark(rgb(210, 230, 227), rgb(29, 47, 44));">
+                <text x="112" y="1018.5">조회 시 원본 문서의 현재 열람 권한 확인</text>
+              </g>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="etl-wide-source-raw">
+          <g>
+            <path d="M 337 187.5 L 407.92 187.5" fill="none" stroke="#385c65" stroke-width="2.4" stroke-miterlimit="10" pointer-events="stroke" style="stroke: light-dark(rgb(56, 92, 101), rgb(139, 170, 178));"/>
+            <path d="M 417.32 187.5 L 407.92 190.63 L 407.92 184.37 Z" fill="#385c65" stroke="#385c65" stroke-width="2.4" stroke-miterlimit="10" pointer-events="all" style="fill: light-dark(rgb(56, 92, 101), rgb(139, 170, 178)); stroke: light-dark(rgb(56, 92, 101), rgb(139, 170, 178));"/>
+          </g>
+        </g>
+        <g data-cell-id="etl-wide-raw-read">
+          <g>
+            <path d="M 575 229 L 575 254 L 206 254 L 206 273.92" fill="none" stroke="#385c65" stroke-width="2.4" stroke-miterlimit="10" pointer-events="stroke" style="stroke: light-dark(rgb(56, 92, 101), rgb(139, 170, 178));"/>
+            <path d="M 206 283.32 L 202.87 273.92 L 209.13 273.92 Z" fill="#385c65" stroke="#385c65" stroke-width="2.4" stroke-miterlimit="10" pointer-events="all" style="fill: light-dark(rgb(56, 92, 101), rgb(139, 170, 178)); stroke: light-dark(rgb(56, 92, 101), rgb(139, 170, 178));"/>
+          </g>
+        </g>
+        <g data-cell-id="etl-wide-read-mask">
+          <g>
+            <path d="M 206 395 L 206 437.92" fill="none" stroke="#385c65" stroke-width="2.4" stroke-miterlimit="10" pointer-events="stroke" style="stroke: light-dark(rgb(56, 92, 101), rgb(139, 170, 178));"/>
+            <path d="M 206 447.32 L 202.87 437.92 L 209.13 437.92 Z" fill="#385c65" stroke="#385c65" stroke-width="2.4" stroke-miterlimit="10" pointer-events="all" style="fill: light-dark(rgb(56, 92, 101), rgb(139, 170, 178)); stroke: light-dark(rgb(56, 92, 101), rgb(139, 170, 178));"/>
+          </g>
+        </g>
+        <g data-cell-id="etl-wide-read-screen">
+          <g>
+            <path d="M 382 340.5 L 433.92 340.5" fill="none" stroke="#93500c" stroke-width="2.4" stroke-miterlimit="10" stroke-dasharray="12 9.6" pointer-events="stroke" style="stroke: light-dark(rgb(147, 80, 12), rgb(209, 152, 93));"/>
+            <path d="M 443.32 340.5 L 433.92 343.63 L 433.92 337.37 Z" fill="#93500c" stroke="#93500c" stroke-width="2.4" stroke-miterlimit="10" pointer-events="all" style="fill: light-dark(rgb(147, 80, 12), rgb(209, 152, 93)); stroke: light-dark(rgb(147, 80, 12), rgb(209, 152, 93));"/>
+          </g>
+        </g>
+        <g data-cell-id="etl-wide-screen-mask">
+          <g>
+            <path d="M 488.6 395 L 488.6 502.32 L 394.08 502.32" fill="none" stroke="#93500c" stroke-width="2.4" stroke-miterlimit="10" stroke-dasharray="12 9.6" pointer-events="stroke" style="stroke: light-dark(rgb(147, 80, 12), rgb(209, 152, 93));"/>
+            <path d="M 384.68 502.32 L 394.08 499.19 L 394.08 505.45 Z" fill="#93500c" stroke="#93500c" stroke-width="2.4" stroke-miterlimit="10" pointer-events="all" style="fill: light-dark(rgb(147, 80, 12), rgb(209, 152, 93)); stroke: light-dark(rgb(147, 80, 12), rgb(209, 152, 93));"/>
+          </g>
+        </g>
+        <g data-cell-id="etl-wide-screen-verify">
+          <g>
+            <path d="M 704.44 395 L 704.44 642.52 L 394.08 642.52" fill="none" stroke="#93500c" stroke-width="2.4" stroke-miterlimit="10" stroke-dasharray="12 9.6" pointer-events="stroke" style="stroke: light-dark(rgb(147, 80, 12), rgb(209, 152, 93));"/>
+            <path d="M 384.68 642.52 L 394.08 639.39 L 394.08 645.65 Z" fill="#93500c" stroke="#93500c" stroke-width="2.4" stroke-miterlimit="10" pointer-events="all" style="fill: light-dark(rgb(147, 80, 12), rgb(209, 152, 93)); stroke: light-dark(rgb(147, 80, 12), rgb(209, 152, 93));"/>
+          </g>
+        </g>
+        <g data-cell-id="etl-wide-mask-verify">
+          <g>
+            <path d="M 206 559 L 206 599.92" fill="none" stroke="#385c65" stroke-width="2.4" stroke-miterlimit="10" pointer-events="stroke" style="stroke: light-dark(rgb(56, 92, 101), rgb(139, 170, 178));"/>
+            <path d="M 206 609.32 L 202.87 599.92 L 209.13 599.92 Z" fill="#385c65" stroke="#385c65" stroke-width="2.4" stroke-miterlimit="10" pointer-events="all" style="fill: light-dark(rgb(56, 92, 101), rgb(139, 170, 178)); stroke: light-dark(rgb(56, 92, 101), rgb(139, 170, 178));"/>
+          </g>
+        </g>
+        <g data-cell-id="etl-wide-verify-clean">
+          <g>
+            <path d="M 206 721 L 206 768.92" fill="none" stroke="#176351" stroke-width="2.4" stroke-miterlimit="10" pointer-events="stroke" style="stroke: light-dark(rgb(23, 99, 81), rgb(117, 182, 167));"/>
+            <path d="M 206 778.32 L 202.87 768.92 L 209.13 768.92 Z" fill="#176351" stroke="#176351" stroke-width="2.4" stroke-miterlimit="10" pointer-events="all" style="fill: light-dark(rgb(23, 99, 81), rgb(117, 182, 167)); stroke: light-dark(rgb(23, 99, 81), rgb(117, 182, 167));"/>
+          </g>
+        </g>
+        <g data-cell-id="etl-wide-verify-hold">
+          <g>
+            <path d="M 382 694.84 L 581 694.84 L 581 768.92" fill="none" stroke="#973e3d" stroke-width="2.4" stroke-miterlimit="10" pointer-events="stroke" style="stroke: light-dark(rgb(151, 62, 61), rgb(228, 151, 150));"/>
+            <path d="M 581 778.32 L 577.87 768.92 L 584.13 768.92 Z" fill="#973e3d" stroke="#973e3d" stroke-width="2.4" stroke-miterlimit="10" pointer-events="all" style="fill: light-dark(rgb(151, 62, 61), rgb(228, 151, 150)); stroke: light-dark(rgb(151, 62, 61), rgb(228, 151, 150));"/>
+          </g>
+        </g>
+        <g data-cell-id="etl-wide-clean-index">
+          <g>
+            <path d="M 206 879 L 206 914.92" fill="none" stroke="#176351" stroke-width="2.4" stroke-miterlimit="10" pointer-events="stroke" style="stroke: light-dark(rgb(23, 99, 81), rgb(117, 182, 167));"/>
+            <path d="M 206 924.32 L 202.87 914.92 L 209.13 914.92 Z" fill="#176351" stroke="#176351" stroke-width="2.4" stroke-miterlimit="10" pointer-events="all" style="fill: light-dark(rgb(23, 99, 81), rgb(117, 182, 167)); stroke: light-dark(rgb(23, 99, 81), rgb(117, 182, 167));"/>
+          </g>
+        </g>
+        <g data-cell-id="etl-wide-uncertain">
+          <g transform="translate(0.5,0.5)">
+            <rect x="501" y="424" width="195" height="55" fill="none" stroke="none" pointer-events="all"/>
+          </g>
+          <g>
+            <g fill="#93500C" font-family="Helvetica, 'Noto Sans CJK KR', sans-serif" font-weight="bold" text-anchor="start" font-size="17px" style="fill: light-dark(rgb(147, 80, 12), rgb(209, 152, 93));">
+              <text x="501" y="449">의심 · 불확실</text>
+              <text x="501" y="469">또는 규칙 후보</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="etl-wide-negative">
+          <g transform="translate(0.5,0.5)">
+            <rect x="447" y="603" width="242" height="29" fill="none" stroke="none" pointer-events="all"/>
+          </g>
+          <g>
+            <g fill="#93500C" font-family="Helvetica, 'Noto Sans CJK KR', sans-serif" font-weight="bold" text-anchor="end" font-size="17px" style="fill: light-dark(rgb(147, 80, 12), rgb(209, 152, 93));">
+              <text x="689" y="625">음성 · 규칙 후보 없음</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="etl-wide-blocked">
+          <g transform="translate(0.5,0.5)">
+            <rect x="405" y="708" width="164" height="50" fill="none" stroke="none" pointer-events="all"/>
+          </g>
+          <g>
+            <g fill="#973E3D" font-family="Helvetica, 'Noto Sans CJK KR', sans-serif" font-weight="bold" text-anchor="end" font-size="17px" style="fill: light-dark(rgb(151, 62, 61), rgb(228, 151, 150));">
+              <text x="569" y="730.5">잔여 의심</text>
+              <text x="569" y="750.5">검사 차단·실패</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="etl-wide-passed">
+          <g transform="translate(0.5,0.5)">
+            <rect x="221" y="736" width="73" height="26" fill="none" stroke="none" pointer-events="all"/>
+          </g>
+          <g>
+            <g fill="#176351" font-family="Helvetica, 'Noto Sans CJK KR', sans-serif" font-weight="bold" text-anchor="start" font-size="17px" style="fill: light-dark(rgb(23, 99, 81), rgb(117, 182, 167));">
+              <text x="221" y="756.5">통과</text>
+            </g>
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>
