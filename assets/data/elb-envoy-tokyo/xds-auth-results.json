@@ -1,0 +1,338 @@
+{
+ "scope": "Local loopback replay. Envoy 1.40.0 (BoringSSL) with a bootstrap limited to fields ELB for Envoy accepts (node.cluster, admin, dynamic_resources, static_resources); --service-node mimics the instance ID that ELB sets. xDS server: go-control-plane v0.14.0 over mTLS, authorizing node.cluster against the client certificate URI SAN on every SotW request that carries a node; Delta ADS (DeltaAggregatedResources) is refused with Unimplemented because go-control-plane allows Delta requests when no Delta callback is set. Test-only PKI. Not run on a managed proxy; security groups are not exercised.",
+ "cases": [
+  {
+   "case": "A-C bootstrap",
+   "proxy": "order-gw",
+   "dynamic_listeners": "http::127.0.0.1:10080",
+   "control_plane_connected": "1",
+   "xds_ssl_handshake": "1"
+  },
+  {
+   "case": "A-C bootstrap",
+   "proxy": "impostor",
+   "dynamic_listeners": "none",
+   "control_plane_connected": "0",
+   "xds_ssl_handshake": "1"
+  },
+  {
+   "case": "A-C bootstrap",
+   "proxy": "nocert",
+   "dynamic_listeners": "none",
+   "control_plane_connected": "0",
+   "xds_ssl_handshake": "0"
+  },
+  {
+   "case": "A request via order-gw listener",
+   "result": "200 order-gw v1"
+  },
+  {
+   "case": "B request via pay-gw listener (impostor)",
+   "result": "000"
+  },
+  {
+   "case": "D route to new cluster at xDS port",
+   "http": "503",
+   "body": "upstream connect error or disconnect/reset before headers. reset reason: remote connection failure"
+  },
+  {
+   "delta": false,
+   "direct_mtls": false,
+   "ev": "client",
+   "node_cluster": "order-gw",
+   "received_listeners": [
+    "http@10080"
+   ],
+   "t": "2026-11-27T09:04:32.806043338Z",
+   "target": "127.0.0.1:10080",
+   "version": "v1"
+  },
+  {
+   "delta": false,
+   "direct_mtls": false,
+   "error": "node.cluster \"pay-gw\" not allowed for \"spiffe://example.test/elb-proxy/order-gw\"",
+   "ev": "client",
+   "grpc_code": "PermissionDenied",
+   "node_cluster": "pay-gw",
+   "t": "2026-11-27T09:04:32.812464211Z",
+   "target": "127.0.0.1:10080"
+  },
+  {
+   "delta": false,
+   "direct_mtls": true,
+   "error": "node.cluster \"pay-gw\" not allowed for \"spiffe://example.test/elb-proxy/order-gw\"",
+   "ev": "client",
+   "grpc_code": "PermissionDenied",
+   "node_cluster": "pay-gw",
+   "t": "2026-11-27T09:04:32.819253117Z",
+   "target": "127.0.0.1:18000"
+  },
+  {
+   "delta": true,
+   "direct_mtls": true,
+   "error": "EOF",
+   "ev": "client",
+   "grpc_code": "Unknown",
+   "node_cluster": "pay-gw",
+   "t": "2026-11-27T09:04:32.825845312Z",
+   "target": "127.0.0.1:18000"
+  },
+  {
+   "delta": true,
+   "direct_mtls": true,
+   "error": "delta xDS disabled",
+   "ev": "client",
+   "grpc_code": "Unimplemented",
+   "node_cluster": "order-gw",
+   "t": "2026-11-27T09:04:32.832128713Z",
+   "target": "127.0.0.1:18000"
+  },
+  {
+   "delta": true,
+   "direct_mtls": false,
+   "error": "delta xDS disabled",
+   "ev": "client",
+   "grpc_code": "Unimplemented",
+   "node_cluster": "pay-gw",
+   "t": "2026-11-27T09:04:32.83787369Z",
+   "target": "127.0.0.1:10080"
+  },
+  {
+   "case": "F rotation (order-gw)",
+   "mv_into_watched_dir_at": "2026-11-27T09:04:32.858276968Z",
+   "xds_server_restart_at": "2026-11-27T09:04:35.914337763Z",
+   "envoy_admin_certs_serial_before_mv": "eec94aec6a0604b0",
+   "envoy_admin_certs_serial_3s_after_mv": "3b657b0993a374b4",
+   "order_gw_streams_opened_between_mv_and_restart": 0,
+   "order_gw_stream_serials": [
+    [
+     "2026-11-27T09:04:28.68595722Z",
+     "eec94aec6a0604b0"
+    ],
+    [
+     "2026-11-27T09:04:37.871563124Z",
+     "3b657b0993a374b4"
+    ]
+   ],
+   "envoy_pid_unchanged": "yes",
+   "request_after_reconnect": "order-gw v1"
+  }
+ ],
+ "tls_rejects_no_client_cert": 9,
+ "delta_streams_refused": 3,
+ "control_server_without_delta_callback": {
+  "note": "Same server built without DeltaStreamOpenFunc. With the order-gw certificate, Delta ADS for node.cluster pay-gw returned pay-gw's listener while SotW was denied. go-control-plane v0.14.0 CallbackFuncs.OnStreamDeltaRequest returns nil (allow) when StreamDeltaRequestFunc is unset.",
+  "results": [
+   {
+    "delta": true,
+    "direct_mtls": true,
+    "ev": "client",
+    "node_cluster": "pay-gw",
+    "received_listeners": [
+     "http@10081"
+    ],
+    "t": "2026-11-27T09:05:03.481385523Z",
+    "target": "127.0.0.1:18000"
+   },
+   {
+    "delta": false,
+    "direct_mtls": true,
+    "error": "node.cluster \"pay-gw\" not allowed for \"spiffe://example.test/elb-proxy/order-gw\"",
+    "ev": "client",
+    "grpc_code": "PermissionDenied",
+    "node_cluster": "pay-gw",
+    "t": "2026-11-27T09:05:03.488759037Z",
+    "target": "127.0.0.1:18000"
+   }
+  ]
+ },
+ "streams_by_node_id": {
+  "i-0local-order-gw": [
+   {
+    "server_run": 1,
+    "opened": "2026-11-27T09:04:28.68595722Z",
+    "client_cert_serial": "eec94aec6a0604b0",
+    "san": "spiffe://example.test/elb-proxy/order-gw",
+    "grpc_metadata_keys": [
+     ":authority",
+     "content-type",
+     "x-envoy-internal",
+     "x-forwarded-for"
+    ],
+    "node_id": "i-0local-order-gw",
+    "node_cluster": "order-gw",
+    "allow": true
+   },
+   {
+    "server_run": 2,
+    "opened": "2026-11-27T09:04:37.871563124Z",
+    "client_cert_serial": "3b657b0993a374b4",
+    "san": "spiffe://example.test/elb-proxy/order-gw",
+    "grpc_metadata_keys": [
+     ":authority",
+     "content-type",
+     "x-envoy-internal",
+     "x-forwarded-for"
+    ],
+    "node_id": "i-0local-order-gw",
+    "node_cluster": "order-gw",
+    "allow": true
+   }
+  ],
+  "i-0local-impostor": [
+   {
+    "server_run": 1,
+    "opened": "2026-11-27T09:04:28.685969358Z",
+    "client_cert_serial": "eec94aec6a0604b0",
+    "san": "spiffe://example.test/elb-proxy/order-gw",
+    "grpc_metadata_keys": [
+     ":authority",
+     "content-type",
+     "x-envoy-internal",
+     "x-forwarded-for"
+    ],
+    "node_id": "i-0local-impostor",
+    "node_cluster": "pay-gw",
+    "allow": false
+   },
+   {
+    "server_run": 1,
+    "opened": "2026-11-27T09:04:28.932205862Z",
+    "client_cert_serial": "eec94aec6a0604b0",
+    "san": "spiffe://example.test/elb-proxy/order-gw",
+    "grpc_metadata_keys": [
+     ":authority",
+     "content-type",
+     "x-envoy-internal",
+     "x-forwarded-for"
+    ],
+    "node_id": "i-0local-impostor",
+    "node_cluster": "pay-gw",
+    "allow": false
+   },
+   {
+    "server_run": 1,
+    "opened": "2026-11-27T09:04:29.000791829Z",
+    "client_cert_serial": "eec94aec6a0604b0",
+    "san": "spiffe://example.test/elb-proxy/order-gw",
+    "grpc_metadata_keys": [
+     ":authority",
+     "content-type",
+     "x-envoy-internal",
+     "x-forwarded-for"
+    ],
+    "node_id": "i-0local-impostor",
+    "node_cluster": "pay-gw",
+    "allow": false
+   },
+   {
+    "server_run": 1,
+    "opened": "2026-11-27T09:04:29.970477098Z",
+    "client_cert_serial": "eec94aec6a0604b0",
+    "san": "spiffe://example.test/elb-proxy/order-gw",
+    "grpc_metadata_keys": [
+     ":authority",
+     "content-type",
+     "x-envoy-internal",
+     "x-forwarded-for"
+    ],
+    "node_id": "i-0local-impostor",
+    "node_cluster": "pay-gw",
+    "allow": false
+   },
+   {
+    "server_run": 1,
+    "opened": "2026-11-27T09:04:32.552826681Z",
+    "client_cert_serial": "eec94aec6a0604b0",
+    "san": "spiffe://example.test/elb-proxy/order-gw",
+    "grpc_metadata_keys": [
+     ":authority",
+     "content-type",
+     "x-envoy-internal",
+     "x-forwarded-for"
+    ],
+    "node_id": "i-0local-impostor",
+    "node_cluster": "pay-gw",
+    "allow": false
+   },
+   {
+    "server_run": 1,
+    "opened": "2026-11-27T09:04:35.486379965Z",
+    "client_cert_serial": "eec94aec6a0604b0",
+    "san": "spiffe://example.test/elb-proxy/order-gw",
+    "grpc_metadata_keys": [
+     ":authority",
+     "content-type",
+     "x-envoy-internal",
+     "x-forwarded-for"
+    ],
+    "node_id": "i-0local-impostor",
+    "node_cluster": "pay-gw",
+    "allow": false
+   },
+   {
+    "server_run": 2,
+    "opened": "2026-11-27T09:04:40.125627297Z",
+    "client_cert_serial": "eec94aec6a0604b0",
+    "san": "spiffe://example.test/elb-proxy/order-gw",
+    "grpc_metadata_keys": [
+     ":authority",
+     "content-type",
+     "x-envoy-internal",
+     "x-forwarded-for"
+    ],
+    "node_id": "i-0local-impostor",
+    "node_cluster": "pay-gw",
+    "allow": false
+   }
+  ],
+  "external-caller": [
+   {
+    "server_run": 1,
+    "opened": "2026-11-27T09:04:32.804754785Z",
+    "client_cert_serial": "eec94aec6a0604b0",
+    "san": "spiffe://example.test/elb-proxy/order-gw",
+    "grpc_metadata_keys": [
+     ":authority",
+     "content-type",
+     "user-agent",
+     "x-forwarded-proto",
+     "x-request-id"
+    ],
+    "node_id": "external-caller",
+    "node_cluster": "order-gw",
+    "allow": true
+   },
+   {
+    "server_run": 1,
+    "opened": "2026-11-27T09:04:32.812179141Z",
+    "client_cert_serial": "eec94aec6a0604b0",
+    "san": "spiffe://example.test/elb-proxy/order-gw",
+    "grpc_metadata_keys": [
+     ":authority",
+     "content-type",
+     "user-agent",
+     "x-forwarded-proto",
+     "x-request-id"
+    ],
+    "node_id": "external-caller",
+    "node_cluster": "pay-gw",
+    "allow": false
+   },
+   {
+    "server_run": 1,
+    "opened": "2026-11-27T09:04:32.818978051Z",
+    "client_cert_serial": "eec94aec6a0604b0",
+    "san": "spiffe://example.test/elb-proxy/order-gw",
+    "grpc_metadata_keys": [
+     ":authority",
+     "content-type",
+     "user-agent"
+    ],
+    "node_id": "external-caller",
+    "node_cluster": "pay-gw",
+    "allow": false
+   }
+  ]
+ }
+}

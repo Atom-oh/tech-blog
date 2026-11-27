@@ -298,7 +298,7 @@ AWS가 **글로벌 rate limiting 미지원**이라고 명시한 대상은 EKS의
 | 설정을 바꾸는 주체 | 팀이 운영하는 부분 | 맞는 상황 |
 | --- | --- | --- |
 | 배포 파이프라인이 bootstrap과 ZIP 아카이브 전달 | 설정 생성·검증, 주소 갱신, 배포와 롤백 | 대상과 정책이 드물게 바뀌는 인입 게이트웨이. 이 글의 예제 방식 |
-| 자체 xDS 서버가 gRPC/ADS로 전달 | 서버 가용성과 신뢰 설정, 서비스 발견, 스냅샷 일관성, ACK/NACK 관찰 | Pod 교체나 카나리 배포에 맞춰 정책과 엔드포인트를 지속적으로 갱신 |
+| 자체 xDS 서버가 gRPC/ADS로 전달 | 서버 가용성과 신뢰 설정([연결 인증·인가](#xds-auth)), 서비스 발견, 스냅샷 일관성, ACK/NACK 관찰 | Pod 교체나 카나리 배포에 맞춰 정책과 엔드포인트를 지속적으로 갱신 |
 | EKS의 Envoy Gateway가 Gateway API를 xDS로 변환 | Envoy Gateway와 remote infrastructure provider 컨트롤러 운영, 정책 변환 | Kubernetes에서 Gateway·HTTPRoute를 관리하고 프록시 실행을 AWS에 위임 |
 
 세 방식 모두 AWS는 Envoy 프로세스와 호스트의 패치, AZ별 용량과 확장을 맡습니다. 첫 번째 방식은 별도 상시 xDS 서버 없이 동작합니다. bootstrap에 모든 라우트를 넣을 수도 있고, 예제처럼 리스너를 고정한 채 `/xds/routes.yaml`(RDS)과 `/xds/clusters.yaml`(CDS)을 파일로 읽게 할 수도 있습니다. ZIP만 갱신하면 AWS가 파일을 교체하고, 감시 디렉터리를 설정한 Envoy가 새 내용을 읽습니다. bootstrap 자체를 바꾸면 hot restart가 일어나며 기존 연결의 drain 시간은 60초입니다. [Envoy 실행·설정 갱신 방식](https://docs.aws.amazon.com/elasticloadbalancing/latest/elbproxy/how-envoy-runs.html)
@@ -306,6 +306,70 @@ AWS가 **글로벌 rate limiting 미지원**이라고 명시한 대상은 EKS의
 <figure class="diagram"><a href="/assets/elb-envoy-config-update.svg"><img src="/assets/elb-envoy-config-update.svg" alt="ELB for Envoy의 설정 갱신 두 가지. xDS 파일을 담은 ZIP만 바꾸면 AWS가 새 파일을 제자리로 옮기고 Envoy는 재시작하지 않으며, 감시 디렉터리를 설정한 Envoy가 /xds의 RDS와 CDS 파일을 다시 읽는다. 변경 세트의 변경 속성은 Proxy.ConfigurationArchive 하나였고 /revision 응답이 12:31:56 UTC에 v1, 12:32:29 UTC에 v2였다. bootstrap 파일을 바꾸면 envoy --mode validate로 검사한 뒤 hot restart해 새 프로세스가 리스너를 넘겨받고, 이전 프로세스는 60초 동안 기존 연결을 drain한 뒤 종료한다. TCP와 WebSocket 연결은 강제로 닫지 않는다." loading="lazy"></a><figcaption>위 줄은 측정한 동작, 아래 줄은 AWS 문서에 설명된 동작입니다. 검증에 실패한 bootstrap은 적용되지 않고 이전 설정이 계속 요청을 처리합니다.</figcaption></figure>
 
 기존 Istio CRD를 그대로 유지하려면 이를 해석하는 istiod 등의 구성 경로와 관리형 프록시 사이의 연결, 신원 발급, SDS, 버전 호환성을 별도로 검증해야 합니다. AWS가 문서화한 EKS 통합은 Envoy Gateway에 `elb-envoy-remote-infra-provider`를 붙이는 방식입니다. 이 컨트롤러가 관리형 프록시를 만들고 Envoy Gateway가 xDS를 제공합니다. 출시 시점의 통합 API는 `v1alpha1`입니다. [EKS 통합의 동작과 제약](https://docs.aws.amazon.com/elasticloadbalancing/latest/elbproxy/kubernetes-overview.html)
+
+<h2 id="xds-auth">자체 xDS 서버에 붙일 때 연결은 어떻게 인증하고 인가하나?</h2>
+
+**ELB for Envoy가 xDS 서버에 자기를 증명할 수단은 설정 아카이브에 넣은 클라이언트 인증서입니다.** Kubernetes의 사이드카는 Pod의 서비스 계정 토큰으로 istiod에서 워크로드 인증서를 받습니다. 관리형 프록시에는 그런 토큰이 없고, 옆에 에이전트를 띄우거나 Envoy CLI 플래그를 바꿀 수도 없습니다. bootstrap의 `node`에서 지정할 수 있는 값은 `node.cluster`뿐이고(생략하면 프록시 이름), `node.id`는 AWS가 인스턴스 ID로 채웁니다. 그래서 첫 자격 증명은 `configurationArchive`로 넣을 수밖에 없습니다. AWS 문서는 xDS 인증 방식을 따로 정하지 않습니다. 다만 제어 플레인용 TLS 인증서를 아카이브 파일에서 `watched_directory`로 읽어 재시작 없이 교체하는 방법을 안내합니다. AWS의 EKS 통합도 Envoy Gateway 접속용 클라이언트 인증서·키·CA를 아카이브에 담아 Envoy Gateway Pod IP의 18000 포트로 mTLS 연결합니다. 아래는 여기에 프록시별 인증서와 서버 쪽 인가를 더한 구성입니다. [How the proxy runs Envoy](https://docs.aws.amazon.com/elasticloadbalancing/latest/elbproxy/how-envoy-runs.html) · [remote provider의 설정 전달 방식](https://github.com/aws/elb-envoy-remote-infra-provider/blob/v1.0.0/docs/how-it-works.md#how-the-proxy-gets-its-configuration)
+
+정적 공유 키(bearer 토큰)는 권하지 않습니다. 아카이브에 비밀 값을 넣는 일 자체는 피할 수 없으니, 정할 것은 **무엇을 넣느냐**입니다.
+
+| 증명 수단 | 장점 | 한계 |
+| --- | --- | --- |
+| **프록시별 클라이언트 인증서 + mTLS** (권장) | 개인 키가 네트워크로 전송되지 않는 소유 증명입니다. SAN에 프록시 이름을 넣으면 서버가 인가에 씁니다. 만료가 인증서에 들어 있습니다. | 발급·교체 파이프라인과 만료 경보가 필요합니다. |
+| 정적 토큰 + gRPC `initial_metadata` | 구현이 쉽습니다. | 스트림을 열 때마다 서버로 보내는 bearer 값이라, 로그나 서버에서 새면 누구나 재사용합니다. 만료와 사용 범위를 따로 만들어야 하고, TLS가 없으면 평문입니다. |
+| 프록시 IAM 역할 | 신원이 AWS에 있습니다. | ELB for Envoy 문서에서 xDS 연결을 프록시 역할로 인증하는 방법은 찾지 못했습니다. 프록시 역할은 로그 전송과 Envoy 필터가 AWS 서비스를 호출할 때 쓰는 권한입니다. |
+
+**아카이브를 지키는 경계는 IAM과 KMS입니다.** 아카이브는 항상 저장 시 암호화됩니다. 고객 관리형 KMS 키를 지정하면 데이터 키가 프록시 ARN 암호화 컨텍스트에 묶여, 다른 프록시의 설정은 복호화하지 못합니다. `GetProxyConfigurationContents`는 `includeConfigArchive`로 아카이브 내용을 돌려주므로 **개인 키를 읽을 수 있는 API**입니다. `GetProxy`와 분리돼 있으니 메타데이터 조회 권한과 나눠 부여합니다. 이 액션의 조건 키는 `aws:ResourceTag/${TagKey}`뿐이라 설정 파일만 읽게 하고 아카이브는 막는 식의 구분은 IAM으로 할 수 없습니다. [고객 관리형 키 암호화](https://docs.aws.amazon.com/elasticloadbalancing/latest/elbproxy/proxy-encryption.html) · [GetProxyConfigurationContents](https://docs.aws.amazon.com/elasticloadbalancing/elb-proxy/latest/APIReference/API_GetProxyConfigurationContents.html)
+
+**읽기 전용 정책이 이 API를 포함할 수 있습니다.** AWS 관리형 정책 `ElasticLoadBalancingReadOnly`(v3, 2026-11-27 확인)는 `elasticloadbalancing:Get*`를 허용하므로 `GetProxyConfigurationContents`도 허용됩니다(IAM 정책 시뮬레이터 결과 `allowed`). `ReadOnlyAccess`는 ELB에 `Describe*`만 허용해 포함하지 않습니다. 기본값인 AWS 소유 키에서는 KMS가 이 읽기를 막지 않습니다. 고객 관리형 키를 쓰면 이 호출에 호출자의 `kms:Decrypt`도 필요하므로 키 권한이 없는 읽기 전용 역할은 걸러집니다. 단, 키 정책이 계정 root에 `kms:*`를 위임하면 IAM으로 `kms:Decrypt`를 가진 관리자 역할은 여전히 읽을 수 있습니다. 그래서 키 사용 여부와 관계없이 SCP나 권한 경계에 배포 역할만 예외로 둔 명시적 `Deny`를 함께 둡니다. 반대로 `CreateProxy`·`UpdateProxyConfiguration`을 호출할 수 있는 주체는 프록시가 쓸 신원을 정할 수 있습니다. 관리형 프록시에서는 IAM이 신원의 뿌리입니다.
+
+```yaml
+# bootstrap의 xds_cluster (ELB가 받는 필드만 사용)
+# 아카이브는 Envoy 파일시스템 루트에 풀리므로 ZIP 안의 xds-auth/xds-client.yaml이 /xds-auth/xds-client.yaml로 읽힙니다.
+transport_socket:
+  name: envoy.transport_sockets.tls
+  typed_config:
+    "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+    sni: xds.example.test
+    common_tls_context:
+      tls_certificate_sds_secret_configs:
+      - name: xds_client
+        sds_config:
+          path_config_source: {path: /xds-auth/xds-client.yaml, watched_directory: {path: /xds-auth}}
+          resource_api_version: V3
+      validation_context_sds_secret_config:      # 서버 CA와 SAN(xds.example.test) 검증
+        name: xds_server_ca
+        sds_config:
+          path_config_source: {path: /xds-auth/xds-server-ca.yaml, watched_directory: {path: /xds-auth}}
+          resource_api_version: V3
+```
+
+**인가는 서버에서 인증서와 `node`를 짝지어 합니다.** `node.cluster`와 `node.id`는 프록시가 스스로 보내는 값입니다. 그대로 믿으면 인증서 하나로 다른 게이트웨이의 설정을 요청할 수 있습니다. 프록시마다 인증서를 따로 발급하고, SAN이 `spiffe://example.test/elb-proxy/order-gw`인 인증서는 `node.cluster: order-gw`의 리소스만 받게 합니다. 확인은 첫 메시지만이 아니라 `node`가 실린 **모든 요청**에서 합니다. go-control-plane은 이후 메시지에 `node`가 오면 그 값으로 바꾸기 때문입니다(`pkg/server/sotw/v3/ads.go`). AWS의 EKS 통합은 클러스터의 모든 프록시에 같은 인증서를 넣으므로, 인증서만으로는 프록시를 구분할 수 없습니다.
+
+**Delta xDS도 같은 규칙으로 막아야 합니다.** ADS gRPC 서비스를 등록하면 SotW(`StreamAggregatedResources`)와 함께 Delta(`DeltaAggregatedResources`)도 열립니다. go-control-plane v0.14.0은 Delta 콜백을 지정하지 않으면 Delta 요청을 그대로 허용합니다. SotW에만 인가를 넣은 서버에 `order-gw` 인증서로 Delta 요청을 보내면 `pay-gw`의 리스너를 받았습니다. bootstrap이 SotW(`api_type: GRPC`)를 쓴다면 서버에서 Delta를 거부하고, Delta를 쓴다면 Delta 콜백에도 같은 검사를 넣습니다.
+
+로컬 Envoy 1.40.0에 ELB가 받는 필드만 쓴 bootstrap을 올리고, 위 규칙(Delta는 거부)을 넣은 go-control-plane v0.14.0 서버에 연결한 결과입니다. 관리형 프록시가 아니라 같은 Envoy 버전으로 재현했고, 인증서는 테스트용입니다.
+
+| 경우 | 결과 |
+| --- | --- |
+| `order-gw` 인증서, `node.cluster: order-gw` | `control_plane.connected_state` 1, 리스너 수신, 요청 200 |
+| 같은 인증서로 `node.cluster: pay-gw` 주장 | 시도 7번(서버 재시작 전후)이 모두 거부. 리스너 없음 |
+| 클라이언트 인증서 없음 | TLS 단계에서 거부. 설정 0건 |
+| 같은 인증서로 Delta xDS 요청 | 서버가 Delta 스트림을 거부. 리스너 0건 |
+| 라우트가 xDS 포트를 가리키는 **새 클러스터** | 503 `remote connection failure` |
+| 라우트가 **`xds_cluster` 자체**를 가리킴 | 외부 호출자가 `order-gw` 리스너 설정을 받음. `pay-gw` 요청과 Delta 요청은 거부 |
+
+[실측 결과](/assets/data/elb-envoy-tokyo/xds-auth-results.json) · [bootstrap 전체](/assets/data/elb-envoy-tokyo/xds-auth-bootstrap.yaml) · [인가 규칙을 넣은 xDS 서버](/assets/data/elb-envoy-tokyo/xds-auth-server.go)
+
+**보안 그룹으로는 xDS 연결과 프록시를 거친 요청을 구분할 수 없습니다.** AWS 문서에 따르면 프록시의 보안 그룹 규칙은 프록시로 들어오는 트래픽과 프록시가 보내는 트래픽을 모두 제어합니다. 보안 그룹은 프록시 단위로 지정하므로 xDS 연결과 백엔드로 가는 연결의 출발지는 같은 보안 그룹입니다. EKS 통합도 공유 백엔드 SG 하나를 출발지로 삼아 노드 SG에 18000(xDS), 18002(Wasm), 백엔드 포트를 엽니다. 보안 그룹이 답할 수 있는 질문은 "프록시에서 온 연결인가"까지입니다. 위 마지막 행처럼 라우트가 `xds_cluster`를 가리키면 외부 요청이 **프록시의 인증서를 단 채** xDS 서버에 도착하므로 mTLS로도 막히지 않습니다. 그래서 경계를 세 겹으로 둡니다. [How proxies work](https://docs.aws.amazon.com/elasticloadbalancing/latest/elbproxy/how-proxies-work.html) · [remote provider의 보안 그룹](https://github.com/aws/elb-envoy-remote-infra-provider/blob/v1.0.0/docs/deploy/security_groups.md)
+
+1. **xDS 서버 SG는 프록시 SG에서 오는 xDS 포트만 받습니다.** 다른 백엔드와 SG·포트를 같이 쓰지 않습니다.
+2. **라우트가 제어 플레인을 가리키지 못하게 합니다.** 배포 파이프라인에서 라우트가 참조하는 클러스터 이름을 검사해 `xds_cluster` 같은 제어 플레인용 이름을 막습니다. admin 주소(`127.0.0.1`)를 가리키는 클러스터도 꼭 필요한 경로만 둡니다. AWS 문서는 `/config_dump`가 설정 속 비밀 값을 드러낼 수 있다고 경고합니다. 목적지를 요청이 정하는 `dynamic_forward_proxy`·`ORIGINAL_DST` 클러스터는 쓰지 않고, 백엔드용 업스트림 TLS에 xDS 클라이언트 인증서를 재사용하지 않습니다.
+3. **프록시별 인증서와 SAN 인가로 피해 범위를 좁힙니다.** 위 재현에서 라우트로 들어온 호출자도 그 프록시 자신의 설정까지만 받았습니다. SDS로 백엔드 키까지 xDS에 실어 보낸다면 새는 범위도 그만큼 커집니다.
+
+보조 신호도 있습니다. Envoy 자신의 ADS 스트림에는 `x-envoy-internal`·`x-forwarded-for`가, 라우트를 거친 스트림에는 `x-forwarded-proto`·`x-request-id`가 실렸습니다. 서버가 `x-request-id`가 있는 스트림을 거부할 수도 있지만, 이 헤더는 HTTP 연결 관리자 설정에 따라 달라지므로 경계로 삼지는 않습니다.
+
+**인증서 교체는 아카이브만 바꾸면 되고, 새 인증서는 다음 연결부터 쓰입니다.** 감시 디렉터리로 옮긴 새 인증서는 3초 뒤 Envoy의 `/certs`에 나타나지만, 이미 열린 ADS 스트림은 이전 인증서를 유지합니다. 재연결된 스트림은 새 인증서를 쓰고, Envoy 프로세스는 바뀌지 않습니다(위 재현 결과). 서버는 교체 기간 동안 이전 인증서와 새 인증서를 모두 받아야 하고, CA까지 바꾼다면 두 CA를 함께 신뢰합니다. 오래 열린 스트림도 다시 연결되게 하려면 gRPC 서버의 `MaxConnectionAge`와 `MaxConnectionAgeGrace`를 함께 둡니다. grpc-go에서 `MaxConnectionAgeGrace`의 기본값은 무한대여서 `MaxConnectionAge`만으로는 열린 스트림이 닫히지 않습니다. 관리형 프록시에서의 인증서 교체는 측정하지 않았고, 아카이브만 바꿀 때 재시작 없이 파일이 교체되는 동작은 앞의 [설정 갱신 실측](/assets/elb-envoy-config-update.svg)과 같습니다.
 
 ## EKS 제어 플레인, istiod, CRD의 운영 주체
 
